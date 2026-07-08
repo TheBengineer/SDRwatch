@@ -208,6 +208,37 @@ def ensure_baseline_schema(conn: sqlite3.Connection) -> None:
             updated_at TEXT NOT NULL
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS recordings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            baseline_id INTEGER NOT NULL,
+            detection_id INTEGER,
+            f_center_hz INTEGER NOT NULL,
+            bandwidth_hz REAL NOT NULL,
+            started_utc TEXT NOT NULL,
+            duration_ms INTEGER NOT NULL,
+            sample_rate_hz REAL NOT NULL,
+            raw_path TEXT,
+            raw_bytes INTEGER DEFAULT 0,
+            modulation TEXT,
+            ogg_path TEXT,
+            ogg_bytes INTEGER,
+            raw_deleted INTEGER DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'raw',
+            error TEXT,
+            created_utc TEXT DEFAULT (datetime('now'))
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS ignore_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            baseline_id INTEGER NOT NULL,
+            f_center_hz INTEGER NOT NULL,
+            tolerance_hz INTEGER NOT NULL DEFAULT 50000,
+            label TEXT,
+            created_utc TEXT DEFAULT (datetime('now'))
+        )
+        """,
     ]
     for stmt in stmts:
         conn.execute(stmt)
