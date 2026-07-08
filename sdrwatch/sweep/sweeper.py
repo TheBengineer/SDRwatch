@@ -26,6 +26,11 @@ from sdrwatch.io.bandplan import Bandplan
 from sdrwatch.sweep.scheduler import WindowScheduler
 from sdrwatch.util.scan_logger import ScanLogger
 
+from sdrwatch.recording.recorder import IQRecorder
+from sdrwatch.recording.demod import demodulate_fm
+from sdrwatch.recording.compressor import compress_to_ogg
+from sdrwatch.recording.cleanup import enforce_retention
+
 
 def _select_revisit_segment(tag: RevisitTag, segments: List[Segment]) -> Optional[Segment]:
     for seg in segments:
@@ -261,6 +266,7 @@ class Sweeper:
         bandplan = self.bandplan
         baseline_ctx = self.baseline_ctx
         logger = self.logger
+        self.src = src
 
         scheduler = WindowScheduler(args.start, args.stop, args.step)
         power_monitor = WindowPowerMonitor()
@@ -420,6 +426,9 @@ class Sweeper:
                 total_revisit_confirmed += revisit_stats.get("confirmed", 0)
                 total_revisit_false += revisit_stats.get("false_positive", 0)
 
+            if getattr(args, "capture_iq", False) and detection_engine is not None:
+                self._run_recording_pass(args)
+
         finally:
             if detection_engine:
                 flushed, new_flush = detection_engine.flush()
@@ -455,6 +464,123 @@ class Sweeper:
                 total_promoted,
                 total_new_signals,
             )
+
+
+    def _run_recording_pass(self, args) -> None:
+        _log.info("recording pass: capturing IQ for detected signals")
+
+        import os
+        from datetime import datetime, timezone
+
+        capture_dir = getattr(args, "capture_dir", "./captures")
+        duration_s = getattr(args, "capture_duration", 10.0)
+        max_signals = getattr(args, "record_max_signals", 10)
+        samp_rate = getattr(args, "samp_rate", 2.4e6)
+        baseline_id = int(self.baseline_ctx.id)
+
+        try:
+            detections = self.store.load_baseline_detections(baseline_id)
+        except Exception:
+            _log.warning("failed to load detections for recording pass", exc_info=True)
+            detections = []
+
+        if not detections:
+            _log.info("no detections to record")
+            return
+
+        filtered: list = []
+        for det in detections:
+            f_center = int(det.f_center_hz)
+            if f_center == 0:
+                continue
+            if self.store.is_frequency_ignored(baseline_id, f_center):
+                _log.debug("skipping ignored freq %d Hz", f_center)
+                continue
+            filtered.append(det)
+
+        if not filtered:
+            _log.info("all detections filtered by ignore rules")
+            return
+
+        # Weakest signals first — lowest SNR = most ephemeral, capture before they vanish
+        def _snr(d):
+            return max(d.snr_db, 0)
+
+        filtered.sort(key=_snr)
+        targets = filtered[:max_signals]
+
+        _log.info("recording %d/%d signals", len(targets), len(filtered))
+
+        recorder = IQRecorder(self.store, capture_dir=capture_dir)
+        src = self.src
+
+        for det in targets:
+            f_center = int(det.f_center_hz)
+            det_id = int(det.id)
+
+            rec_id, rec_path = recorder.record(
+                src=src,
+                f_center_hz=f_center,
+                samp_rate=samp_rate,
+                duration_s=duration_s,
+                baseline_id=baseline_id,
+                detection_id=det_id,
+            )
+
+            if rec_id is None:
+                _log.warning("failed to record freq %d Hz", f_center)
+                continue
+
+            modulation: str | None = None
+            try:
+                from sdrwatch.recording.classifier import classify_modulation
+
+                bw = max(int(det.f_high_hz - det.f_low_hz), 0)
+                modulation = classify_modulation(
+                    np.array([], dtype=np.complex64), samp_rate, f_center, float(bw)
+                )
+            except NotImplementedError:
+                pass
+            except Exception as e:
+                _log.debug("classifier error: %s", e)
+
+            try:
+                if src is not None and rec_path and os.path.exists(rec_path):
+                    samples = np.fromfile(rec_path, dtype=np.complex64)
+                    audio = demodulate_fm(samples, samp_rate)
+
+                    if len(audio) > 0:
+                        ogg_dir = os.path.join(capture_dir, "ogg")
+                        os.makedirs(ogg_dir, exist_ok=True)
+                        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+                        ogg_path = os.path.join(ogg_dir, f"{baseline_id}_{det_id}_{f_center}_{ts}.ogg")
+
+                        ogg_ok = compress_to_ogg(audio, 48000, ogg_path)
+                        if ogg_ok:
+                            self.store.update_recording_status(
+                                rec_id,
+                                "compressed",
+                                ogg_path=ogg_path,
+                                modulation=modulation,
+                            )
+                            try:
+                                os.remove(rec_path)
+                                _log.info("deleted raw IQ: %s", rec_path)
+                            except OSError as e:
+                                _log.warning("failed to delete raw %s: %s", rec_path, e)
+            except Exception as e:
+                _log.error("demod/compress failed for recording %s: %s", rec_id, e)
+
+        try:
+            quota_gb = getattr(args, "record_quota_gb", 1)
+            ttl_days = getattr(args, "record_ttl_days", 7)
+            enforce_retention(self.store, capture_dir, ttl_days=ttl_days, quota_gb=quota_gb)
+        except NotImplementedError:
+            _log.debug("retention enforcement not yet implemented")
+        except Exception as e:
+            _log.error("retention enforcement failed: %s", e)
+
+        _log.info("recording pass complete")
 
 
 def run_sweep(
