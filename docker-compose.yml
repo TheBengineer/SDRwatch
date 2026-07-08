@@ -1,0 +1,86 @@
+# =============================================================================
+# SDRwatch - Docker Compose
+# =============================================================================
+#
+# Before attaching your SDR dongle, see README.docker.md for USB passthrough.
+#
+# Start the web dashboard + control API:
+#   docker compose up                        # (SDR not required to start)
+#
+# Run a one-off scan (SDR required):
+#   docker compose run --rm --device /dev/bus/usb sdrwatch-cli \
+#     --baseline-id latest --driver rtlsdr \
+#     --start 88e6 --stop 108e6
+#
+# List available profiles (no SDR needed):
+#   docker compose run --rm sdrwatch-cli --list-profiles
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Control API — REST API for managing scanner jobs (needs USB for scanning)
+  # ---------------------------------------------------------------------------
+  sdrwatch-control:
+    build:
+      context: .
+      target: control
+    container_name: sdrwatch-control
+    hostname: sdrwatch-control
+    volumes:
+      - sdrwatch-data:/data
+      - sdrwatch-control-state:/tmp/sdrwatch-control
+    environment:
+      SDRWATCH_CONTROL_TOKEN: "${SDRWATCH_CONTROL_TOKEN:-change_me_control}"
+      SDRWATCH_DB: "/data/sdrwatch.db"
+    ports:
+      - "127.0.0.1:8765:8765"
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    # USB SDR access
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+
+  # ---------------------------------------------------------------------------
+  # Web UI — Flask dashboard (no SDR needed)
+  # ---------------------------------------------------------------------------
+  sdrwatch-web:
+    build:
+      context: .
+      target: web
+    container_name: sdrwatch-web
+    hostname: sdrwatch-web
+    depends_on:
+      - sdrwatch-control
+    volumes:
+      - sdrwatch-data:/data
+    environment:
+      SDRWATCH_TOKEN: "${SDRWATCH_TOKEN:-}"
+      SDRWATCH_CONTROL_URL: "http://sdrwatch-control:8765"
+      SDRWATCH_CONTROL_TOKEN: "${SDRWATCH_CONTROL_TOKEN:-change_me_control}"
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # CLI runner — ad-hoc scan commands
+  #   Pass --device /dev/bus/usb when running with an SDR.
+  # ---------------------------------------------------------------------------
+  sdrwatch-cli:
+    build:
+      context: .
+      target: base
+    container_name: sdrwatch-cli
+    profiles:
+      - cli
+    volumes:
+      - sdrwatch-data:/data
+    environment:
+      SDRWATCH_DB: "/data/sdrwatch.db"
+    entrypoint: ["python3", "-m", "sdrwatch.cli"]
+    command: ["--list-profiles"]
+
+volumes:
+  sdrwatch-data:
+  sdrwatch-control-state:
