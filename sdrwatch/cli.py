@@ -21,10 +21,18 @@ _log = get_logger(__name__)
 
 
 def run(args: argparse.Namespace) -> int:
-    """Top-level CLI dispatcher that delegates execution to sweep.runner.
+    """Top-level CLI dispatcher that delegates execution to sweep.runner or subcommands.
 
     Returns an exit code from ExitCode.
     """
+    sub = getattr(args, "_subcommand", None)
+    if sub == "ignore":
+        return cmd_ignore(args)
+    if sub == "replay":
+        return cmd_replay(args)
+    if sub == "record":
+        return cmd_record(args)
+
     if getattr(args, "list_profiles", False):
         _emit_profiles_json()
         return ExitCode.SUCCESS
@@ -177,6 +185,45 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--sleep-between-sweeps", dest="sleep_between_sweeps", type=float, help="Seconds to sleep between sweep cycles (default 0)")
     p.add_argument("--tmpdir", type=str, help="Scratch directory for temp files (defaults to $TMPDIR)")
 
+    p.add_argument("--capture-iq", action="store_true", help="Enable raw IQ capture pass after sweep")
+    p.add_argument("--continuous-capture", dest="continuous_capture", action="store_true",
+                   help="Continuous capture mode (implies --capture-iq)")
+    p.add_argument("--capture-dir", dest="capture_dir", type=str, default="./captures", help="Root directory for IQ captures (default ./captures)")
+    p.add_argument("--capture-duration", dest="capture_duration", type=float, default=10.0, help="Recording duration in seconds per signal (default 10.0)")
+    p.add_argument("--record-ttl-days", dest="record_ttl_days", type=int, default=7, help="Days before auto-deleting recordings (default 7)")
+    p.add_argument("--record-quota-gb", dest="record_quota_gb", type=int, default=1, help="Max disk usage for recordings in GB (default 1)")
+    p.add_argument("--record-max-signals", dest="record_max_signals", type=int, default=10, help="Max signals to record per sweep (default 10)")
+
+    p.set_defaults(_subcommand=None)
+    subparsers = p.add_subparsers(metavar="")
+    p_ignore = subparsers.add_parser("ignore", help="Manage signal capture ignore rules")
+    p_ignore.set_defaults(_subcommand="ignore")
+    p_ignore.add_argument("--add", nargs="*", help="Add ignore rule: FREQ_HZ [--tolerance HZ] [--label TEXT] [--baseline-id ID]")
+    p_ignore.add_argument("--remove", type=int, help="Remove ignore rule by ID")
+    p_ignore.add_argument("--list", action="store_true", help="List all ignore rules")
+    p_ignore.add_argument("--freq", type=float, help="Frequency in Hz (for --add)")
+    p_ignore.add_argument("--tolerance", type=float, default=50000, help="Tolerance in Hz (default: 50000)")
+    p_ignore.add_argument("--label", type=str, help="Human-readable label")
+    p_ignore.add_argument("--baseline-id", type=int, help="Baseline ID to scope the rule")
+    p_ignore.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
+
+    p_replay = subparsers.add_parser("replay", help="Replay a recorded signal with selected modulation")
+    p_replay.set_defaults(_subcommand="replay")
+    p_replay.add_argument("--id", type=int, required=True, help="Recording ID from the recordings table")
+    p_replay.add_argument("--modulation", choices=["fm", "am", "cw", "lsb", "usb"], default="fm", help="Demodulation mode (default: fm)")
+    p_replay.add_argument("--output", type=str, help="Output .ogg file path (default: auto-generated)")
+    p_replay.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
+
+    p_record = subparsers.add_parser("record", help="Manage recording lifecycle")
+    p_record.set_defaults(_subcommand="record")
+    p_record_sub = p_record.add_subparsers(dest="_record_action", metavar="")
+    p_rec_cleanup = p_record_sub.add_parser("cleanup", help="Enforce retention TTL and disk quota")
+    p_rec_cleanup.add_argument("--ttl-days", type=int, default=7, help="Delete recordings older than N days (default 7)")
+    p_rec_cleanup.add_argument("--quota-gb", type=int, default=1, help="Max disk usage in GB (default 1)")
+    p_rec_cleanup.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
+    p_rec_status = p_record_sub.add_parser("status", help="Show recording statistics")
+    p_rec_status.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
+
     args = p.parse_args(argv)
     args._cli_overrides = set()
 
@@ -225,16 +272,31 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     _set_default(args, args._cli_overrides, "duration", None)
     _set_default(args, args._cli_overrides, "sleep_between_sweeps", 0.0)
     _set_default(args, args._cli_overrides, "tmpdir", os.environ.get("TMPDIR"))
+    _set_default(args, args._cli_overrides, "capture_iq", False)
+    _set_default(args, args._cli_overrides, "continuous_capture", False)
+    _set_default(args, args._cli_overrides, "capture_dir", "./captures")
+    _set_default(args, args._cli_overrides, "capture_duration", 10.0)
+    _set_default(args, args._cli_overrides, "record_ttl_days", 7)
+    _set_default(args, args._cli_overrides, "record_quota_gb", 1)
+    _set_default(args, args._cli_overrides, "record_max_signals", 10)
     setattr(args, "abs_power_floor_db", None)
 
+    # --continuous-capture implies --capture-iq
+    if getattr(args, "continuous_capture", False):
+        setattr(args, "capture_iq", True)
+
     has_span = hasattr(args, "start") and hasattr(args, "stop")
-    if not args.list_profiles and not has_span:
+    is_ignore = getattr(args, "_subcommand", None) == "ignore"
+    is_replay = getattr(args, "_subcommand", None) == "replay"
+    is_record = getattr(args, "_subcommand", None) == "record"
+    is_non_scan = is_ignore or is_replay or is_record or getattr(args, "list_profiles", False)
+    if not is_non_scan and not has_span:
         p.error("--start and --stop are required unless --list-profiles is used")
 
     if has_span:
         _apply_scan_profile(args, p)
 
-    if not args.list_profiles:
+    if not is_non_scan:
         baseline_raw = getattr(args, "baseline_id", None)
         if baseline_raw is None:
             p.error("--baseline-id is required for scanning runs")
@@ -253,7 +315,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     if hasattr(args, "_cli_overrides"):
         delattr(args, "_cli_overrides")
 
-    if not args.list_profiles:
+    if not is_non_scan:
         if args.driver != "rtlsdr_native" and not HAVE_SOAPY:
             p.error("python3-soapysdr not installed. Install it (or use --driver rtlsdr_native).")
         if args.driver == "rtlsdr_native" and not HAVE_RTLSDR:
@@ -370,6 +432,145 @@ def _apply_scan_profile(args: argparse.Namespace, parser: argparse.ArgumentParse
 def _emit_profiles_json() -> None:
     payload = serialize_profiles()
     print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _resolve_db_path(args: argparse.Namespace) -> str:
+    db = getattr(args, "db", None)
+    if db:
+        return str(db)
+    return os.environ.get("SDRWATCH_DB", "sdrwatch.db")
+
+
+def cmd_ignore(args: argparse.Namespace) -> int:
+    from sdrwatch.baseline.store import Store as _Store
+    from sdrwatch.util.exit_codes import ExitCode as _ExitCode
+
+    store = _Store(_resolve_db_path(args))
+    if args.list:
+        rules = store.list_ignore_rules(getattr(args, "baseline_id", None))
+        if not rules:
+            print("No ignore rules.")
+            return _ExitCode.SUCCESS
+        print(f"{'ID':>4}  {'Freq (MHz)':<12}  {'Tolerance':<10}  {'Label':<20}  {'Created'}")
+        print("-" * 70)
+        for r in rules:
+            f_mhz = r["f_center_hz"] / 1e6
+            print(f"{r['id']:>4}  {f_mhz:<12.4f}  {r['tolerance_hz']:<10}  {(r.get('label') or ''):<20}  {r['created_utc']}")
+        return _ExitCode.SUCCESS
+    elif args.add is not None or getattr(args, "freq", None) is not None:
+        freq = getattr(args, "freq", None)
+        if freq is None and args.add:
+            try:
+                freq = float(args.add[0])
+            except (IndexError, ValueError):
+                freq = None
+        if freq is None:
+            print("error: --freq or --add FREQ_HZ is required")
+            return _ExitCode.GENERAL_ERROR
+        rid = store.add_ignore_rule(
+            baseline_id=getattr(args, "baseline_id", None) or 0,
+            f_center_hz=int(freq),
+            tolerance_hz=int(args.tolerance),
+            label=getattr(args, "label", None),
+        )
+        print(f"Added ignore rule #{rid}: {freq/1e6:.4f} MHz ± {args.tolerance} Hz")
+        return _ExitCode.SUCCESS
+    elif getattr(args, "remove", None) is not None:
+        store.remove_ignore_rule(args.remove)
+        print(f"Removed ignore rule #{args.remove}")
+        return _ExitCode.SUCCESS
+    else:
+        print("usage: sdrwatch ignore --add FREQ_HZ [--tolerance HZ] [--label TEXT] [--baseline-id ID]")
+        print("       sdrwatch ignore --remove ID")
+        print("       sdrwatch ignore --list [--baseline-id ID]")
+        return _ExitCode.SUCCESS
+
+
+def cmd_replay(args: argparse.Namespace) -> int:
+    import os
+
+    import numpy as np
+
+    from sdrwatch.baseline.store import Store as _Store
+    from sdrwatch.recording.compressor import compress_to_ogg
+    from sdrwatch.recording.demod import demodulate_fm
+    from sdrwatch.util.exit_codes import ExitCode as _ExitCode
+
+    _UNIMPLEMENTED = {"am", "cw", "lsb", "usb"}
+
+    store = _Store(_resolve_db_path(args))
+    rec = store.get_recording(args.id)
+    if rec is None:
+        print(f"error: recording #{args.id} not found")
+        return _ExitCode.GENERAL_ERROR
+
+    raw_path = rec.get("raw_path")
+    if not raw_path or not os.path.exists(str(raw_path)):
+        print(f"error: raw file not found: {raw_path}")
+        return _ExitCode.GENERAL_ERROR
+
+    samp_rate = rec.get("sample_rate_hz")
+    if not samp_rate:
+        print("error: recording missing sample_rate_hz metadata")
+        return _ExitCode.GENERAL_ERROR
+
+    mod = str(args.modulation or rec.get("modulation") or "fm")
+
+    if mod in _UNIMPLEMENTED:
+        print(f"error: demodulation '{mod}' is not yet implemented")
+        return _ExitCode.GENERAL_ERROR
+
+    samp_rate_f = float(samp_rate)
+    cf32 = np.fromfile(str(raw_path), dtype=np.complex64)
+    audio = demodulate_fm(cf32, samp_rate_f)
+
+    output = str(args.output) if args.output else str(raw_path).replace(".cf32", f"_{mod}.ogg")
+    ok = compress_to_ogg(audio, 48000, output)
+    if ok:
+        print(f"Replayed {mod}: {output}")
+        return _ExitCode.SUCCESS
+
+    print("error: OGG compression failed (ffmpeg available?)")
+    return _ExitCode.GENERAL_ERROR
+
+
+def cmd_record(args: argparse.Namespace) -> int:
+    from sdrwatch.baseline.store import Store as _Store
+    from sdrwatch.recording.cleanup import (
+        compute_recording_stats,
+        enforce_retention,
+    )
+    from sdrwatch.util.exit_codes import ExitCode as _ExitCode
+
+    store = _Store(_resolve_db_path(args))
+    action = getattr(args, "_record_action", None)
+
+    if action == "cleanup":
+        ttl = args.ttl_days
+        quota = args.quota_gb
+        # capture_dir is unused in enforce_retention for now (file paths are absolute from DB)
+        result = enforce_retention(store, "", ttl_days=ttl, quota_gb=quota)
+        print(
+            f"cleanup: deleted {result['deleted_count']}, "
+            f"freed {result['freed_bytes'] / (1024**2):.1f} MB, "
+            f"{result['kept_count']} recordings remain"
+        )
+        return _ExitCode.SUCCESS
+
+    if action == "status":
+        stats = compute_recording_stats(store, "")
+        print(f"Total recordings:  {stats['total_count']}")
+        print(
+            f"Disk usage:        {stats['total_bytes'] / (1024**2):.1f} MB "
+            f"({stats['total_gb']:.3f} GB)"
+        )
+        print(f"Oldest recording:  {stats['oldest'] or 'N/A'}")
+        print(f"Newest recording:  {stats['newest'] or 'N/A'}")
+        return _ExitCode.SUCCESS
+
+    print("usage: sdrwatch record cleanup [--ttl-days 7] [--quota-gb 1]")
+    print("       sdrwatch record status")
+    return _ExitCode.SUCCESS
 
 
 if __name__ == "__main__":
