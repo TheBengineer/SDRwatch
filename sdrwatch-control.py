@@ -245,9 +245,10 @@ def discover_rtlsdr() -> List[Device]:
         import SoapySDR  # type: ignore
         devs = SoapySDR.Device.enumerate(dict(driver="rtlsdr"))
         for i, d in enumerate(devs):
-            serial = d.get("serial", None)
-            label = d.get("label", f"RTL-SDR #{i}")
-            devices.append(Device(key=f"rtl:{i}", kind="rtlsdr", label=label + (f" (SN {serial})" if serial else ""), extra={"index": i, "serial": serial, "soapy_args": d}))
+            d_dict = dict(d)
+            serial = d_dict.get("serial")
+            label = d_dict.get("label", f"RTL-SDR #{i}")
+            devices.append(Device(key=f"rtl:{i}", kind="rtlsdr", label=label + (f" (SN {serial})" if serial else ""), extra={"index": i, "serial": serial, "soapy_args": d_dict}))
         if devices:
             return devices
     except Exception:
@@ -278,9 +279,10 @@ def discover_hackrf() -> List[Device]:
         import SoapySDR  # type: ignore
         devs = SoapySDR.Device.enumerate(dict(driver="hackrf"))
         for i, d in enumerate(devs):
-            serial = d.get("serial", None)
-            label = d.get("label", f"HackRF One #{i}")
-            devices.append(Device(key=f"hackrf:{i}", kind="hackrf", label=label + (f" (SN {serial})" if serial else ""), extra={"index": i, "serial": serial, "soapy_args": d}))
+            d_dict = dict(d)
+            serial = d_dict.get("serial")
+            label = d_dict.get("label", f"HackRF One #{i}")
+            devices.append(Device(key=f"hackrf:{i}", kind="hackrf", label=label + (f" (SN {serial})" if serial else ""), extra={"index": i, "serial": serial, "soapy_args": d_dict}))
         if devices:
             return devices
     except Exception:
@@ -447,12 +449,17 @@ class JobManager:
         # Refuse to start if the device is already locked (but clear stale locks first)
         self._acquire_device(device_key, owner="pending")
         try:
+            sdrwatch_args = dict(sdrwatch_args)  # copy
             # If we have discovery metadata for this device, attach it for downstream
             discover_map = {d.key: d for d in discover_devices()}
             if device_key in discover_map:
                 meta = discover_map[device_key].extra
-                sdrwatch_args = dict(sdrwatch_args)  # copy
                 sdrwatch_args["__discover_meta"] = meta
+            # Propagate SDRWATCH_DB from controller env if not explicitly provided
+            if "db" not in sdrwatch_args:
+                env_db = os.environ.get("SDRWATCH_DB")
+                if env_db:
+                    sdrwatch_args["db"] = env_db
 
             jid = short_uuid()
             log_path = str(LOGS_DIR / f"{jid}.log")
@@ -624,6 +631,18 @@ class JobManager:
         if args.get("persistence_mode"):
             cmd += ["--persistence-mode", str(args["persistence_mode"])]
 
+        # Capture/recording string params
+        if args.get("capture_dir"):
+            cmd += ["--capture-dir", str(args["capture_dir"])]
+        if args.get("capture_duration"):
+            cmd += ["--capture-duration", str(args["capture_duration"])]
+        if args.get("record_ttl_days"):
+            cmd += ["--record-ttl-days", str(args["record_ttl_days"])]
+        if args.get("record_quota_gb"):
+            cmd += ["--record-quota-gb", str(args["record_quota_gb"])]
+        if args.get("record_max_signals"):
+            cmd += ["--record-max-signals", str(args["record_max_signals"])]
+
         # CFAR mode is a simple string flag (off/os/ca)
         if args.get("cfar"):
             cmd += ["--cfar", str(args["cfar"])]
@@ -645,6 +664,12 @@ class JobManager:
             cmd.append("--spur-calibration")
         if args.get("two_pass"):
             cmd.append("--two-pass")
+
+        # Recording/capture flags
+        if args.get("capture_iq"):
+            cmd.append("--capture-iq")
+        if args.get("continuous_capture"):
+            cmd.append("--continuous-capture")
 
         # Booleans
         # (keep list in sync with scanner CLI flags)
