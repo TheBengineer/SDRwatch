@@ -1,6 +1,11 @@
-"""Demodulators: FM, AM, CW, LSB, USB from complex float32 IQ."""
+"""Demodulators: WBFM, FM, AM, CW, LSB, USB from complex float32 IQ."""
 import numpy as np
 import scipy.signal
+
+
+def demodulate_wbfm(cf32: np.ndarray, samp_rate: float) -> np.ndarray:
+    """Wideband FM broadcast demodulation. Alias for demodulate_fm."""
+    return demodulate_fm(cf32, samp_rate)
 
 
 def demodulate_fm(cf32: np.ndarray, samp_rate: float) -> np.ndarray:

@@ -362,6 +362,7 @@ def api_recordings_classify(recording_id: int):
 # ---------------------------------------------------------------------------
 
 _DEMOD_FN_MAP: Dict[str, str] = {
+    "wbfm": "demodulate_wbfm",
     "fm": "demodulate_fm",
     "am": "demodulate_am",
     "cw": "demodulate_cw",
@@ -399,6 +400,7 @@ def api_recordings_demod(recording_id: int):
             demodulate_fm,
             demodulate_lsb,
             demodulate_usb,
+            demodulate_wbfm,
         )
         from sdrwatch.recording.compressor import compress_to_ogg
 
@@ -406,6 +408,7 @@ def api_recordings_demod(recording_id: int):
         cf32 = np.fromfile(row["raw_path"], dtype=np.complex64)
 
         demod_fn_map = {
+            "wbfm": demodulate_wbfm,
             "fm": demodulate_fm,
             "am": demodulate_am,
             "cw": demodulate_cw,

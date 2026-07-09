@@ -174,7 +174,7 @@ async function loadRecordings(){
             <!-- Modulation buttons -->
             <div class="flex flex-wrap items-center gap-2 text-xs">
               <span class="text-slate-400 mr-1">Demod:</span>
-              ${['fm','am','cw','lsb','usb'].map(m =>
+              ${['wbfm','fm','am','cw','lsb','usb'].map(m =>
                 `<button class="chip cursor-pointer hover:bg-sky-600/40 mod-btn-${rec.id}" data-mod="${m}" onclick="event.stopPropagation();playModulation(${rec.id},'${m}')">${m.toUpperCase()}</button>`
               ).join('')}
               <span class="text-slate-500 ml-2">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
@@ -501,7 +501,7 @@ setInterval(loadRecordings, 5000);
         </div>
         <audio id="audio-review" controls preload="none" style="width:100%;height:36px"></audio>
         <div class="flex flex-wrap gap-2 items-center justify-center">`;
-    ['fm','am','cw','lsb','usb'].forEach(m => {
+    ['wbfm','fm','am','cw','lsb','usb'].forEach(m => {
       html += `<button class="chip cursor-pointer hover:bg-sky-600/40" onclick="playReviewMod('${m}')">${m.toUpperCase()}</button>`;
     });
     html += `</div>
