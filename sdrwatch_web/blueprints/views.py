@@ -1068,6 +1068,29 @@ def spur_map():
     )
 
 
+@bp.get("/api/spur-map")
+def api_spur_map():
+    """Spur calibration map data as JSON."""
+    from sdrwatch_web.auth import require_auth
+    require_auth()
+    state, _ = db_state()
+    if state != "ready":
+        return jsonify({"spur_entries": []})
+    con = get_con()
+    try:
+        rows = qa(
+            con,
+            """
+            SELECT bin_hz, mean_power_db, hits, last_seen_utc
+            FROM spur_map
+            ORDER BY bin_hz
+            """,
+        )
+    except sqlite3.OperationalError:
+        rows = []
+    return jsonify({"spur_entries": rows})
+
+
 # ---------------------------------------------------------------------------
 # CSV export (/export/detections.csv)
 # ---------------------------------------------------------------------------
