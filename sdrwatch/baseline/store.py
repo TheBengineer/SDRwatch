@@ -1466,4 +1466,11 @@ class Store:
             "ORDER BY hit_count DESC, last_seen_utc DESC",
             (baseline_id, min_hits),
         ).fetchall()
-        return [dict(r) for r in rows]
+        import sqlite3
+        return [{
+            "f_center_hz": r[0],
+            "hit_count": r[1],
+            "last_seen_utc": r[2],
+            "avg_duration_s": r[3],
+            "band": r[4],
+        } for r in rows]
