@@ -211,12 +211,16 @@ function drawFrame(
   ctx.restore()
 }
 
+const CLICK_TOLERANCE_PX = 8
+
 export default function SpectrumCanvas(props: Props) {
   const { data, zoomPan, width, height = 400 } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const propsRef = useRef(props)
   const zoomPanRef = useRef(zoomPan)
   const [tick, setTick] = useState(0)
+  const [hoveredSignal, setHoveredSignal] = useState<Signal | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
   propsRef.current = props
   zoomPanRef.current = zoomPan
 
@@ -250,24 +254,62 @@ export default function SpectrumCanvas(props: Props) {
     return () => cancelAnimationFrame(raf)
   }, [data, width, height, tick])
 
+  // Find signal nearest to mouse position
+  const findSignal = useCallback((clientX: number, clientY: number): Signal | null => {
+    const c = canvasRef.current
+    if (!c) return null
+    const rect = c.getBoundingClientRect()
+    const mx = clientX - rect.left
+    const zoom = zoomPanRef.current.zoom
+    const pad = { left: 60, right: 20, top: 20, bottom: 40 }
+    const pw = width - pad.left - pad.right
+    const freqStart = zoom.centerHz - zoom.spanHz / 2
+    const freqEnd = zoom.centerHz + zoom.spanHz / 2
+    const signals = propsRef.current.signals
+    if (!signals) return null
+
+    for (const sig of signals) {
+      const sx = ((sig.f_center_hz - freqStart) / zoom.spanHz) * pw + pad.left
+      if (Math.abs(sx - mx) < CLICK_TOLERANCE_PX) {
+        return sig
+      }
+    }
+    return null
+  }, [width])
+
   const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
     const c = canvasRef.current
     if (!c) return
     zoomPanRef.current.onWheel(e, c.getBoundingClientRect())
     setTick((t) => t + 1)
   }, [])
+
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const c = canvasRef.current
     if (!c) return
     zoomPanRef.current.onMouseDown(e, c.getBoundingClientRect())
   }, [])
+
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const c = canvasRef.current
     if (!c) return
     zoomPanRef.current.onMouseMove(e, c.getBoundingClientRect())
     setTick((t) => t + 1)
-  }, [])
+
+    // Hover detection for signal markers
+    if (!zoomPanRef.current.zoom) return
+    const sig = findSignal(e.clientX, e.clientY)
+    setHoveredSignal(sig)
+    if (sig) {
+      const rect = c.getBoundingClientRect()
+      setTooltipPos({ x: e.clientX - rect.left + 12, y: e.clientY - rect.top - 10 })
+    } else {
+      setTooltipPos(null)
+    }
+  }, [findSignal])
+
   const handleMouseUp = useCallback(() => zoomPanRef.current.onMouseUp(), [])
+
   const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const c = canvasRef.current
     if (!c) return
@@ -275,15 +317,55 @@ export default function SpectrumCanvas(props: Props) {
     setTick((t) => t + 1)
   }, [])
 
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const sig = findSignal(e.clientX, e.clientY)
+    if (sig) {
+      window.location.href = `/signal/${sig.id}`
+    }
+  }, [findSignal])
+
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ display: 'block', cursor: 'crosshair', width, height }}
-      onWheel={handleWheel}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onDoubleClick={handleDoubleClick}
-    />
+    <div style={{ position: 'relative' }}>
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'block', cursor: hoveredSignal ? 'pointer' : 'crosshair', width, height }}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onDoubleClick={handleDoubleClick}
+        onClick={handleClick}
+      />
+      {hoveredSignal && tooltipPos && (
+        <div
+          style={{
+            position: 'absolute',
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            background: '#1e293b',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 8,
+            padding: '6px 10px',
+            fontSize: 12,
+            color: '#e2e8f0',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            zIndex: 10,
+          }}
+        >
+          <div style={{ fontWeight: 600, color: CLASSIFICATION_COLORS[hoveredSignal.classification] ?? '#3b82f6' }}>
+            {hoveredSignal.signal_id || `#${hoveredSignal.id}`}
+            {' — '}
+            {(hoveredSignal.f_center_hz / 1e6).toFixed(4)} MHz
+          </div>
+          <div style={{ color: '#94a3b8' }}>
+            {hoveredSignal.classification}
+            {hoveredSignal.label ? ` · ${hoveredSignal.label}` : ''}
+            {hoveredSignal.snr_db != null ? ` · SNR ${hoveredSignal.snr_db.toFixed(1)} dB` : ''}
+          </div>
+          <div style={{ color: '#64748b', fontSize: 10 }}>Click to view details</div>
+        </div>
+      )}
+    </div>
   )
 }
