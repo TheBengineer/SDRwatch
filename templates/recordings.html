@@ -177,10 +177,21 @@ async function loadRecordings(){
             <div class="flex flex-wrap items-center gap-2 text-xs">
               <span class="text-slate-400 mr-1">Demod:</span>
               ${['wbfm','fm','am','cw','lsb','usb'].map(m =>
-                `<button class="chip cursor-pointer hover:bg-sky-600/40 mod-btn-${rec.id}" data-mod="${m}" onclick="event.stopPropagation();playModulation(${rec.id},'${m}')">${m.toUpperCase()}</button>`
+                `<button class="chip cursor-pointer hover:bg-sky-600/40 mod-btn-${rec.id} ${rec.modulation === m ? 'bg-sky-600/60 text-sky-100' : ''}" data-mod="${m}" onclick="event.stopPropagation();playModulation(${rec.id},'${m}')">${m.toUpperCase()}</button>`
               ).join('')}
               <span class="text-slate-500 ml-2">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
+              <button class="chip text-xs hover:bg-green-600/40 cursor-pointer" onclick="event.stopPropagation();saveModulation(${rec.id})">💾 Save mod</button>
               <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadRaw(${rec.id})" style="margin-left:auto">⬇ Raw</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs" style="margin-top:4px">
+              <span class="text-slate-400">Classification:</span>
+              <select id="modselect-${rec.id}" class="input text-xs py-0.5" style="max-width:120px" onchange="event.stopPropagation()">
+                <option value="">—</option>
+                <option value="friendly" ${rec.classification === 'friendly' ? 'selected' : ''}>Friendly</option>
+                <option value="ambient" ${rec.classification === 'ambient' ? 'selected' : ''}>Ambient</option>
+                <option value="hostile" ${rec.classification === 'hostile' ? 'selected' : ''}>Hostile</option>
+                <option value="unknown" ${rec.classification === 'unknown' ? 'selected' : ''}>Unknown</option>
+              </select>
             </div>
           </div>
         </td>
@@ -243,6 +254,48 @@ document.getElementById("bulk-delete-btn")?.addEventListener("click", async func
 });
 
 function downloadRaw(id){ window.location.href = "/api/recordings/"+id+"/download/raw"; }
+
+// Save modulation and classification for a recording
+async function saveModulation(id){
+  const modBtns = document.querySelectorAll(`.mod-btn-${id}`);
+  let mod = "";
+  modBtns.forEach(b => {
+    if(b.classList.contains("bg-sky-600")) mod = b.dataset.mod || "";
+  });
+  const cls = document.getElementById("modselect-"+id)?.value || "";
+  const body = {modulation: mod || null};
+  if(cls) body.classification = cls;
+  try{
+    const r = await fetch("/api/recordings/"+id, {
+      method:"PATCH",
+      headers: {'Content-Type':'application/json', ...(TOKEN ? {"Authorization":"Bearer "+TOKEN} : {})},
+      body: JSON.stringify(body)
+    });
+    const status = document.getElementById("recording-status");
+    if(r.ok){
+      // Highlight the saved modulation button
+      modBtns.forEach(b => b.classList.remove("bg-sky-600/60", "text-sky-100"));
+      modBtns.forEach(b => { if(b.dataset.mod === mod) b.classList.add("bg-sky-600/60", "text-sky-100"); });
+      loadRecordings();
+    } else {
+      alert("Save failed");
+    }
+  }catch(e){ alert("Save error"); }
+}
+
+// Track active modulation button on click
+document.addEventListener("click", function(e){
+  const btn = e.target.closest("[data-mod]");
+  if(!btn) return;
+  const id = btn.closest("[id^='expand-']")?.id?.replace("expand-","");
+  if(!id) return;
+  const parent = btn.closest(".flex-wrap");
+  if(!parent) return;
+  parent.querySelectorAll("[data-mod]").forEach(b => {
+    b.classList.remove("bg-sky-600/60", "text-sky-100");
+  });
+  btn.classList.add("bg-sky-600/60", "text-sky-100");
+});
 
 // Demodulate and play: POST modulation, receive OGG blob, auto-play
 async function playModulation(id, mod){
@@ -445,7 +498,10 @@ document.getElementById("mod-filter")?.addEventListener("change", loadRecordings
 document.getElementById("status-filter")?.addEventListener("change", loadRecordings);
 loadBaselines();
 loadRecordings();
-setInterval(loadRecordings, 5000);
+setInterval(() => {
+  // Don't re-render while a recording is expanded — would destroy audio element
+  if(!expandedId) loadRecordings();
+}, 5000);
 </script>
 
 <script>

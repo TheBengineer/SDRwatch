@@ -182,6 +182,32 @@ def api_recordings_delete(recording_id: int):
     return jsonify({"ok": True})
 
 
+@bp.patch("/api/recordings/<int:recording_id>")
+def api_recordings_update(recording_id: int):
+    """Update recording metadata (modulation, classification, notes)."""
+    require_auth()
+    body = request.get_json(force=True, silent=True) or {}
+    wcon = _open_write_con()
+    try:
+        updates: list[str] = []
+        params: list = []
+        for col in ("modulation", "classification", "notes", "label"):
+            if col in body:
+                updates.append(f"{col} = ?")
+                params.append(body[col])
+        if not updates:
+            return jsonify({"error": "no fields to update"}), 400
+        params.append(recording_id)
+        wcon.execute(
+            f"UPDATE recordings SET {', '.join(updates)} WHERE id = ?",
+            params,
+        )
+        wcon.commit()
+    finally:
+        wcon.close()
+    return jsonify({"ok": True})
+
+
 @bp.post("/api/recordings/bulk-delete")
 def api_recordings_bulk_delete():
     """Delete multiple recordings at once."""
