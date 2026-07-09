@@ -28,6 +28,16 @@ from sdrwatch.util.scan_logger import ScanLogger
 
 from sdrwatch.recording.recorder import IQRecorder
 from sdrwatch.recording.demod import demodulate_fm
+
+
+class _QueuedTarget:
+    """Minimal detection-like wrapper for queued recording rows."""
+    def __init__(self, row):
+        self.f_center_hz = int(row.f_center_hz)
+        self.id = int(row.detection_id)
+        self.snr_db = 0.0
+        self.f_low_hz = self.f_center_hz - 50000
+        self.f_high_hz = self.f_center_hz + 50000
 from sdrwatch.recording.compressor import compress_to_ogg
 from sdrwatch.recording.cleanup import enforce_retention
 
@@ -478,17 +488,30 @@ class Sweeper:
         samp_rate = getattr(args, "samp_rate", 2.4e6)
         baseline_id = int(self.baseline_ctx.id)
 
+        # Load sweep detections + queued recordings as recording targets
+        targets: list = []
+
         try:
             detections = self.store.load_baseline_detections(baseline_id)
         except Exception:
             _log.warning("failed to load detections for recording pass", exc_info=True)
             detections = []
 
-        if not detections:
-            _log.info("no detections to record")
-            return
+        # Also pick up any queued recordings that need to be captured
+        queued: list = []
+        try:
+            queued_rows = self.store.con.execute(
+                "SELECT id AS detection_id, f_center_hz FROM recordings "
+                "WHERE status = 'queued' AND baseline_id = ? ORDER BY created_utc ASC LIMIT ?",
+                (baseline_id, max_signals),
+            ).fetchall()
+            for q in queued_rows:
+                queued.append(q)
+        except Exception:
+            _log.debug("could not load queued recordings", exc_info=True)
 
-        filtered: list = []
+        # Merge sweep detections and queued recordings
+        seen_freqs: set = set()
         for det in detections:
             f_center = int(det.f_center_hz)
             if f_center == 0:
@@ -496,20 +519,32 @@ class Sweeper:
             if self.store.is_frequency_ignored(baseline_id, f_center):
                 _log.debug("skipping ignored freq %d Hz", f_center)
                 continue
-            filtered.append(det)
+            seen_freqs.add(f_center)
+            targets.append(det)
 
-        if not filtered:
-            _log.info("all detections filtered by ignore rules")
+        for q in queued:
+            f_center = int(q.f_center_hz)
+            if f_center in seen_freqs:
+                continue  # already going to record this via sweep detection
+            if self.store.is_frequency_ignored(baseline_id, f_center):
+                _log.debug("skipping ignored queued freq %d Hz", f_center)
+                continue
+            seen_freqs.add(f_center)
+            # Create a minimal detection-like object
+            targets.append(_QueuedTarget(q))
+
+        if not targets:
+            _log.info("nothing to record")
             return
 
-        # Weakest signals first — lowest SNR = most ephemeral, capture before they vanish
-        def _snr(d):
-            return max(d.snr_db, 0)
+        # Weakest signals first (sweep detections have SNR; queued targets get default 0)
+        def _priority(t):
+            return -max(getattr(t, "snr_db", 0) or 0, 0)
 
-        filtered.sort(key=_snr)
-        targets = filtered[:max_signals]
+        targets.sort(key=_priority)
+        targets = targets[:max_signals]
 
-        _log.info("recording %d/%d signals", len(targets), len(filtered))
+        _log.info("recording %d/%d target(s)", len(targets), len(targets))
 
         recorder = IQRecorder(self.store, capture_dir=capture_dir)
         src = self.src
