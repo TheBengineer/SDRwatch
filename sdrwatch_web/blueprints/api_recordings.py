@@ -292,10 +292,24 @@ def api_recordings_queue(detection_id: int):
     body = request.get_json(force=True, silent=True) or {}
     baseline_id = body.get("baseline_id")
     f_center_hz = body.get("f_center_hz")
+    bandwidth_hz = body.get("bandwidth_hz", 0)
     if not baseline_id or not f_center_hz:
         abort(400, description="baseline_id and f_center_hz required")
-    # TODO: queue via controller or mark in db for next recording pass
-    return jsonify({"ok": True, "message": "Signal queued for recording"})
+    wcon = _open_write_con()
+    try:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        wcon.execute(
+            "INSERT INTO recordings (baseline_id, detection_id, f_center_hz, bandwidth_hz, "
+            "started_utc, duration_ms, sample_rate_hz, status) VALUES (?, ?, ?, ?, ?, 0, 0, 'queued')",
+            (int(baseline_id), int(detection_id), int(f_center_hz), float(bandwidth_hz),
+             now.strftime("%Y-%m-%dT%H:%M:%S")),
+        )
+        wcon.commit()
+        rec_id = wcon.lastrowid
+    finally:
+        wcon.close()
+    return jsonify({"ok": True, "recording_id": rec_id, "message": "Signal queued for recording"})
 
 
 # ---------------------------------------------------------------------------

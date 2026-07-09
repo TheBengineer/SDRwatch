@@ -34,6 +34,7 @@
       <label for="status-filter">Status</label>
       <select id="status-filter" class="input">
         <option value="">All statuses</option>
+        <option value="queued">Queued</option>
         <option value="raw">Raw</option>
         <option value="compressed">Compressed</option>
         <option value="compression_failed">Failed</option>
@@ -118,7 +119,8 @@ async function loadRecordings(){
     if(!r.ok) throw new Error("fetch failed");
     const data = await r.json();
     const list = data.recordings || [];
-    document.getElementById("rec-count").textContent = list.length + " recordings";
+    const queuedCount = list.filter(r => r.status === "queued").length;
+    document.getElementById("rec-count").textContent = list.length + " recordings" + (queuedCount ? " (" + queuedCount + " queued)" : "");
     const badge = document.getElementById("signal-badge");
     if(badge){
       if(filterDetectionId){
@@ -135,7 +137,7 @@ async function loadRecordings(){
     }
     tbody.innerHTML = list.map(rec => {
       const modBadge = rec.modulation ? `<span class="chip text-xs">${rec.modulation.toUpperCase()}</span>` : '<span class="chip text-xs text-slate-500">—</span>';
-      const statusColor = rec.status === "compressed" ? "text-green-400" : rec.status === "compression_failed" ? "text-red-400" : "text-slate-400";
+      const statusColor = rec.status === "compressed" ? "text-green-400" : rec.status === "queued" ? "text-amber-400" : rec.status === "compression_failed" ? "text-red-400" : "text-slate-400";
       const hasOgg = rec.ogg_exists || (rec.ogg_path && rec.status === "compressed");
       const checked = selected.has(rec.id);
       return `<tr class="cursor-pointer hover:bg-slate-800/40 ${checked ? 'bg-sky-900/20' : ''}" onclick="toggleExpand(${rec.id})">
