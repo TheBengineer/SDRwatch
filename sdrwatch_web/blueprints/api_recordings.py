@@ -103,7 +103,8 @@ def api_recordings_list():
 
     where = " AND ".join(conditions)
     rows = con.execute(
-        f"SELECT {_RECORDING_COLS} FROM recordings WHERE {where} ORDER BY created_utc DESC LIMIT 200"
+        f"SELECT {_RECORDING_COLS} FROM recordings WHERE {where} ORDER BY created_utc DESC LIMIT 200",
+        tuple(params) if params else (),
     ).fetchall()
 
     recordings = [_enrich_recording(dict(r)) for r in rows]
