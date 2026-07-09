@@ -76,10 +76,21 @@ def create_app(db_path: str) -> Flask:
 
     @app.errorhandler(Exception)
     def capture_error_to_ring(exc):
-        # Let HTTP exceptions (404, 401, 403, 405, etc.) pass through as-is
+        # Let HTTP exceptions (404, 401, etc.) pass through without wrapping
         from werkzeug.exceptions import HTTPException
         if isinstance(exc, HTTPException):
-            raise exc
+            entry = {
+                "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+                "path": request.path,
+                "method": request.method,
+                "error": str(exc),
+                "type": type(exc).__name__,
+                "traceback": tb.format_exc(),
+            }
+            app.config["ERROR_RING"].append(entry)
+            while len(app.config["ERROR_RING"]) > app.config["ERROR_RING_MAX"]:
+                app.config["ERROR_RING"].pop(0)
+            return exc
         entry = {
             "ts": datetime.now(timezone.utc)
             .isoformat(timespec="milliseconds")
