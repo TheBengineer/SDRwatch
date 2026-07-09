@@ -177,7 +177,7 @@ def api_recordings_bulk_delete():
     body = request.get_json(force=True, silent=True) or {}
     ids = body.get("ids", [])
     if not ids or not isinstance(ids, list):
-        abort(400, description="ids must be a non-empty list")
+        return jsonify({"error": "ids must be a non-empty list"}), 400
     wcon = _open_write_con()
     try:
         deleted = 0
