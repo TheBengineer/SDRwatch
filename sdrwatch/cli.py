@@ -32,6 +32,8 @@ def run(args: argparse.Namespace) -> int:
         return cmd_replay(args)
     if sub == "record":
         return cmd_record(args)
+    if sub == "monitor":
+        return cmd_monitor(args)
 
     if getattr(args, "list_profiles", False):
         _emit_profiles_json()
@@ -224,6 +226,18 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p_rec_status = p_record_sub.add_parser("status", help="Show recording statistics")
     p_rec_status.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
 
+    p_monitor = subparsers.add_parser("monitor", help="Monitor a single frequency for signal bursts (energy detection)")
+    p_monitor.set_defaults(_subcommand="monitor")
+    p_monitor.add_argument("--freq", type=float, required=True, help="Center frequency in Hz")
+    p_monitor.add_argument("--samp-rate", dest="samp_rate", type=float, default=2.4e6, help="Sample rate in Hz")
+    p_monitor.add_argument("--threshold-db", type=float, default=6.0, help="Onset threshold above noise floor in dB")
+    p_monitor.add_argument("--max-duration", type=float, default=30.0, help="Max burst capture duration in seconds")
+    p_monitor.add_argument("--capture-dir", type=str, default="./captures", help="Capture directory")
+    p_monitor.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
+    p_monitor.add_argument("--driver", type=str, default="rtlsdr", help="SDR driver key")
+    p_monitor.add_argument("--gain", type=str, default="auto", help='Gain in dB or "auto"')
+    p_monitor.add_argument("--soapy-args", type=str, help="Comma-separated Soapy device args (e.g., 'serial=00000001,index=0')")
+
     args = p.parse_args(argv)
     args._cli_overrides = set()
 
@@ -289,7 +303,8 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     is_ignore = getattr(args, "_subcommand", None) == "ignore"
     is_replay = getattr(args, "_subcommand", None) == "replay"
     is_record = getattr(args, "_subcommand", None) == "record"
-    is_non_scan = is_ignore or is_replay or is_record or getattr(args, "list_profiles", False)
+    is_monitor = getattr(args, "_subcommand", None) == "monitor"
+    is_non_scan = is_ignore or is_replay or is_record or is_monitor or getattr(args, "list_profiles", False)
     if not is_non_scan and not has_span:
         p.error("--start and --stop are required unless --list-profiles is used")
 
@@ -571,6 +586,72 @@ def cmd_record(args: argparse.Namespace) -> int:
     print("usage: sdrwatch record cleanup [--ttl-days 7] [--quota-gb 1]")
     print("       sdrwatch record status")
     return _ExitCode.SUCCESS
+
+
+def cmd_monitor(args: argparse.Namespace) -> int:
+    """Continuous burst capture mode on a single frequency."""
+    from sdrwatch.baseline.store import Store
+    from sdrwatch.recording.burst import BurstCapture
+    from sdrwatch.drivers.soapy import SDRSource, HAVE_SOAPY
+    from sdrwatch.drivers.rtlsdr import RTLSDRSource, HAVE_RTLSDR
+    from sdrwatch.util.exit_codes import ExitCode
+
+    store = Store(_resolve_db_path(args))
+
+    driver = getattr(args, "driver", "rtlsdr")
+    samp_rate = getattr(args, "samp_rate", 2.4e6)
+    gain = getattr(args, "gain", "auto")
+    soapy_args = getattr(args, "soapy_args", None)
+
+    if driver == "rtlsdr_native":
+        if not HAVE_RTLSDR:
+            print("error: pyrtlsdr not available")
+            return ExitCode.GENERAL_ERROR
+        src = RTLSDRSource(samp_rate=samp_rate, gain=gain, device_index=0)
+    else:
+        if not HAVE_SOAPY:
+            print("error: SoapySDR not available")
+            return ExitCode.GENERAL_ERROR
+        src = SDRSource(driver=driver, samp_rate=samp_rate, gain=gain, soapy_args=soapy_args)
+
+    if hasattr(src, "set_fixed_gain_mode"):
+        try:
+            src.set_fixed_gain_mode(gain_db=20.0)
+        except Exception:
+            pass
+
+    burster = BurstCapture(
+        src=src,
+        f_center_hz=int(args.freq),
+        samp_rate=samp_rate,
+        threshold_db=float(args.threshold_db),
+        max_duration_s=float(args.max_duration),
+        capture_dir=str(args.capture_dir),
+        store=store,
+    )
+
+    _log.info("monitoring %.3f MHz (threshold=%+.1f dB, max_duration=%.1fs, warmup=%.0fs)",
+              args.freq / 1e6, float(args.threshold_db), float(args.max_duration), 5.0)
+
+    try:
+        while True:
+            event = burster.read()
+            if event:
+                _log.info("burst: %.1fs at %d Hz -> %s (peak=%.1f dB, noise=%.1f dB)",
+                          event["duration_s"], event["f_center_hz"],
+                          event["raw_path"], event["max_power_db"],
+                          event["noise_floor_db"])
+    except KeyboardInterrupt:
+        _log.info("monitor interrupted")
+    except Exception as e:
+        _log.error("monitor error: %s", e)
+    finally:
+        try:
+            src.close()
+        except Exception:
+            pass
+
+    return ExitCode.SUCCESS
 
 
 if __name__ == "__main__":

@@ -433,7 +433,8 @@ def control():
 @bp.get("/recordings")
 def recordings_page():
     """Recordings browse page."""
-    return render_template("recordings.html")
+    review = request.args.get("review", "").strip()
+    return render_template("recordings.html", review=review)
 
 
 # ---------------------------------------------------------------------------
