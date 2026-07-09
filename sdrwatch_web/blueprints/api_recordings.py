@@ -299,14 +299,14 @@ def api_recordings_queue(detection_id: int):
     try:
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
-        wcon.execute(
+        cur = wcon.execute(
             "INSERT INTO recordings (baseline_id, detection_id, f_center_hz, bandwidth_hz, "
             "started_utc, duration_ms, sample_rate_hz, status) VALUES (?, ?, ?, ?, ?, 0, 0, 'queued')",
             (int(baseline_id), int(detection_id), int(f_center_hz), float(bandwidth_hz),
              now.strftime("%Y-%m-%dT%H:%M:%S")),
         )
         wcon.commit()
-        rec_id = wcon.lastrowid
+        rec_id = cur.lastrowid
     finally:
         wcon.close()
     return jsonify({"ok": True, "recording_id": rec_id, "message": "Signal queued for recording"})
