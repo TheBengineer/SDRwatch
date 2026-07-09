@@ -86,6 +86,28 @@
       </section>
       {% endif %}
 
+      <!-- Recording controls -->
+      <div class="card">
+        <h2 class="text-lg font-semibold mb-2">Recording</h2>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn" id="record-now-btn" title="Queue this signal for IQ capture">
+            🎙 Record IQ
+          </button>
+          <button type="button" id="mute-btn" class="chip text-sm hover:bg-amber-600/40 cursor-pointer" title="Never record this frequency">
+            🔇 Mute
+          </button>
+        </div>
+        <div id="recording-status" class="text-xs text-slate-400 mt-2"></div>
+      </div>
+
+      <!-- Recording history -->
+      <section class="card">
+        <h2 class="text-lg font-semibold mb-2">Captures</h2>
+        <div id="signal-recordings">
+          <p class="text-sm text-slate-500">Loading...</p>
+        </div>
+      </section>
+
       <!-- Signal characterization -->
       <section class="card">
         <h2 class="text-lg font-semibold mb-4">📊 Signal Characterization</h2>
@@ -571,6 +593,92 @@
   document.getElementById('mark-ambient-btn')?.addEventListener('click', () => quickClassify('ambient'));
   document.getElementById('mark-hostile-btn')?.addEventListener('click', () => quickClassify('hostile'));
 })();
+
+// IQ recording controls
+const TOKEN = localStorage.getItem('SDRWATCH_TOKEN');
+const SIG_FREQ = {{ signal.f_center_hz | default(0) }};
+const SIG_BW = {{ signal.bandwidth_hz | default(0) }};
+const SIG_BASELINE = {{ signal.baseline_id | default('null') }};
+const SIG_ID = {{ signal.id | default('null') }};
+const API_BASE_REC = '/api/recordings';
+
+async function loadSignalRecordings(){
+  const resp = await fetch(API_BASE_REC+'?baseline_id='+SIG_BASELINE, { headers: TOKEN ? {"Authorization":"Bearer "+TOKEN} : {} });
+  if(!resp.ok) return;
+  const data = await resp.json();
+  const allRecs = (data.recordings || []).filter(r => r.detection_id === SIG_ID);
+  const container = document.getElementById('signal-recordings');
+  if(!container) return;
+  if(allRecs.length === 0){
+    container.innerHTML = '<p class="text-sm text-slate-500">No captures for this signal yet.</p>';
+    return;
+  }
+  container.innerHTML = allRecs.map(rec => {
+    const playAudio = rec.ogg_path && rec.status === 'compressed'
+      ? `<audio controls preload="none" style="height:28px;width:140px"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>`
+      : '<span class="text-xs text-slate-500">raw only</span>';
+    return `<div class="flex items-center justify-between py-2 border-b border-slate-700/40 last:border-0">
+      <div>
+        <span class="chip text-xs">${(rec.modulation || 'raw').toUpperCase()}</span>
+        <span class="text-xs text-slate-400 ml-2">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : '—'}</span>
+        <span class="text-xs text-slate-500 ml-2">${(rec.raw_size_display || (rec.raw_bytes ? Math.round(rec.raw_bytes/1024)+'KB' : '—'))}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        ${playAudio}
+        <a href="/api/recordings/${rec.id}/download/raw" class="chip text-xs hover:bg-sky-600/40" download>⬇</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('record-now-btn')?.addEventListener('click', async () => {
+  try{
+    const resp = await fetch(API_BASE_REC+'/'+SIG_ID+'/queue', {
+      method:'POST',
+      headers: {'Content-Type':'application/json', ...(TOKEN ? {"Authorization":"Bearer "+TOKEN} : {})},
+      body: JSON.stringify({baseline_id: SIG_BASELINE, f_center_hz: SIG_FREQ, bandwidth_hz: SIG_BW})
+    });
+    const status = document.getElementById('recording-status');
+    if(resp.ok){
+      status.textContent = '✅ Queued for next recording pass';
+      status.className = 'text-xs text-green-400 mt-2';
+    } else {
+      const err = await resp.json().catch(()=>({}));
+      status.textContent = '❌ ' + (err.description || 'Failed');
+      status.className = 'text-xs text-red-400 mt-2';
+    }
+  }catch(e){
+    const status = document.getElementById('recording-status');
+    status.textContent = '❌ Error: ' + e.message;
+    status.className = 'text-xs text-red-400 mt-2';
+  }
+});
+
+document.getElementById('mute-btn')?.addEventListener('click', async () => {
+  try{
+    const resp = await fetch('/api/ignore-rules', {
+      method:'POST',
+      headers: {'Content-Type':'application/json', ...(TOKEN ? {"Authorization":"Bearer "+TOKEN} : {})},
+      body: JSON.stringify({f_center_hz: SIG_FREQ, tolerance_hz: 50000, baseline_id: SIG_BASELINE, label: 'Signal #'+SIG_ID})
+    });
+    const status = document.getElementById('recording-status');
+    if(resp.ok){
+      status.textContent = '🔇 Frequency muted — future sweeps will skip this signal';
+      status.className = 'text-xs text-amber-400 mt-2';
+    } else {
+      const err = await resp.json().catch(()=>({}));
+      status.textContent = '❌ ' + (err.description || 'Failed');
+      status.className = 'text-xs text-red-400 mt-2';
+    }
+  }catch(e){
+    const status = document.getElementById('recording-status');
+    status.textContent = '❌ Error: ' + e.message;
+    status.className = 'text-xs text-red-400 mt-2';
+  }
+});
+
+// Load recordings on page load
+loadSignalRecordings();
 </script>
 {% endif %}
 {% endblock %}

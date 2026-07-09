@@ -9,7 +9,8 @@
   <div class="card lg:col-span-2">
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-lg font-semibold">SDRwatch Control</h2>
-      <div><span class="muted">State:</span> <span id="state-pill" class="pill idle">Idle</span></div>
+      <div><span class="muted">State:</span> <span id="state-pill" class="pill idle">Idle</span>
+      <span id="recording-pill" class="pill idle" style="display:none">⏺ Idle</span></div>
     </div>
 
     <form id="ctl" class="grid gap-4">
@@ -96,6 +97,46 @@
               <option value="spur">Spur calibration</option>
             </select>
             <div class="hint mt-1 text-xs">Spur calibration populates the spur map and suppresses detections.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Continuous Capture -->
+      <div>
+        <div class="section-title flex items-center gap-2 cursor-pointer" id="recording-config-toggle">
+          <span>📹 Continuous Capture</span>
+          <span class="text-xs text-slate-500" id="recording-config-arrow">▶</span>
+        </div>
+        <div id="recording-config-body" class="subgrid mt-2" style="display:none">
+          <div class="field">
+            <label for="capture_iq">Capture IQ</label>
+            <select id="capture_iq" class="input" name="capture_iq">
+              <option value="">Disabled</option>
+              <option value="true">Enabled (capture after each sweep)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="continuous_capture">Continuous mode</label>
+            <select id="continuous_capture" class="input" name="continuous_capture">
+              <option value="">Disabled</option>
+              <option value="true">Enabled (loop + capture)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="capture_duration">Duration per signal (s)</label>
+            <input id="capture_duration" class="input" name="capture_duration" value="10" type="number" min="1" max="60" />
+          </div>
+          <div class="field">
+            <label for="record_max_signals">Max signals per pass</label>
+            <input id="record_max_signals" class="input" name="record_max_signals" value="10" type="number" min="1" max="100" />
+          </div>
+          <div class="field">
+            <label for="record_ttl_days">Retention (days)</label>
+            <input id="record_ttl_days" class="input" name="record_ttl_days" value="7" type="number" min="1" max="365" />
+          </div>
+          <div class="field">
+            <label for="record_quota_gb">Disk quota (GB)</label>
+            <input id="record_quota_gb" class="input" name="record_quota_gb" value="1" type="number" min="0.1" max="100" step="0.1" />
           </div>
         </div>
       </div>
@@ -780,6 +821,18 @@ f.addEventListener('submit', async (e)=>{
     delete body.two_pass;
   }
 
+  // Capture/IQ recording params
+  ['capture_iq','continuous_capture','capture_duration','record_max_signals','record_ttl_days','record_quota_gb'].forEach(k => {
+    const v = body[k];
+    if(v !== undefined && v !== '' && v !== null){
+      if(v === 'true') body[k] = true;
+      else if(v === 'false') body[k] = false;
+      else if(!isNaN(Number(v))) body[k] = Number(v);
+    } else {
+      delete body[k];
+    }
+  });
+
   const device_key = body.device_key; delete body.device_key;
   const payload = { device_key, label: body.label || 'web', baseline_id: Number(activeBaselineId), params: body };
 
@@ -809,6 +862,41 @@ async function poll(){
   setTimeout(poll, 1000);
 }
 poll();
+
+// Update recording status pill
+async function pollRecordingStatus(){
+  try{
+    const r = await fetch('/api/now', { headers: authHeaders(false) });
+    if(!r.ok) return;
+    const data = await r.json();
+    const pill = document.getElementById('recording-pill');
+    if(!pill) return;
+    const job = data.job;
+    if(job && job.params?.capture_iq){
+      pill.style.display = 'inline-flex';
+      if(job.status === 'running'){
+        pill.textContent = '⏺ Recording';
+        pill.className = 'pill run';
+      } else {
+        pill.textContent = '⏸ Capture idle';
+        pill.className = 'pill idle';
+      }
+    } else {
+      pill.style.display = 'none';
+    }
+  }catch(e){}
+}
+setInterval(pollRecordingStatus, 3000);
+
+// Collapsible recording config
+document.getElementById('recording-config-toggle')?.addEventListener('click', () => {
+  const body = document.getElementById('recording-config-body');
+  const arrow = document.getElementById('recording-config-arrow');
+  if(!body || !arrow) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'grid';
+  arrow.textContent = open ? '▶' : '▼';
+});
 
 // Logs
 const log = document.getElementById('log');
