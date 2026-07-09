@@ -289,7 +289,7 @@ async function toggleExpand(id){
   }
   row.style.display = "table-row";
   expandedId = id;
-  // Load amplitude if canvas exists and empty
+    // Load amplitude if canvas exists and empty
   const canvas = document.getElementById("plot-"+id);
   if(canvas && !canvas.dataset.loaded){
     canvas.dataset.loaded = "1";
@@ -297,12 +297,18 @@ async function toggleExpand(id){
       const r = await fetch("/api/recordings/"+id+"/amplitude", { headers: auth({}) });
       if(!r.ok) return;
       const buf = await r.arrayBuffer();
-      const points = parseInt(r.headers.get("X-Amplitude-Points") || "0", 10);
       const floats = new Float32Array(buf);
       const arr = Array.from(floats);
       canvas._amplitudeData = arr;
       drawAmplitude(canvas, arr, 0);
     }catch(e){ /* amplitude unavailable */ }
+  }
+
+  // Auto-play FM modulation on expand
+  const audio = document.getElementById("audio-"+id);
+  if(audio && !audio.dataset.fmTried){
+    audio.dataset.fmTried = "1";
+    playModulation(id, "fm");
   }
 }
 
@@ -421,5 +427,166 @@ document.getElementById("status-filter")?.addEventListener("change", loadRecordi
 loadBaselines();
 loadRecordings();
 setInterval(loadRecordings, 5000);
+</script>
+
+<script>
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("review")) return;
+
+  // Hide existing table/filter UI
+  document.querySelectorAll(".subgrid, .card.overflow-x-auto, #bulk-delete-btn").forEach(el => {
+    if(el) el.style.display = "none";
+  });
+
+  const reviewContainer = document.createElement("div");
+  reviewContainer.id = "review-container";
+  reviewContainer.className = "space-y-4";
+  document.querySelector(".space-y-4")?.prepend(reviewContainer);
+
+  let recordings = [];
+  let currentIdx = 0;
+  let autoplay = false;
+
+  async function loadReview(){
+    try{
+      const r = await fetch("/api/recordings", { headers: auth({}) });
+      const data = await r.json();
+      const all = (data.recordings || []).filter(r => r.detection_id && r.detection_id !== null);
+      // Group by detection_id, keep latest
+      const grouped = new Map();
+      all.forEach(rec => {
+        const key = rec.detection_id;
+        const existing = grouped.get(key);
+        if (!existing || (rec.created_utc || "") > (existing.created_utc || "")) {
+          grouped.set(key, rec);
+        }
+      });
+      recordings = Array.from(grouped.values());
+      currentIdx = 0;
+      renderReview();
+    }catch(e){
+      reviewContainer.innerHTML = '<p class="text-red-400">Failed to load recordings</p>';
+    }
+  }
+
+  function renderReview(){
+    if(recordings.length === 0){
+      reviewContainer.innerHTML = '<p class="text-slate-500">No recordings found for review.</p>';
+      return;
+    }
+    const rec = recordings[currentIdx];
+    
+    // Build the review card
+    let html = `
+      <div class="card space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-slate-400">Signal ${currentIdx + 1} of ${recordings.length}</span>
+          <div class="flex gap-2">
+            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();navigateReview(-1)" ${currentIdx === 0 ? 'disabled style="opacity:0.4"' : ''}>← Prev</button>
+            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();navigateReview(1)" ${currentIdx === recordings.length - 1 ? 'disabled style="opacity:0.4"' : ''}>Next →</button>
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold font-mono">${rec.f_mhz ? rec.f_mhz.toFixed(4) : '—'} MHz</div>
+          <div class="text-xs text-slate-400">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400 mb-1 flex items-center gap-2">
+            <span id="playlabel-review" class="cursor-pointer hover:text-sky-400" onclick="togglePlay(${rec.id})">▶ Click waveform to play</span>
+            <span id="time-review" class="text-slate-500">0:00 / ${rec.duration_ms ? formatTime(rec.duration_ms/1000) : '--:--'}</span>
+            <span id="modlabel-review" class="chip text-xs bg-sky-600/60 text-sky-100" style="display:none">FM</span>
+          </div>
+          <canvas id="plot-review" height="100" style="width:100%;height:100px;background:#0b1220;border-radius:0.5rem;cursor:pointer"></canvas>
+        </div>
+        <audio id="audio-review" controls preload="none" style="width:100%;height:36px"></audio>
+        <div class="flex flex-wrap gap-2 items-center justify-center">`;
+    ['fm','am','cw','lsb','usb'].forEach(m => {
+      html += `<button class="chip cursor-pointer hover:bg-sky-600/40" onclick="playReviewMod('${m}')">${m.toUpperCase()}</button>`;
+    });
+    html += `</div>
+        <div class="flex flex-wrap gap-3 items-center border-t border-slate-700/40 pt-3">
+          <label class="text-xs text-slate-400">Classification:</label>
+          <select id="review-classify" class="input text-xs py-1">
+            <option value="unknown">Unknown</option>
+            <option value="friendly">Friendly</option>
+            <option value="ambient">Ambient</option>
+            <option value="hostile">Hostile</option>
+          </select>
+          <label class="text-xs text-slate-400">Label:</label>
+          <input id="review-label" class="input text-xs py-1" placeholder="e.g. FM station" style="max-width:180px">
+          <button class="btn text-xs" onclick="saveReview()">Save & Next</button>
+          <label class="flex items-center gap-1 text-xs text-slate-400">
+            <input type="checkbox" id="review-autoadvance" ${autoplay ? 'checked' : ''}> Auto-advance
+          </label>
+        </div>
+        <div id="review-status" class="text-xs text-slate-500 text-center"></div>
+      </div>`;
+
+    reviewContainer.innerHTML = html;
+
+    // Load amplitude
+    loadReviewAmplitude(rec.id);
+  }
+
+  async function loadReviewAmplitude(id){
+    const canvas = document.getElementById("plot-review");
+    if(!canvas) return;
+    try{
+      const r = await fetch("/api/recordings/"+id+"/amplitude", { headers: auth({}) });
+      if(!r.ok) return;
+      const buf = await r.arrayBuffer();
+      const floats = new Float32Array(buf);
+      const arr = Array.from(floats);
+      canvas._amplitudeData = arr;
+      canvas._amplitudeId = id;
+      drawAmplitude(canvas, arr, 0);
+    }catch(e){}
+  }
+
+  function navigateReview(dir){
+    const newIdx = currentIdx + dir;
+    if(newIdx < 0 || newIdx >= recordings.length) return;
+    currentIdx = newIdx;
+    renderReview();
+  }
+
+  function playReviewMod(mod){
+    const id = recordings[currentIdx]?.id;
+    if(!id) return;
+    playModulation(id, mod);
+  }
+
+  async function saveReview(){
+    const rec = recordings[currentIdx];
+    if(!rec) return;
+    const status = document.getElementById("review-status");
+    try{
+      const cls = document.getElementById("review-classify")?.value || "unknown";
+      const label = document.getElementById("review-label")?.value || "";
+      // Save classification via PATCH /api/signals/<detection_id>
+      if(rec.detection_id){
+        await fetch("/api/signals/"+rec.detection_id, {
+          method: "PATCH",
+          headers: {'Content-Type':'application/json', ...(TOKEN ? {"Authorization":"Bearer "+TOKEN} : {})},
+          body: JSON.stringify({classification: cls, label: label})
+        });
+      }
+      if(document.getElementById("review-autoadvance")?.checked){
+        navigateReview(1);
+      }
+      status.textContent = "✅ Saved. " + (rec.detection_id ? "Signal #" + rec.detection_id : "") + " → " + cls;
+    }catch(e){
+      status.textContent = "❌ Save failed";
+    }
+  }
+
+  loadReview();
+
+  // Expose for onclick handlers
+  window.navigateReview = navigateReview;
+  window.playReviewMod = playReviewMod;
+  window.saveReview = saveReview;
+})();
 </script>
 {% endblock %}
