@@ -184,6 +184,20 @@ class Store:
         )
         cur.execute(
             """
+            CREATE TABLE IF NOT EXISTS signal_locations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                baseline_id INTEGER NOT NULL,
+                f_center_hz INTEGER NOT NULL,
+                hit_count INTEGER NOT NULL DEFAULT 1,
+                last_seen_utc TEXT NOT NULL,
+                avg_duration_s REAL DEFAULT 0,
+                band TEXT DEFAULT '',
+                UNIQUE(baseline_id, f_center_hz)
+            )
+            """
+        )
+        cur.execute(
+            """
             CREATE TABLE IF NOT EXISTS ignore_rules (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 baseline_id INTEGER NOT NULL,
@@ -1424,3 +1438,32 @@ class Store:
         )
         row = cur.fetchone()
         return int(row[0]) > 0
+
+    # ------------------------------------------------------------------
+    # Signal locations (patrol mode learning)
+    # ------------------------------------------------------------------
+
+    def record_signal_location(self, baseline_id: int, f_center_hz: int, duration_s: float,
+                                band: str = "") -> None:
+        """Update signal_locations: increment hit_count, update last_seen and avg duration."""
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        self.con.execute(
+            "INSERT INTO signal_locations (baseline_id, f_center_hz, last_seen_utc, avg_duration_s, band) "
+            "VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(baseline_id, f_center_hz) DO UPDATE SET "
+            "hit_count = hit_count + 1, last_seen_utc = ?, "
+            "avg_duration_s = (avg_duration_s * (hit_count - 1) + ?) / hit_count",
+            (baseline_id, f_center_hz, now, duration_s, band, now, duration_s),
+        )
+        self.con.commit()
+
+    def get_known_signals(self, baseline_id: int, min_hits: int = 1) -> list[dict]:
+        """Get signal locations with at least min_hits, ordered by hit_count desc."""
+        rows = self.con.execute(
+            "SELECT f_center_hz, hit_count, last_seen_utc, avg_duration_s, band "
+            "FROM signal_locations WHERE baseline_id = ? AND hit_count >= ? "
+            "ORDER BY hit_count DESC, last_seen_utc DESC",
+            (baseline_id, min_hits),
+        ).fetchall()
+        return [dict(r) for r in rows]

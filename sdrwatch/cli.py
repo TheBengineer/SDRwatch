@@ -34,6 +34,8 @@ def run(args: argparse.Namespace) -> int:
         return cmd_record(args)
     if sub == "monitor":
         return cmd_monitor(args)
+    if sub == "patrol":
+        return cmd_patrol(args)
 
     if getattr(args, "list_profiles", False):
         _emit_profiles_json()
@@ -238,6 +240,21 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p_monitor.add_argument("--gain", type=str, default="auto", help='Gain in dB or "auto"')
     p_monitor.add_argument("--soapy-args", type=str, help="Comma-separated Soapy device args (e.g., 'serial=00000001,index=0')")
 
+    # Patrol subcommand
+    p_patrol = subparsers.add_parser("patrol", help="Continuously scan a band, detect and record bursts, learn signal locations")
+    p_patrol.set_defaults(_subcommand="patrol")
+    p_patrol.add_argument("--start", type=float, required=True, help="Start frequency in Hz")
+    p_patrol.add_argument("--stop", type=float, required=True, help="Stop frequency in Hz")
+    p_patrol.add_argument("--samp-rate", dest="samp_rate", type=float, default=2.4e6, help="Sample rate in Hz")
+    p_patrol.add_argument("--threshold-db", type=float, default=6.0, help="Onset threshold above noise floor in dB")
+    p_patrol.add_argument("--max-duration", type=float, default=30.0, help="Max burst capture duration in seconds")
+    p_patrol.add_argument("--step", type=float, default=2.4e6, help="Frequency step between sweep windows in Hz")
+    p_patrol.add_argument("--capture-dir", type=str, default="./captures", help="Capture directory")
+    p_patrol.add_argument("--db", type=str, help="SQLite DB path (default sdrwatch.db)")
+    p_patrol.add_argument("--driver", type=str, default="rtlsdr", help="SDR driver key")
+    p_patrol.add_argument("--gain", type=str, default="auto", help='Gain in dB or "auto"')
+    p_patrol.add_argument("--baseline-id", type=int, required=True, help="Baseline ID for recording")
+
     args = p.parse_args(argv)
     args._cli_overrides = set()
 
@@ -304,7 +321,8 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     is_replay = getattr(args, "_subcommand", None) == "replay"
     is_record = getattr(args, "_subcommand", None) == "record"
     is_monitor = getattr(args, "_subcommand", None) == "monitor"
-    is_non_scan = is_ignore or is_replay or is_record or is_monitor or getattr(args, "list_profiles", False)
+    is_patrol = getattr(args, "_subcommand", None) == "patrol"
+    is_non_scan = is_ignore or is_replay or is_record or is_monitor or is_patrol or getattr(args, "list_profiles", False)
     if not is_non_scan and not has_span:
         p.error("--start and --stop are required unless --list-profiles is used")
 
@@ -645,6 +663,52 @@ def cmd_monitor(args: argparse.Namespace) -> int:
         _log.info("monitor interrupted")
     except Exception as e:
         _log.error("monitor error: %s", e)
+    finally:
+        try:
+            src.close()
+        except Exception:
+            pass
+
+    return ExitCode.SUCCESS
+
+
+def cmd_patrol(args: argparse.Namespace) -> int:
+    """Patrol mode — continuously scan a band, detect bursts, record, learn."""
+    from sdrwatch.baseline.store import Store
+    from sdrwatch.drivers.soapy import SDRSource, HAVE_SOAPY
+    from sdrwatch.drivers.rtlsdr import RTLSDRSource, HAVE_RTLSDR
+    from sdrwatch.recording.patrol import PatrolScanner
+    from sdrwatch.util.exit_codes import ExitCode
+
+    store = Store(args.db or "sdrwatch.db")
+    samp_rate = float(getattr(args, "samp_rate", 2.4e6))
+    gain = str(getattr(args, "gain", "auto"))
+    soapy_args = getattr(args, "soapy_args", None)
+
+    if args.driver == "rtlsdr_native":
+        if not HAVE_RTLSDR:
+            print("error: pyrtlsdr not available")
+            return ExitCode.GENERAL_ERROR
+        src = RTLSDRSource(samp_rate=samp_rate, gain=gain, device_index=0)
+    else:
+        if not HAVE_SOAPY:
+            print("error: SoapySDR not available")
+            return ExitCode.GENERAL_ERROR
+        src = SDRSource(driver=args.driver, samp_rate=samp_rate, gain=gain, soapy_args=soapy_args)
+
+    patrol = PatrolScanner(
+        src=src, store=store, baseline_id=int(args.baseline_id),
+        start_hz=int(args.start), stop_hz=int(args.stop),
+        samp_rate=samp_rate, threshold_db=float(args.threshold_db),
+        max_duration_s=float(args.max_duration),
+        step_hz=float(args.step) if hasattr(args, "step") else None,
+        capture_dir=str(args.capture_dir),
+    )
+
+    try:
+        patrol.run()
+    except KeyboardInterrupt:
+        _log.info("patrol interrupted")
     finally:
         try:
             src.close()
