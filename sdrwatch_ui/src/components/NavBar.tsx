@@ -13,6 +13,7 @@ const navLinks: NavLinkItem[] = [
   { to: '/changes', label: 'Changes' },
   { to: '/recordings', label: 'Recordings' },
   { to: '/spur-map', label: 'Spur Map' },
+  { to: '/spectrum', label: 'Spectrum' },
   { to: '/live', label: 'Live' },
   { to: '/debug', label: 'Debug', debug: true },
 ]

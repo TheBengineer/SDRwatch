@@ -1,3 +1,5 @@
+import type { SpectrumData } from '../types'
+
 const TOKEN_KEY = 'SDRWATCH_TOKEN';
 
 export function getToken(): string {
@@ -73,4 +75,17 @@ export async function apiFetchBlob(path: string): Promise<Blob> {
   if (res.status === 401) throw new Error('Unauthorized');
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.blob();
+}
+
+export async function fetchSpectrum(
+  baselineId: number,
+  fMinHz?: number,
+  fMaxHz?: number,
+  points?: number,
+): Promise<SpectrumData> {
+  const params: Record<string, string | number> = { baseline_id: baselineId }
+  if (fMinHz !== undefined) params.f_min_hz = fMinHz
+  if (fMaxHz !== undefined) params.f_max_hz = fMaxHz
+  if (points !== undefined) params.points = points
+  return apiGet<SpectrumData>('/api/spectrum', params)
 }

@@ -292,3 +292,10 @@ export interface CollectionContext {
   bandplan_path?: string;
   baseline_notes?: string;
 }
+
+// Spectrum data (from GET /api/spectrum)
+export interface SpectrumData {
+  freqs: number[]
+  power_db: number[]
+  noise_db: number[]
+}
