@@ -255,7 +255,7 @@ export default function SpectrumCanvas(props: Props) {
   }, [data, width, height, tick])
 
   // Find signal nearest to mouse position
-  const findSignal = useCallback((clientX: number, clientY: number): Signal | null => {
+  const findSignal = useCallback((clientX: number): Signal | null => {
     const c = canvasRef.current
     if (!c) return null
     const rect = c.getBoundingClientRect()
@@ -264,7 +264,6 @@ export default function SpectrumCanvas(props: Props) {
     const pad = { left: 60, right: 20, top: 20, bottom: 40 }
     const pw = width - pad.left - pad.right
     const freqStart = zoom.centerHz - zoom.spanHz / 2
-    const freqEnd = zoom.centerHz + zoom.spanHz / 2
     const signals = propsRef.current.signals
     if (!signals) return null
 
@@ -298,7 +297,7 @@ export default function SpectrumCanvas(props: Props) {
 
     // Hover detection for signal markers
     if (!zoomPanRef.current.zoom) return
-    const sig = findSignal(e.clientX, e.clientY)
+    const sig = findSignal(e.clientX)
     setHoveredSignal(sig)
     if (sig) {
       const rect = c.getBoundingClientRect()
@@ -318,7 +317,7 @@ export default function SpectrumCanvas(props: Props) {
   }, [])
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const sig = findSignal(e.clientX, e.clientY)
+    const sig = findSignal(e.clientX)
     if (sig) {
       window.location.href = `/signal/${sig.id}`
     }
