@@ -76,6 +76,10 @@ def create_app(db_path: str) -> Flask:
 
     @app.errorhandler(Exception)
     def capture_error_to_ring(exc):
+        # Let HTTP exceptions (404, 401, 403, 405, etc.) pass through as-is
+        from werkzeug.exceptions import HTTPException
+        if isinstance(exc, HTTPException):
+            raise exc
         entry = {
             "ts": datetime.now(timezone.utc)
             .isoformat(timespec="milliseconds")
@@ -89,7 +93,6 @@ def create_app(db_path: str) -> Flask:
         app.config["ERROR_RING"].append(entry)
         while len(app.config["ERROR_RING"]) > app.config["ERROR_RING_MAX"]:
             app.config["ERROR_RING"].pop(0)
-        # Re-raise to let Flask handle normally
         raise exc
 
     # ------------------------------------------------------------------
