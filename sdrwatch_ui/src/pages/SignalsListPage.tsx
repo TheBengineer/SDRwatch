@@ -1,8 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { apiGet } from '../api/client'
 import { useBaseline } from '../context/BaselineContext'
 import type { Signal } from '../types'
+
+type SortField = 'id' | 'f_center_hz' | 'bandwidth_hz' | 'confidence' | 'total_hits' | 'last_seen_utc' | 'classification'
+type SortDir = 'asc' | 'desc'
+
+function sortSignals(list: Signal[], field: SortField, dir: SortDir): Signal[] {
+  return [...list].sort((a, b) => {
+    const aVal = a[field] ?? ''
+    const bVal = b[field] ?? ''
+    let cmp = 0
+    if (typeof aVal === 'string' && typeof bVal === 'string') cmp = aVal.localeCompare(bVal)
+    else if (typeof aVal === 'number' && typeof bVal === 'number') cmp = aVal - bVal
+    return dir === 'asc' ? cmp : -cmp
+  })
+}
 
 export default function SignalsListPage() {
   const { baselineId } = useBaseline()
@@ -10,6 +24,20 @@ export default function SignalsListPage() {
   const [classification, setClassification] = useState('')
   const [selectedOnly, setSelectedOnly] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [sortField, setSortField] = useState<SortField>('id')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  const sorted = useMemo(() => sortSignals(signals, sortField, sortDir), [signals, sortField, sortDir])
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
+
+  function SortIcon({ field }: { field: SortField }) {
+    if (sortField !== field) return <span className="ml-1 text-slate-600">↕</span>
+    return <span className="ml-1 text-sky-400">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
 
   useEffect(() => {
     if (!baselineId) return
@@ -73,14 +101,14 @@ export default function SignalsListPage() {
         <table className="table">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-slate-400">
-              <th className="th">ID</th>
-              <th className="th">Center (MHz)</th>
-              <th className="th">Bandwidth</th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('id')}>ID<SortIcon field="id" /></th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('f_center_hz')}>Center (MHz)<SortIcon field="f_center_hz" /></th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('bandwidth_hz')}>Bandwidth<SortIcon field="bandwidth_hz" /></th>
               <th className="th">Label</th>
-              <th className="th">Classification</th>
-              <th className="th">Confidence</th>
-              <th className="th">Hits</th>
-              <th className="th">Last seen</th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('classification')}>Classification<SortIcon field="classification" /></th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('confidence')}>Confidence<SortIcon field="confidence" /></th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('total_hits')}>Hits<SortIcon field="total_hits" /></th>
+              <th className="th cursor-pointer hover:text-sky-400 select-none" onClick={() => toggleSort('last_seen_utc')}>Last seen<SortIcon field="last_seen_utc" /></th>
             </tr>
           </thead>
           <tbody>
@@ -94,7 +122,7 @@ export default function SignalsListPage() {
                   </div>
                 </td>
               </tr>
-            ) : signals.map(s => (
+            ) : sorted.map(s => (
               <tr
                 key={s.id}
                 className={`border-b border-white/10 hover:bg-slate-800/40 cursor-pointer ${s.selected ? 'bg-sky-900/20' : ''}`}
