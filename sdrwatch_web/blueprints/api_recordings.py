@@ -95,6 +95,10 @@ def api_recordings_list():
     conditions: List[str] = []
     params: List[Any] = []
 
+    # Hide queued recordings by default — they're placeholders with no files
+    if not status and not show_queued:
+        conditions.append("status != 'queued'")
+
     if baseline_id is not None:
         conditions.append("baseline_id = ?")
         params.append(baseline_id)
@@ -107,9 +111,6 @@ def api_recordings_list():
     if status:
         conditions.append("status = ?")
         params.append(status)
-    # Hide queued recordings by default — they're placeholders with no files
-    if not status and not show_queued:
-        conditions.append("status != 'queued'")
     if f_min_mhz is not None:
         conditions.append("f_center_hz >= ?")
         params.append(int(f_min_mhz * 1e6))
@@ -117,7 +118,7 @@ def api_recordings_list():
         conditions.append("f_center_hz <= ?")
         params.append(int(f_max_mhz * 1e6))
 
-    where = " AND ".join(conditions)
+    where = " AND ".join(conditions) if conditions else "1=1"
     rows = con.execute(
         f"SELECT {_RECORDING_COLS} FROM recordings WHERE {where} ORDER BY created_utc DESC LIMIT 200",
         tuple(params) if params else (),
