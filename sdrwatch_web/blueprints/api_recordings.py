@@ -87,17 +87,12 @@ def api_recordings_list():
     detection_id = request.args.get("detection_id", type=int)
     modulation = request.args.get("modulation")
     status = request.args.get("status")
-    show_queued = request.args.get("show_queued", "").strip().lower() in ("1", "true")
     f_min_mhz = request.args.get("f_min_mhz", type=float)
     f_max_mhz = request.args.get("f_max_mhz", type=float)
 
     con = get_con()
     conditions: List[str] = []
     params: List[Any] = []
-
-    # Hide queued recordings by default — they're placeholders with no files
-    if not status and not show_queued:
-        conditions.append("status != 'queued'")
 
     if baseline_id is not None:
         conditions.append("baseline_id = ?")
