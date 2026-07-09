@@ -58,7 +58,8 @@ class PatrolScanner:
         """Build ordered scan plan: known signals first, then gaps."""
         # Load known signal locations with >= 3 hits (established signals)
         known = self.store.get_known_signals(self.baseline_id, min_hits=3)
-        raw_windows = list(range(self.start_hz, self.stop_hz, int(self.step_hz)))
+        step = int(self.step_hz)
+        raw_windows = list(range(int(self.start_hz), int(self.stop_hz), max(step, 1)))
 
         # Place known frequencies at the front of the scan plan
         known_freqs = {int(k["f_center_hz"]) for k in known}
