@@ -105,7 +105,18 @@ FROM base AS control
 EXPOSE 8765
 CMD ["python3", "sdrwatch-control.py", "serve", "--host", "0.0.0.0", "--port", "8765"]
 
+# =============================================================================
+# Frontend build stage
+# =============================================================================
+FROM node:20 AS frontend
+WORKDIR /build
+COPY sdrwatch_ui/package.json sdrwatch_ui/package-lock.json ./
+RUN npm ci
+COPY sdrwatch_ui/ .
+RUN npm run build
+
 FROM base AS web
 
+COPY --from=frontend /build/dist /opt/sdrwatch/sdrwatch_ui/dist
 EXPOSE 8080
 CMD ["python3", "sdrwatch-web.py", "--db", "/data/sdrwatch.db", "--host", "0.0.0.0", "--port", "8080"]

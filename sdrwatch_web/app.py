@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Set
 
-from flask import Flask, g, request
+from flask import Flask, abort, g, request, send_from_directory
 
 from sdrwatch_web.config import CONTROL_TOKEN, CONTROL_URL
 from sdrwatch_web.controller import ControllerClient
@@ -110,6 +110,7 @@ def create_app(db_path: str) -> Flask:
     # Register blueprints
     # ------------------------------------------------------------------
     from sdrwatch_web.blueprints.api_baselines import bp as api_baselines_bp
+    from sdrwatch_web.blueprints.api_charts import bp as api_charts_bp
     from sdrwatch_web.blueprints.api_debug import bp as api_debug_bp
     from sdrwatch_web.blueprints.api_jobs import bp as api_jobs_bp
     from sdrwatch_web.blueprints.api_recordings import bp as api_recordings_bp
@@ -120,9 +121,40 @@ def create_app(db_path: str) -> Flask:
     app.register_blueprint(api_debug_bp)
     app.register_blueprint(api_jobs_bp)
     app.register_blueprint(api_baselines_bp)
+    app.register_blueprint(api_charts_bp)
     app.register_blueprint(api_recordings_bp)
     app.register_blueprint(api_signals_bp)
     app.register_blueprint(ctl_bp)
     app.register_blueprint(views_bp)
+
+    # ------------------------------------------------------------------
+    # React SPA catch-all (must be after blueprint registrations)
+    # ------------------------------------------------------------------
+    REACT_DIST = os.path.join(os.path.dirname(__file__), '..', 'sdrwatch_ui', 'dist')
+
+    @app.route('/assets/<path:filename>')
+    def react_assets(filename):
+        return send_from_directory(os.path.join(REACT_DIST, 'assets'), filename)
+
+    @app.route('/<path:path>')
+    def serve_react(path):
+        # Skip API routes, control routes, export routes
+        if path and (path.startswith('api/') or path.startswith('ctl/') or path.startswith('export/')):
+            return abort(404)
+        # Serve static files from React dist
+        if path:
+            full = os.path.join(REACT_DIST, path)
+            if os.path.exists(full) and os.path.isfile(full):
+                return send_from_directory(REACT_DIST, path)
+        # Serve index.html for SPA routing, inject token
+        index_path = os.path.join(REACT_DIST, 'index.html')
+        if os.path.exists(index_path):
+            token = os.environ.get('SDRWATCH_TOKEN', '')
+            with open(index_path) as f:
+                html = f.read()
+            if token:
+                html = html.replace('</head>', f'<meta name="sdrwatch-token" content="{token}"></head>')
+            return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+        return abort(404)
 
     return app

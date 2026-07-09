@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card {
+    @apply rounded-2xl p-4 bg-white/5 text-slate-100 border border-white/10;
+  }
+  .chip {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-white/10;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-600 text-white text-sm hover:bg-sky-500 transition-colors;
+  }
+  .input {
+    @apply px-3 py-2 rounded-xl border border-white/20 bg-white/5 text-slate-100 font-medium;
+  }
+  .input:focus {
+    @apply outline-2 outline-offset-2 outline-sky-500;
+  }
+  .table {
+    @apply w-full text-sm;
+  }
+  .th, .td {
+    @apply px-3 py-2 text-left border-b border-white/10;
+  }
+  .field {
+    @apply flex flex-col gap-1;
+  }
+  .field label {
+    @apply text-xs text-slate-300 font-medium;
+  }
+  .subgrid {
+    @apply grid grid-cols-2 gap-3;
+  }
+  @media (min-width: 768px) {
+    .subgrid {
+      @apply grid-cols-4;
+    }
+  }
+  .muted {
+    @apply text-slate-400;
+  }
+}
