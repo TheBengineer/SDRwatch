@@ -187,9 +187,12 @@ async function toggleExpand(id){
     try{
       const r = await fetch("/api/recordings/"+id+"/amplitude", { headers: auth({}) });
       if(!r.ok) return;
-      const data = await r.json();
-      canvas._amplitudeData = data.amplitude;
-      drawAmplitude(canvas, data.amplitude, 0);
+      const buf = await r.arrayBuffer();
+      const points = parseInt(r.headers.get("X-Amplitude-Points") || "0", 10);
+      const floats = new Float32Array(buf);
+      const arr = Array.from(floats);
+      canvas._amplitudeData = arr;
+      drawAmplitude(canvas, arr, 0);
     }catch(e){ /* amplitude unavailable */ }
   }
 }

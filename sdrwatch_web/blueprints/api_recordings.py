@@ -10,7 +10,7 @@ import os
 import sqlite3
 from typing import Any, Dict, List
 
-from flask import Blueprint, abort, current_app, jsonify, request, send_file
+from flask import Blueprint, Response, abort, current_app, jsonify, request, send_file
 
 from sdrwatch_web.auth import require_auth
 from sdrwatch_web.db import get_con
@@ -214,7 +214,7 @@ def api_recordings_download_ogg(recording_id: int):
 
 @bp.get("/api/recordings/<int:recording_id>/amplitude")
 def api_recordings_amplitude(recording_id: int):
-    """Return amplitude envelope as downsampled JSON array for plotting."""
+    """Return amplitude envelope as raw float32 binary (500 points)."""
     require_auth()
     con = get_con()
     row = con.execute(
@@ -229,17 +229,19 @@ def api_recordings_amplitude(recording_id: int):
         mag = np.abs(cf32)
         target = 500
         step = max(1, len(mag) // target)
-        downsampled = mag[::step]
+        downsampled = mag[::step].astype(np.float32)
         mx = float(np.max(downsampled))
         if mx > 0:
-            downsampled = (downsampled / mx).tolist()
-        else:
-            downsampled = downsampled.tolist()
-        return jsonify({
-            "amplitude": downsampled,
-            "points": len(downsampled),
-            "sample_rate_hz": float(row["sample_rate_hz"] or 2.4e6),
-        })
+            downsampled = (downsampled / mx).astype(np.float32)
+        raw_bytes = downsampled.tobytes()
+        return Response(
+            raw_bytes,
+            mimetype="application/octet-stream",
+            headers={
+                "X-Amplitude-Points": str(len(downsampled)),
+                "X-Amplitude-Sample-Rate": str(float(row["sample_rate_hz"] or 2.4e6)),
+            },
+        )
     except Exception as e:
         abort(500, description=str(e))
 
