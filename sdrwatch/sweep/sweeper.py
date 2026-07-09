@@ -27,7 +27,6 @@ from sdrwatch.sweep.scheduler import WindowScheduler
 from sdrwatch.util.scan_logger import ScanLogger
 
 from sdrwatch.recording.recorder import IQRecorder
-from sdrwatch.recording.demod import demodulate_fm
 
 
 class _QueuedTarget:
@@ -584,42 +583,28 @@ class Sweeper:
                 except Exception:
                     _log.debug("could not update queued recording status", exc_info=True)
 
+            # Run modulation classifier on the captured IQ (advisory — user can override)
             modulation: str | None = None
             try:
-                from sdrwatch.recording.classifier import classify_modulation
-
-                bw = max(int(det.f_high_hz - det.f_low_hz), 0)
-                modulation = classify_modulation(
-                    np.array([], dtype=np.complex64), samp_rate, f_center, float(bw)
-                )
-            except NotImplementedError:
-                pass
-            except Exception as e:
-                _log.debug("classifier error: %s", e)
-
-            try:
-                if src is not None and rec_path and os.path.exists(rec_path):
+                if rec_path and os.path.exists(rec_path):
                     samples = np.fromfile(rec_path, dtype=np.complex64)
-                    audio = demodulate_fm(samples, samp_rate)
+                    from sdrwatch.recording.classifier import classify_modulation
+                    bw = max(int(det.f_high_hz - det.f_low_hz), 0)
+                    modulation = classify_modulation(
+                        samples[:int(samp_rate * 1.0)], samp_rate, f_center, float(bw)
+                    )
+            except Exception:
+                pass
 
-                    if len(audio) > 0:
-                        ogg_dir = os.path.join(capture_dir, "ogg")
-                        os.makedirs(ogg_dir, exist_ok=True)
-                        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-                        ogg_path = os.path.join(ogg_dir, f"{baseline_id}_{det_id}_{f_center}_{ts}.ogg")
-
-                        ogg_ok = compress_to_ogg(audio, 48000, ogg_path)
-                        if ogg_ok:
-                            self.store.update_recording_status(
-                                rec_id,
-                                "compressed",
-                                ogg_path=ogg_path,
-                                modulation=modulation,
-                            )
-                            # Keep raw file for re-demodulation
-                            _log.debug("kept raw IQ: %s", rec_path)
+            # Store recording with modulation suggestion (no auto-demod — user tries mods in review)
+            try:
+                self.store.update_recording_status(
+                    rec_id,
+                    "raw",
+                    modulation=modulation,
+                )
             except Exception as e:
-                _log.error("demod/compress failed for recording %s: %s", rec_id, e)
+                _log.debug("status update error: %s", e)
 
         try:
             quota_gb = getattr(args, "record_quota_gb", 1)
