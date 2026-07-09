@@ -139,7 +139,7 @@ async function loadRecordings(){
               <canvas id="plot-${rec.id}" height="100" style="width:100%;height:100px;background:#0b1220;border-radius:0.5rem;cursor:pointer"></canvas>
             </div>
             <!-- Audio element (always present, source set dynamically) -->
-            <audio id="audio-${rec.id}" preload="none" style="width:100%;height:36px"></audio>
+            <audio id="audio-${rec.id}" controls preload="none" style="width:100%;height:40px"></audio>
             <!-- Modulation buttons -->
             <div class="flex flex-wrap items-center gap-2 text-xs">
               <span class="text-slate-400 mr-1">Demod:</span>
@@ -178,6 +178,22 @@ async function playModulation(id, mod){
     audio.src = url;
     if(label){ label.textContent = mod.toUpperCase(); label.style.display = "inline"; }
     if(playlabel) playlabel.textContent = "⏸ "+mod.toUpperCase();
+
+    // Hook timeupdate for playhead sync
+    audio.onplay = null; audio.ontimeupdate = null; audio.onpause = null; audio.onended = null;
+    audio.addEventListener("play", function handler(){
+      const lid = document.getElementById("playlabel-"+id);
+      if(lid) lid.textContent = "⏸ Playing";
+    }, {once: true});
+    audio.addEventListener("timeupdate", function handler(){
+      updatePlayhead(id);
+    });
+    audio.addEventListener("ended", function(){
+      const lid = document.getElementById("playlabel-"+id);
+      if(lid) lid.textContent = "▶ Click to replay";
+      updatePlayhead(id);
+    });
+
     await audio.play();
   }catch(e){
     if(playlabel) playlabel.textContent = "❌ Error";
@@ -331,40 +347,7 @@ function updatePlayhead(id){
   if(data) drawAmplitude(canvas, data, dur > 0 ? ct / dur : 0);
 }
 
-// Hook timeupdate on audio elements created dynamically
-const origCreate = document.createElement;
-document.createElement = function(tag, options){
-  const el = origCreate.call(document, tag, options);
-  if(tag.toLowerCase() === "audio"){
-    el.addEventListener("timeupdate", function(){
-      const id = this.id ? this.id.replace("audio-","") : null;
-      if(id) updatePlayhead(id);
-    });
-    el.addEventListener("play", function(){
-      const id = this.id ? this.id.replace("audio-","") : null;
-      if(id){
-        const label = document.getElementById("playlabel-"+id);
-        if(label) label.textContent = "⏸ Playing";
-      }
-    });
-    el.addEventListener("pause", function(){
-      const id = this.id ? this.id.replace("audio-","") : null;
-      if(id){
-        const label = document.getElementById("playlabel-"+id);
-        if(label) label.textContent = "▶ Paused";
-      }
-    });
-    el.addEventListener("ended", function(){
-      const id = this.id ? this.id.replace("audio-","") : null;
-      if(id){
-        const label = document.getElementById("playlabel-"+id);
-        if(label) label.textContent = "▶ Click to replay";
-        updatePlayhead(id);
-      }
-    });
-  }
-  return el;
-};
+
 
 document.getElementById("refresh-btn")?.addEventListener("click", loadRecordings);
 document.getElementById("baseline-filter")?.addEventListener("change", loadRecordings);
