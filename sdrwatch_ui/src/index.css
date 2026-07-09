@@ -18,6 +18,21 @@
   .input:focus {
     @apply outline-2 outline-offset-2 outline-sky-500;
   }
+  .input::placeholder {
+    color: #64748b;
+  }
+  select.input option {
+    color: #0f172a;
+    background: #f1f5f9;
+  }
+  /* Dark mode autofill override */
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f1f5f9;
+    -webkit-box-shadow: 0 0 0 30px #1e293b inset;
+    caret-color: #f1f5f9;
+  }
   .table {
     @apply w-full text-sm;
   }

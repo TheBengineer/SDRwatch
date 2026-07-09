@@ -136,19 +136,22 @@ def create_app(db_path: str) -> Flask:
 
     @app.route('/assets/<path:filename>')
     def react_assets(filename):
-        return send_from_directory(os.path.join(REACT_DIST, 'assets'), filename)
+        # Hashed assets — cache forever (hash changes on rebuild)
+        return send_from_directory(os.path.join(REACT_DIST, 'assets'), filename,
+                                   max_age=31536000)
 
+    @app.route('/')
     @app.route('/<path:path>')
-    def serve_react(path):
+    def serve_react(path=''):
         # Skip API routes, control routes, export routes
         if path and (path.startswith('api/') or path.startswith('ctl/') or path.startswith('export/')):
             return abort(404)
-        # Serve static files from React dist
+        # Serve static files from React dist (non-hashed, e.g. favicon)
         if path:
             full = os.path.join(REACT_DIST, path)
             if os.path.exists(full) and os.path.isfile(full):
                 return send_from_directory(REACT_DIST, path)
-        # Serve index.html for SPA routing, inject token
+        # Serve index.html for SPA routing, inject token. No caching — always fresh.
         index_path = os.path.join(REACT_DIST, 'index.html')
         if os.path.exists(index_path):
             token = os.environ.get('SDRWATCH_TOKEN', '')
@@ -156,7 +159,12 @@ def create_app(db_path: str) -> Flask:
                 html = f.read()
             if token:
                 html = html.replace('</head>', f'<meta name="sdrwatch-token" content="{token}"></head>')
-            return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+            return html, 200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         return abort(404)
 
     return app
