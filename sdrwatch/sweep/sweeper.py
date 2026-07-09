@@ -31,10 +31,10 @@ from sdrwatch.recording.demod import demodulate_fm
 
 
 class _QueuedTarget:
-    """Minimal detection-like wrapper for queued recording rows."""
+    """Minimal detection-like wrapper for queued recording rows (tuples from sqlite3)."""
     def __init__(self, row):
-        self.f_center_hz = int(row.f_center_hz)
-        self.id = int(row.detection_id)
+        self.id = int(row[0])   # detection_id
+        self.f_center_hz = int(row[1])  # f_center_hz
         self.snr_db = 0.0
         self.f_low_hz = self.f_center_hz - 50000
         self.f_high_hz = self.f_center_hz + 50000
