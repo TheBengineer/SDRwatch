@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Recordings</h1>
+    <span class="text-sm text-slate-400" id="rec-count">0 recordings</span>
+  </div>
+
+  <!-- Filter toolbar -->
+  <div class="subgrid">
+    <div class="field">
+      <label for="baseline-filter">Baseline</label>
+      <select id="baseline-filter" class="input">
+        <option value="">All baselines</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="mod-filter">Modulation</label>
+      <select id="mod-filter" class="input">
+        <option value="">All modulations</option>
+        <option value="fm">FM</option>
+        <option value="am">AM</option>
+        <option value="cw">CW</option>
+        <option value="usb">USB</option>
+        <option value="lsb">LSB</option>
+        <option value="digital">Digital</option>
+        <option value="unknown">Unknown</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="status-filter">Status</label>
+      <select id="status-filter" class="input">
+        <option value="">All statuses</option>
+        <option value="raw">Raw</option>
+        <option value="compressed">Compressed</option>
+        <option value="compression_failed">Failed</option>
+      </select>
+    </div>
+    <div class="flex items-end gap-2">
+      <button class="btn text-sm" id="refresh-btn">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Recordings table -->
+  <div class="card overflow-x-auto">
+    <table class="table">
+      <thead>
+        <tr class="text-xs uppercase text-slate-400">
+          <th class="th">ID</th>
+          <th class="th">Freq (MHz)</th>
+          <th class="th">Modulation</th>
+          <th class="th">Duration</th>
+          <th class="th">Raw</th>
+          <th class="th">OGG</th>
+          <th class="th">Status</th>
+          <th class="th">Created</th>
+          <th class="th">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="recordings-body">
+        <tr><td colspan="9" class="td text-center text-slate-500 py-8">Loading recordings...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TOKEN = localStorage.getItem("SDRWATCH_TOKEN") || "";
+function auth(hdrs={}){ if(TOKEN) hdrs["Authorization"]="Bearer "+TOKEN; hdrs["Content-Type"]="application/json"; return hdrs; }
+
+async function loadBaselines(){
+  try{
+    const r = await fetch("/api/baselines", { headers: auth({}) });
+    if(!r.ok) return;
+    const data = await r.json();
+    const list = data.baselines || [];
+    const sel = document.getElementById("baseline-filter");
+    sel.innerHTML = '<option value="">All baselines</option>';
+    list.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b.id;
+      opt.textContent = `#${b.id} · ${b.name}`;
+      sel.appendChild(opt);
+    });
+  }catch(e){ /* baselines unavailable */ }
+}
+
+async function loadRecordings(){
+  const params = new URLSearchParams();
+  const bl = document.getElementById("baseline-filter")?.value;
+  const mod = document.getElementById("mod-filter")?.value;
+  const st = document.getElementById("status-filter")?.value;
+  if(bl) params.set("baseline_id", bl);
+  if(mod) params.set("modulation", mod);
+  if(st) params.set("status", st);
+  try{
+    const r = await fetch("/api/recordings?" + params.toString(), { headers: auth({}) });
+    if(!r.ok) throw new Error("fetch failed");
+    const data = await r.json();
+    const list = data.recordings || [];
+    document.getElementById("rec-count").textContent = list.length + " recordings";
+    const tbody = document.getElementById("recordings-body");
+    if(list.length === 0){
+      tbody.innerHTML = '<tr><td colspan="9" class="td text-center text-slate-500 py-8">No recordings yet. Run a scan with --capture-iq to create recordings.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(rec => {
+      const modBadge = rec.modulation ? `<span class="chip text-xs">${rec.modulation.toUpperCase()}</span>` : '<span class="chip text-xs text-slate-500">—</span>';
+      const statusColor = rec.status === "compressed" ? "text-green-400" : rec.status === "compression_failed" ? "text-red-400" : "text-slate-400";
+      const playBtn = rec.ogg_exists || (rec.ogg_path && rec.status === "compressed")
+        ? `<audio controls preload="none" style="height:28px;width:120px"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>`
+        : '<span class="text-xs text-slate-600">—</span>';
+      return `<tr>
+        <td class="td font-mono text-xs">${rec.id}</td>
+        <td class="td font-mono">${rec.f_mhz ? rec.f_mhz.toFixed(4) : '—'}</td>
+        <td class="td">${modBadge}</td>
+        <td class="td text-xs">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : '—'}</td>
+        <td class="td text-xs">${rec.raw_size_display || '—'}</td>
+        <td class="td text-xs">${rec.ogg_size_display || '—'}</td>
+        <td class="td text-xs ${statusColor}">${rec.status || '—'}</td>
+        <td class="td text-xs text-slate-400">${rec.created_utc ? rec.created_utc.slice(0,19).replace('T',' ') : '—'}</td>
+        <td class="td">
+          <div class="flex flex-wrap gap-1 items-center">
+            ${playBtn}
+            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="downloadRaw(${rec.id})">⬇ Raw</button>
+            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="downloadOgg(${rec.id})">⬇ OGG</button>
+            <button class="chip text-xs hover:bg-red-600/40 cursor-pointer" onclick="deleteRec(${rec.id})">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join("");
+  }catch(e){
+    document.getElementById("recordings-body").innerHTML = '<tr><td colspan="9" class="td text-center text-red-400 py-8">Failed to load recordings</td></tr>';
+  }
+}
+
+function downloadRaw(id){ window.location.href = "/api/recordings/"+id+"/download/raw"; }
+function downloadOgg(id){ window.location.href = "/api/recordings/"+id+"/download/ogg"; }
+async function deleteRec(id){
+  if(!confirm("Delete recording #"+id+"?")) return;
+  try{
+    await fetch("/api/recordings/"+id, { method:"DELETE", headers: auth({}) });
+    loadRecordings();
+  }catch(e){ alert("Delete failed"); }
+}
+
+document.getElementById("refresh-btn")?.addEventListener("click", loadRecordings);
+document.getElementById("baseline-filter")?.addEventListener("change", loadRecordings);
+document.getElementById("mod-filter")?.addEventListener("change", loadRecordings);
+document.getElementById("status-filter")?.addEventListener("change", loadRecordings);
+loadBaselines();
+loadRecordings();
+setInterval(loadRecordings, 5000);
+</script>
+{% endblock %}
