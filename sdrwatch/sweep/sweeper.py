@@ -523,15 +523,14 @@ class Sweeper:
             targets.append(det)
 
         for q in queued:
-            f_center = int(q.f_center_hz)
-            if f_center in seen_freqs:
+            qt = _QueuedTarget(q)
+            if qt.f_center_hz in seen_freqs:
                 continue  # already going to record this via sweep detection
-            if self.store.is_frequency_ignored(baseline_id, f_center):
-                _log.debug("skipping ignored queued freq %d Hz", f_center)
+            if self.store.is_frequency_ignored(baseline_id, qt.f_center_hz):
+                _log.debug("skipping ignored queued freq %d Hz", qt.f_center_hz)
                 continue
-            seen_freqs.add(f_center)
-            # Create a minimal detection-like object
-            targets.append(_QueuedTarget(q))
+            seen_freqs.add(qt.f_center_hz)
+            targets.append(qt)
 
         if not targets:
             _log.info("nothing to record")
