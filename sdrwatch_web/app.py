@@ -98,6 +98,7 @@ def create_app(db_path: str) -> Flask:
     from sdrwatch_web.blueprints.api_baselines import bp as api_baselines_bp
     from sdrwatch_web.blueprints.api_debug import bp as api_debug_bp
     from sdrwatch_web.blueprints.api_jobs import bp as api_jobs_bp
+    from sdrwatch_web.blueprints.api_recordings import bp as api_recordings_bp
     from sdrwatch_web.blueprints.api_signals import bp as api_signals_bp
     from sdrwatch_web.blueprints.ctl import bp as ctl_bp
     from sdrwatch_web.blueprints.views import bp as views_bp
@@ -105,6 +106,7 @@ def create_app(db_path: str) -> Flask:
     app.register_blueprint(api_debug_bp)
     app.register_blueprint(api_jobs_bp)
     app.register_blueprint(api_baselines_bp)
+    app.register_blueprint(api_recordings_bp)
     app.register_blueprint(api_signals_bp)
     app.register_blueprint(ctl_bp)
     app.register_blueprint(views_bp)
