@@ -50,6 +50,8 @@ class IQRecorder:
         """
         try:
             src.tune(f_center_hz)
+            # Burn ~50ms of stale samples to let the PLL lock and AGC stabilize
+            _ = src.read(int(samp_rate * 0.05))
         except Exception as e:
             _log.error("tune failed for %d Hz: %s", f_center_hz, e)
             return None, None
