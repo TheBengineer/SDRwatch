@@ -616,11 +616,8 @@ class Sweeper:
                                 ogg_path=ogg_path,
                                 modulation=modulation,
                             )
-                            try:
-                                os.remove(rec_path)
-                                _log.info("deleted raw IQ: %s", rec_path)
-                            except OSError as e:
-                                _log.warning("failed to delete raw %s: %s", rec_path, e)
+                            # Keep raw file for re-demodulation
+                            _log.debug("kept raw IQ: %s", rec_path)
             except Exception as e:
                 _log.error("demod/compress failed for recording %s: %s", rec_id, e)
 
