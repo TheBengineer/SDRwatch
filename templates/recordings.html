@@ -38,6 +38,7 @@
     </div>
     <div class="flex items-end gap-2">
       <button class="btn text-sm" id="refresh-btn">↻ Refresh</button>
+      <button class="btn red text-sm" id="bulk-delete-btn" style="display:none">✕ Delete Selected</button>
     </div>
   </div>
 
@@ -46,6 +47,7 @@
     <table class="table">
       <thead>
         <tr class="text-xs uppercase text-slate-400">
+          <th class="th" style="width:32px"><input type="checkbox" id="select-all" title="Select all"></th>
           <th class="th">ID</th>
           <th class="th">Freq (MHz)</th>
           <th class="th">Modulation</th>
@@ -58,7 +60,7 @@
         </tr>
       </thead>
       <tbody id="recordings-body">
-        <tr><td colspan="9" class="td text-center text-slate-500 py-8">Loading recordings...</td></tr>
+        <tr><td colspan="10" class="td text-center text-slate-500 py-8">Loading recordings...</td></tr>
       </tbody>
     </table>
   </div>
@@ -103,14 +105,16 @@ async function loadRecordings(){
     document.getElementById("rec-count").textContent = list.length + " recordings";
     const tbody = document.getElementById("recordings-body");
     if(list.length === 0){
-      tbody.innerHTML = '<tr><td colspan="9" class="td text-center text-slate-500 py-8">No recordings yet. Run a scan with --capture-iq to create recordings.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="td text-center text-slate-500 py-8">No recordings yet. Run a scan with --capture-iq to create recordings.</td></tr>';
       return;
     }
     tbody.innerHTML = list.map(rec => {
       const modBadge = rec.modulation ? `<span class="chip text-xs">${rec.modulation.toUpperCase()}</span>` : '<span class="chip text-xs text-slate-500">—</span>';
       const statusColor = rec.status === "compressed" ? "text-green-400" : rec.status === "compression_failed" ? "text-red-400" : "text-slate-400";
       const hasOgg = rec.ogg_exists || (rec.ogg_path && rec.status === "compressed");
-      return `<tr class="cursor-pointer hover:bg-slate-800/40" onclick="toggleExpand(${rec.id})">
+      const checked = selected.has(rec.id);
+      return `<tr class="cursor-pointer hover:bg-slate-800/40 ${checked ? 'bg-sky-900/20' : ''}" onclick="toggleExpand(${rec.id})">
+        <td class="td" style="width:32px" onclick="event.stopPropagation()"><input type="checkbox" class="rec-checkbox" value="${rec.id}" ${checked ? 'checked' : ''} onchange="updateBulkDelete()"></td>
         <td class="td font-mono text-xs">${rec.id}</td>
         <td class="td font-mono">${rec.f_mhz ? rec.f_mhz.toFixed(4) : '—'}</td>
         <td class="td">${modBadge}</td>
@@ -120,14 +124,14 @@ async function loadRecordings(){
         <td class="td text-xs ${statusColor}">${rec.status || '—'}</td>
         <td class="td text-xs text-slate-400">${rec.created_utc ? rec.created_utc.slice(0,19).replace('T',' ') : '—'}</td>
         <td class="td">
-          <div class="flex flex-wrap gap-1 items-center">
-            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadRaw(${rec.id})">⬇ Raw</button>
-            <button class="chip text-xs hover:bg-red-600/40 cursor-pointer" onclick="event.stopPropagation();deleteRec(${rec.id})">✕</button>
+          <div class="flex flex-wrap gap-1 items-center" onclick="event.stopPropagation()">
+            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="downloadRaw(${rec.id})">⬇ Raw</button>
+            <button class="chip text-xs hover:bg-red-600/40 cursor-pointer" onclick="deleteRec(${rec.id})">✕</button>
           </div>
         </td>
       </tr>
       <tr id="expand-${rec.id}" class="expand-row" style="display:none">
-        <td colspan="9" class="td" style="padding:0">
+        <td colspan="10" class="td" style="padding:0">
           <div class="bg-slate-900/60 rounded-b-2xl p-4 space-y-3 border-t border-slate-700/40">
             <!-- Waveform audio player -->
             <div>
@@ -157,6 +161,38 @@ async function loadRecordings(){
     document.getElementById("recordings-body").innerHTML = '<tr><td colspan="9" class="td text-center text-red-400 py-8">Failed to load recordings</td></tr>';
   }
 }
+
+const selected = new Set();
+
+function updateBulkDelete(){
+  const boxes = document.querySelectorAll(".rec-checkbox");
+  selected.clear();
+  boxes.forEach(cb => { if(cb.checked) selected.add(parseInt(cb.value)); });
+  const btn = document.getElementById("bulk-delete-btn");
+  if(!btn) return;
+  btn.style.display = selected.size > 0 ? "inline-flex" : "none";
+  btn.textContent = "✕ Delete "+selected.size;
+}
+
+document.getElementById("select-all")?.addEventListener("change", function(){
+  document.querySelectorAll(".rec-checkbox").forEach(cb => { cb.checked = this.checked; });
+  updateBulkDelete();
+});
+
+document.getElementById("bulk-delete-btn")?.addEventListener("click", async function(){
+  if(selected.size === 0) return;
+  if(!confirm("Delete "+selected.size+" recording(s)?")) return;
+  try{
+    const r = await fetch("/api/recordings/bulk-delete", {
+      method:"POST",
+      headers: {'Content-Type':'application/json', ...(TOKEN ? {"Authorization":"Bearer "+TOKEN} : {})},
+      body: JSON.stringify({ids: Array.from(selected)})
+    });
+    if(!r.ok){ alert("Bulk delete failed"); return; }
+    selected.clear();
+    loadRecordings();
+  }catch(e){ alert("Bulk delete error"); }
+});
 
 function downloadRaw(id){ window.location.href = "/api/recordings/"+id+"/download/raw"; }
 

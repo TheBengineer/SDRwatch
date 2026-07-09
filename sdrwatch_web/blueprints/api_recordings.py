@@ -137,36 +137,57 @@ def api_recordings_detail(recording_id: int):
 
 
 @bp.delete("/api/recordings/<int:recording_id>")
-def api_recordings_delete(recording_id: int):
-    """Delete a recording (files + DB row)."""
-    require_auth()
-
-    # Read recording file paths (read-only connection is sufficient)
-    con = get_con()
+def _delete_one(con, recording_id: int) -> bool:
+    """Delete a single recording's files and DB row. Returns True if deleted."""
     row = con.execute(
         "SELECT raw_path, ogg_path FROM recordings WHERE id = ?",
         (recording_id,),
     ).fetchone()
     if not row:
-        abort(404, description="Recording not found")
-
-    # Delete files from disk
+        return False
     for path in (row["raw_path"], row["ogg_path"]):
         if path and os.path.exists(path):
             try:
                 os.remove(path)
             except OSError:
                 pass
+    con.execute("DELETE FROM recordings WHERE id = ?", (recording_id,))
+    return True
 
-    # Hard-delete DB row via writable connection
+
+@bp.delete("/api/recordings/<int:recording_id>")
+def api_recordings_delete(recording_id: int):
+    """Delete a recording (files + DB row)."""
+    require_auth()
     wcon = _open_write_con()
     try:
-        wcon.execute("DELETE FROM recordings WHERE id = ?", (recording_id,))
+        ok = _delete_one(wcon, recording_id)
         wcon.commit()
     finally:
         wcon.close()
-
+    if not ok:
+        abort(404, description="Recording not found")
     return jsonify({"ok": True})
+
+
+@bp.post("/api/recordings/bulk-delete")
+def api_recordings_bulk_delete():
+    """Delete multiple recordings at once."""
+    require_auth()
+    body = request.get_json(force=True, silent=True) or {}
+    ids = body.get("ids", [])
+    if not ids or not isinstance(ids, list):
+        abort(400, description="ids must be a non-empty list")
+    wcon = _open_write_con()
+    try:
+        deleted = 0
+        for rid in ids:
+            if _delete_one(wcon, int(rid)):
+                deleted += 1
+        wcon.commit()
+    finally:
+        wcon.close()
+    return jsonify({"ok": True, "deleted": deleted})
 
 
 # ---------------------------------------------------------------------------
