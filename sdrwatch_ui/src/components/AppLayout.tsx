@@ -17,6 +17,28 @@ export default function AppLayout() {
   })
   const [showTokenInput, setShowTokenInput] = useState(false)
   const [tokenInput, setTokenInput] = useState('')
+  const [usbWarning, setUsbWarning] = useState(false)
+  const [usbDismissed, setUsbDismissed] = useState(false)
+
+  // Poll USB device availability
+  useEffect(() => {
+    let cancelled = false
+    async function checkDevices() {
+      try {
+        const r = await fetch('/ctl/devices')
+        if (cancelled) return
+        if (r.ok) {
+          const data = await r.json()
+          setUsbWarning(Array.isArray(data) && data.length === 0)
+        }
+      } catch {
+        if (!cancelled) setUsbWarning(true)
+      }
+    }
+    checkDevices()
+    const id = setInterval(checkDevices, 10000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
 
   // Fetch baselines on mount
   useEffect(() => {
@@ -169,6 +191,18 @@ export default function AppLayout() {
             </div>
           </div>
         </header>
+        {/* USB warning banner */}
+        {usbWarning && !usbDismissed && (
+          <div className="bg-red-600/80 text-white text-sm text-center py-2 px-4 flex items-center justify-center gap-3">
+            <span>⚠️ No SDR device detected. Connect the USB radio and refresh.</span>
+            <button
+              onClick={() => setUsbDismissed(true)}
+              className="text-white/70 hover:text-white underline text-xs"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <main className="max-w-7xl mx-auto px-4 py-6">
           <Outlet />
         </main>
