@@ -112,6 +112,60 @@
       });
     });
 
+    // Mute buttons — add ignore rule for frequency
+    document.querySelectorAll('[data-mute-freq]').forEach((btn)=>{
+      const freq = btn.getAttribute('data-mute-freq');
+      if(!freq) return;
+      btn.addEventListener('click', async (evt)=>{
+        evt.preventDefault();
+        try{
+          const headers = {'Content-Type':'application/json'};
+          const token = localStorage.getItem('SDRWATCH_TOKEN');
+          if(token) headers['Authorization'] = 'Bearer '+token;
+          const resp = await fetch('/api/ignore-rules', {
+            method:'POST', headers,
+            body: JSON.stringify({f_center_hz: parseInt(freq), tolerance_hz: 50000, label: 'Muted from dashboard'})
+          });
+          if(resp.ok){
+            btn.textContent = '✅';
+            btn.classList.remove('hover:text-amber-400');
+            btn.title = 'Muted';
+          }
+        }catch(e){ console.error('Mute failed:', e); }
+      });
+    });
+
+    // Recording status polling
+    async function pollRecordingCard(){
+      try{
+        const r = await fetch('/api/now', { headers: {} });
+        if(!r.ok) return;
+        const data = await r.json();
+        const card = document.getElementById('recording-status-card');
+        if(!card) return;
+        const pill = document.getElementById('rec-card-pill');
+        const detail = document.getElementById('rec-card-detail');
+        if(!pill || !detail) return;
+        const job = data.job;
+        if(job && job.params?.capture_iq){
+          card.style.display = 'block';
+          if(job.status === 'running'){
+            pill.textContent = 'Recording';
+            pill.className = 'chip text-xs bg-green-600/60 text-green-100';
+            detail.textContent = 'Recording pass active — capturing IQ after sweep.';
+          } else {
+            pill.textContent = 'Idle';
+            pill.className = 'chip text-xs bg-slate-500/60 text-slate-100';
+            detail.textContent = 'Capture enabled, awaiting next sweep.';
+          }
+        } else {
+          card.style.display = 'none';
+        }
+      }catch(e){ /* ignore polling errors */ }
+    }
+    setInterval(pollRecordingCard, 3000);
+    setTimeout(pollRecordingCard, 500);
+
     // Signal classification dropdowns
     document.querySelectorAll('[data-classify-signal]').forEach((selectEl)=>{
       const signalId = selectEl.getAttribute('data-classify-signal');
