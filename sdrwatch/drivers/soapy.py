@@ -71,11 +71,12 @@ class SDRSource:
     def set_fixed_gain_mode(self, gain_db: float = 20.0) -> None:
         """Disable AGC and set a fixed gain for stable recordings."""
         try:
+            # Disable AGC first, then set fixed gain
             self.dev.setGainMode(SOAPY_SDR_RX, 0, False)
             self.dev.setGain(SOAPY_SDR_RX, 0, gain_db)
-            _log.debug("fixed gain set to %.1f dB", gain_db)
-        except Exception:
-            _log.debug("set_fixed_gain_mode failed", exc_info=True)
+            _log.info("recording: AGC disabled, fixed gain set to %.1f dB", gain_db)
+        except Exception as e:
+            _log.warning("recording: could not set fixed gain mode: %s", e)
 
     def close(self) -> None:
         try:
