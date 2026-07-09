@@ -43,6 +43,14 @@ class RTLSDRSource:
     def read(self, count: int) -> np.ndarray:
         return self.dev.read_samples(count)
 
+    def set_fixed_gain_mode(self, gain_db: float = 20.0) -> None:
+        """Disable AGC and set a fixed gain for stable recordings."""
+        try:
+            self.dev.gain = float(gain_db)
+            _log.debug("fixed gain set to %.1f dB", gain_db)
+        except Exception:
+            _log.debug("set_fixed_gain_mode failed", exc_info=True)
+
     def close(self) -> None:
         try:
             self.dev.close()

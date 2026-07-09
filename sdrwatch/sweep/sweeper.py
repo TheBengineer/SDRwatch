@@ -514,6 +514,13 @@ class Sweeper:
         recorder = IQRecorder(self.store, capture_dir=capture_dir)
         src = self.src
 
+        # Lock radio settings before recording pass — disable AGC for stable captures
+        if hasattr(src, "set_fixed_gain_mode"):
+            try:
+                src.set_fixed_gain_mode(gain_db=20.0)
+            except Exception:
+                _log.debug("could not set fixed gain mode for recording", exc_info=True)
+
         for det in targets:
             f_center = int(det.f_center_hz)
             det_id = int(det.id)
