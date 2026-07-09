@@ -229,7 +229,14 @@ export default function LivePage() {
                     <tr key={idx} className="hover:bg-slate-800/40">
                       <td className="td text-slate-400">{order}</td>
                       <td className="td font-mono">
-                        {win.center_mhz != null ? win.center_mhz.toFixed(3) : '—'}
+                        {win.center_mhz != null ? (
+                          <a
+                            href={`/signals?f_min_mhz=${(win.center_mhz - 0.5).toFixed(3)}&f_max_mhz=${(win.center_mhz + 0.5).toFixed(3)}`}
+                            className="text-sky-400 hover:text-sky-300 underline"
+                          >
+                            {win.center_mhz.toFixed(3)}
+                          </a>
+                        ) : '—'}
                       </td>
                       <td className="td">{win.det_count ?? 0}</td>
                       <td className="td">
@@ -279,8 +286,15 @@ export default function LivePage() {
                     className="w-5 rounded-sm"
                     style={{ height: `${height}px`, background: color }}
                   />
-                  <div className="text-[0.6rem] text-slate-500">
-                    {win.center_mhz != null ? win.center_mhz.toFixed(2) : '—'}
+                  <div className="text-[0.6rem]">
+                    {win.center_mhz != null ? (
+                      <a
+                        href={`/signals?f_min_mhz=${(win.center_mhz - 0.5).toFixed(2)}&f_max_mhz=${(win.center_mhz + 0.5).toFixed(2)}`}
+                        className="text-sky-400 hover:text-sky-300 underline"
+                      >
+                        {win.center_mhz.toFixed(2)}
+                      </a>
+                    ) : '—'}
                   </div>
                 </div>
               )
