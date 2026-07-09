@@ -33,7 +33,8 @@ from sdrwatch.recording.demod import demodulate_fm
 class _QueuedTarget:
     """Minimal detection-like wrapper for queued recording rows (tuples from sqlite3)."""
     def __init__(self, row):
-        self.id = int(row[0])   # detection_id
+        self.queued_id = int(row[0])  # recordings.id
+        self.id = int(row[0])         # also used as detection_id for IQRecorder
         self.f_center_hz = int(row[1])  # f_center_hz
         self.snr_db = 0.0
         self.f_low_hz = self.f_center_hz - 50000
@@ -571,6 +572,17 @@ class Sweeper:
             if rec_id is None:
                 _log.warning("failed to record freq %d Hz", f_center)
                 continue
+
+            # If this was a queued recording, mark it as captured so it won't be re-queued
+            if isinstance(det, _QueuedTarget):
+                try:
+                    self.store.con.execute(
+                        "UPDATE recordings SET status = 'completed' WHERE id = ?",
+                        (det.queued_id,),
+                    )
+                    self.store.con.commit()
+                except Exception:
+                    _log.debug("could not update queued recording status", exc_info=True)
 
             modulation: str | None = None
             try:
