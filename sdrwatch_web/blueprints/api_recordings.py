@@ -212,6 +212,38 @@ def api_recordings_download_ogg(recording_id: int):
     )
 
 
+@bp.get("/api/recordings/<int:recording_id>/amplitude")
+def api_recordings_amplitude(recording_id: int):
+    """Return amplitude envelope as downsampled JSON array for plotting."""
+    require_auth()
+    con = get_con()
+    row = con.execute(
+        "SELECT raw_path, sample_rate_hz FROM recordings WHERE id = ?",
+        (recording_id,),
+    ).fetchone()
+    if not row or not row["raw_path"] or not os.path.exists(row["raw_path"]):
+        abort(404, description="Raw file not found")
+    try:
+        import numpy as np
+        cf32 = np.fromfile(row["raw_path"], dtype=np.complex64)
+        mag = np.abs(cf32)
+        target = 500
+        step = max(1, len(mag) // target)
+        downsampled = mag[::step]
+        mx = float(np.max(downsampled))
+        if mx > 0:
+            downsampled = (downsampled / mx).tolist()
+        else:
+            downsampled = downsampled.tolist()
+        return jsonify({
+            "amplitude": downsampled,
+            "points": len(downsampled),
+            "sample_rate_hz": float(row["sample_rate_hz"] or 2.4e6),
+        })
+    except Exception as e:
+        abort(500, description=str(e))
+
+
 # ---------------------------------------------------------------------------
 # Queue a signal for recording
 # ---------------------------------------------------------------------------

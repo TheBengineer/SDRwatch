@@ -109,10 +109,8 @@ async function loadRecordings(){
     tbody.innerHTML = list.map(rec => {
       const modBadge = rec.modulation ? `<span class="chip text-xs">${rec.modulation.toUpperCase()}</span>` : '<span class="chip text-xs text-slate-500">—</span>';
       const statusColor = rec.status === "compressed" ? "text-green-400" : rec.status === "compression_failed" ? "text-red-400" : "text-slate-400";
-      const playBtn = rec.ogg_exists || (rec.ogg_path && rec.status === "compressed")
-        ? `<audio controls preload="none" style="height:28px;width:120px"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>`
-        : '<span class="text-xs text-slate-600">—</span>';
-      return `<tr>
+      const hasOgg = rec.ogg_exists || (rec.ogg_path && rec.status === "compressed");
+      return `<tr class="cursor-pointer hover:bg-slate-800/40" onclick="toggleExpand(${rec.id})">
         <td class="td font-mono text-xs">${rec.id}</td>
         <td class="td font-mono">${rec.f_mhz ? rec.f_mhz.toFixed(4) : '—'}</td>
         <td class="td">${modBadge}</td>
@@ -123,10 +121,25 @@ async function loadRecordings(){
         <td class="td text-xs text-slate-400">${rec.created_utc ? rec.created_utc.slice(0,19).replace('T',' ') : '—'}</td>
         <td class="td">
           <div class="flex flex-wrap gap-1 items-center">
-            ${playBtn}
-            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="downloadRaw(${rec.id})">⬇ Raw</button>
-            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="downloadOgg(${rec.id})">⬇ OGG</button>
-            <button class="chip text-xs hover:bg-red-600/40 cursor-pointer" onclick="deleteRec(${rec.id})">✕</button>
+            <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadRaw(${rec.id})">⬇ Raw</button>
+            <button class="chip text-xs hover:bg-red-600/40 cursor-pointer" onclick="event.stopPropagation();deleteRec(${rec.id})">✕</button>
+          </div>
+        </td>
+      </tr>
+      <tr id="expand-${rec.id}" class="expand-row" style="display:none">
+        <td colspan="9" class="td" style="padding:0">
+          <div class="bg-slate-900/60 rounded-b-2xl p-4 space-y-3 border-t border-slate-700/40">
+            <!-- Amplitude plot -->
+            <div>
+              <div class="text-xs text-slate-400 mb-1">Amplitude envelope</div>
+              <canvas id="plot-${rec.id}" height="100" style="width:100%;height:100px;background:#0b1220;border-radius:0.5rem"></canvas>
+            </div>
+            <!-- Audio player + actions -->
+            <div class="flex flex-wrap items-center gap-3">
+              ${hasOgg ? `<audio controls preload="none" style="height:36px;flex:1;min-width:200px"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>` : '<span class="text-xs text-slate-500">No OGG available</span>'}
+              <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadOgg(${rec.id})">⬇ OGG</button>
+              <span class="text-xs text-slate-500">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
+            </div>
           </div>
         </td>
       </tr>`;
@@ -144,6 +157,76 @@ async function deleteRec(id){
     await fetch("/api/recordings/"+id, { method:"DELETE", headers: auth({}) });
     loadRecordings();
   }catch(e){ alert("Delete failed"); }
+}
+
+let expandedId = null;
+async function toggleExpand(id){
+  const row = document.getElementById("expand-"+id);
+  if(!row) return;
+  if(expandedId === id){
+    row.style.display = "none";
+    expandedId = null;
+    return;
+  }
+  // Collapse previous
+  if(expandedId){
+    const prev = document.getElementById("expand-"+expandedId);
+    if(prev) prev.style.display = "none";
+  }
+  row.style.display = "table-row";
+  expandedId = id;
+  // Load amplitude if canvas exists and empty
+  const canvas = document.getElementById("plot-"+id);
+  if(canvas && !canvas.dataset.loaded){
+    canvas.dataset.loaded = "1";
+    try{
+      const r = await fetch("/api/recordings/"+id+"/amplitude", { headers: auth({}) });
+      if(!r.ok) return;
+      const data = await r.json();
+      drawAmplitude(canvas, data.amplitude);
+    }catch(e){ /* amplitude unavailable */ }
+  }
+}
+
+function drawAmplitude(canvas, data){
+  if(!canvas || !data || data.length < 2) return;
+  const ctx = canvas.getContext("2d");
+  const w = canvas.parentElement.clientWidth || 800;
+  const h = 100;
+  canvas.width = w * (window.devicePixelRatio || 1);
+  canvas.height = h * (window.devicePixelRatio || 1);
+  canvas.style.width = w+"px";
+  canvas.style.height = h+"px";
+  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  ctx.clearRect(0, 0, w, h);
+
+  const pad = 4;
+  const plotW = w - pad * 2;
+  const plotH = h - pad * 2;
+
+  // Fill area
+  ctx.beginPath();
+  ctx.moveTo(pad, pad + plotH);
+  for(let i=0; i<data.length; i++){
+    const x = pad + (i / (data.length-1)) * plotW;
+    const y = pad + plotH - (data[i] * plotH);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(pad + plotW, pad + plotH);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(14,165,233,0.15)";
+  ctx.fill();
+
+  // Draw line
+  ctx.beginPath();
+  for(let i=0; i<data.length; i++){
+    const x = pad + (i / (data.length-1)) * plotW;
+    const y = pad + plotH - (data[i] * plotH);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = "#0ea5e9";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 }
 
 document.getElementById("refresh-btn")?.addEventListener("click", loadRecordings);
