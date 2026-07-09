@@ -134,16 +134,20 @@ async function loadRecordings(){
               <div class="text-xs text-slate-400 mb-1 flex items-center gap-2">
                 <span id="playlabel-${rec.id}" class="cursor-pointer hover:text-sky-400" onclick="togglePlay(${rec.id})">▶ Click waveform to play</span>
                 <span id="time-${rec.id}" class="text-slate-500">0:00 / ${rec.duration_ms ? formatTime(rec.duration_ms/1000) : '--:--'}</span>
+                <span id="modlabel-${rec.id}" class="chip text-xs bg-sky-600/60 text-sky-100" style="display:none">FM</span>
               </div>
               <canvas id="plot-${rec.id}" height="100" style="width:100%;height:100px;background:#0b1220;border-radius:0.5rem;cursor:pointer"></canvas>
             </div>
-            <!-- Hidden audio element -->
-            ${hasOgg ? `<audio id="audio-${rec.id}" preload="none"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>` : ''}
-            <!-- Actions bar -->
-            <div class="flex flex-wrap items-center gap-3 text-xs">
-              <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();togglePlay(${rec.id})">${hasOgg ? '▶ Play / ⏸ Pause' : 'No audio'}</button>
-              <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadOgg(${rec.id})">⬇ OGG</button>
-              <span class="text-slate-500">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
+            <!-- Audio element (always present, source set dynamically) -->
+            <audio id="audio-${rec.id}" preload="none" style="width:100%;height:36px"></audio>
+            <!-- Modulation buttons -->
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="text-slate-400 mr-1">Demod:</span>
+              ${['fm','am','cw','lsb','usb'].map(m =>
+                `<button class="chip cursor-pointer hover:bg-sky-600/40 mod-btn-${rec.id}" data-mod="${m}" onclick="event.stopPropagation();playModulation(${rec.id},'${m}')">${m.toUpperCase()}</button>`
+              ).join('')}
+              <span class="text-slate-500 ml-2">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
+              <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadRaw(${rec.id})" style="margin-left:auto">⬇ Raw</button>
             </div>
           </div>
         </td>
@@ -155,7 +159,31 @@ async function loadRecordings(){
 }
 
 function downloadRaw(id){ window.location.href = "/api/recordings/"+id+"/download/raw"; }
-function downloadOgg(id){ window.location.href = "/api/recordings/"+id+"/download/ogg"; }
+
+// Demodulate and play: POST modulation, receive OGG blob, auto-play
+async function playModulation(id, mod){
+  const audio = document.getElementById("audio-"+id);
+  const label = document.getElementById("modlabel-"+id);
+  const playlabel = document.getElementById("playlabel-"+id);
+  if(!audio) return;
+  try{
+    const r = await fetch("/api/recordings/"+id+"/demod", {
+      method:"POST",
+      headers: {'Content-Type':'application/json', ...(TOKEN ? {"Authorization":"Bearer "+TOKEN} : {})},
+      body: JSON.stringify({modulation: mod})
+    });
+    if(!r.ok){ if(playlabel) playlabel.textContent = "❌ Demod failed"; return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    audio.src = url;
+    if(label){ label.textContent = mod.toUpperCase(); label.style.display = "inline"; }
+    if(playlabel) playlabel.textContent = "⏸ "+mod.toUpperCase();
+    await audio.play();
+  }catch(e){
+    if(playlabel) playlabel.textContent = "❌ Error";
+  }
+}
+
 async function deleteRec(id){
   if(!confirm("Delete recording #"+id+"?")) return;
   try{

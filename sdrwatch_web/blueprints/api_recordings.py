@@ -377,17 +377,8 @@ def api_recordings_demod(recording_id: int):
         if not ok:
             abort(500, description="OGG compression failed")
 
-        wcon = _open_write_con()
-        try:
-            wcon.execute(
-                "UPDATE recordings SET ogg_path = ?, ogg_bytes = ?, status = 'compressed', modulation = ? WHERE id = ?",
-                (ogg_path, os.path.getsize(ogg_path), modulation, recording_id),
-            )
-            wcon.commit()
-        finally:
-            wcon.close()
-
-        return jsonify({"ok": True, "ogg_path": ogg_path})
+        # Return the OGG file directly for client-side playback
+        return send_file(ogg_path, mimetype="audio/ogg")
     except NotImplementedError:
         abort(400, description=f"Demodulation '{modulation}' not yet implemented")
     except Exception as e:
