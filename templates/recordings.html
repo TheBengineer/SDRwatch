@@ -130,9 +130,11 @@ async function loadRecordings(){
         badge.style.display = "none";
       }
     }
+    const prevExpanded = expandedId;           // preserve expanded row across re-render
     const tbody = document.getElementById("recordings-body");
     if(list.length === 0){
       tbody.innerHTML = '<tr><td colspan="10" class="td text-center text-slate-500 py-8">No recordings yet. Run a scan with --capture-iq to create recordings.</td></tr>';
+      expandedId = null;
       return;
     }
     tbody.innerHTML = list.map(rec => {
@@ -184,6 +186,23 @@ async function loadRecordings(){
         </td>
       </tr>`;
     }).join("");
+    // Re-expand the previously expanded row after re-render
+    const reExpand = prevExpanded && document.getElementById("expand-"+prevExpanded);
+    if(reExpand){
+      reExpand.style.display = "table-row";
+      const canvas = document.getElementById("plot-"+prevExpanded);
+      if(canvas && !canvas._amplitudeData && !canvas.dataset.loaded){
+        canvas.dataset.loaded = "1";
+        fetch("/api/recordings/"+prevExpanded+"/amplitude", { headers: auth({}) })
+          .then(r => r.arrayBuffer())
+          .then(buf => {
+            const floats = new Float32Array(buf);
+            const arr = Array.from(floats);
+            canvas._amplitudeData = arr;
+            drawAmplitude(canvas, arr, 0);
+          }).catch(() => {});
+      }
+    }
   }catch(e){
     document.getElementById("recordings-body").innerHTML = '<tr><td colspan="9" class="td text-center text-red-400 py-8">Failed to load recordings</td></tr>';
   }
