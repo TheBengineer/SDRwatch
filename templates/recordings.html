@@ -129,16 +129,21 @@ async function loadRecordings(){
       <tr id="expand-${rec.id}" class="expand-row" style="display:none">
         <td colspan="9" class="td" style="padding:0">
           <div class="bg-slate-900/60 rounded-b-2xl p-4 space-y-3 border-t border-slate-700/40">
-            <!-- Amplitude plot -->
+            <!-- Waveform audio player -->
             <div>
-              <div class="text-xs text-slate-400 mb-1">Amplitude envelope</div>
-              <canvas id="plot-${rec.id}" height="100" style="width:100%;height:100px;background:#0b1220;border-radius:0.5rem"></canvas>
+              <div class="text-xs text-slate-400 mb-1 flex items-center gap-2">
+                <span id="playlabel-${rec.id}" class="cursor-pointer hover:text-sky-400" onclick="togglePlay(${rec.id})">▶ Click waveform to play</span>
+                <span id="time-${rec.id}" class="text-slate-500">0:00 / ${rec.duration_ms ? formatTime(rec.duration_ms/1000) : '--:--'}</span>
+              </div>
+              <canvas id="plot-${rec.id}" height="100" style="width:100%;height:100px;background:#0b1220;border-radius:0.5rem;cursor:pointer"></canvas>
             </div>
-            <!-- Audio player + actions -->
-            <div class="flex flex-wrap items-center gap-3">
-              ${hasOgg ? `<audio controls preload="none" style="height:36px;flex:1;min-width:200px"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>` : '<span class="text-xs text-slate-500">No OGG available</span>'}
+            <!-- Hidden audio element -->
+            ${hasOgg ? `<audio id="audio-${rec.id}" preload="none"><source src="/api/recordings/${rec.id}/download/ogg" type="audio/ogg"></audio>` : ''}
+            <!-- Actions bar -->
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+              <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();togglePlay(${rec.id})">${hasOgg ? '▶ Play / ⏸ Pause' : 'No audio'}</button>
               <button class="chip text-xs hover:bg-sky-600/40 cursor-pointer" onclick="event.stopPropagation();downloadOgg(${rec.id})">⬇ OGG</button>
-              <span class="text-xs text-slate-500">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
+              <span class="text-slate-500">${rec.duration_ms ? (rec.duration_ms/1000).toFixed(1)+'s' : ''} ${rec.sample_rate_hz ? '@ '+(rec.sample_rate_hz/1e6).toFixed(1)+' MS/s' : ''}</span>
             </div>
           </div>
         </td>
@@ -183,12 +188,20 @@ async function toggleExpand(id){
       const r = await fetch("/api/recordings/"+id+"/amplitude", { headers: auth({}) });
       if(!r.ok) return;
       const data = await r.json();
-      drawAmplitude(canvas, data.amplitude);
+      canvas._amplitudeData = data.amplitude;
+      drawAmplitude(canvas, data.amplitude, 0);
     }catch(e){ /* amplitude unavailable */ }
   }
 }
 
-function drawAmplitude(canvas, data){
+function formatTime(secs){
+  if(!secs || secs < 0) return "0:00";
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return m+":"+(s<10?"0":"")+s;
+}
+
+function drawAmplitude(canvas, data, playheadPos){
   if(!canvas || !data || data.length < 2) return;
   const ctx = canvas.getContext("2d");
   const w = canvas.parentElement.clientWidth || 800;
@@ -227,7 +240,100 @@ function drawAmplitude(canvas, data){
   ctx.strokeStyle = "#0ea5e9";
   ctx.lineWidth = 1.5;
   ctx.stroke();
+
+  // Playhead
+  if(playheadPos !== undefined && playheadPos >= 0){
+    const phx = pad + playheadPos * plotW;
+    ctx.beginPath();
+    ctx.moveTo(phx, pad);
+    ctx.lineTo(phx, pad + plotH);
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 }
+
+// Click-to-seek: attach click handler to canvases
+document.addEventListener("click", function(e){
+  const canvas = e.target.closest("canvas[id^='plot-']");
+  if(!canvas) return;
+  const id = canvas.id.replace("plot-","");
+  const audio = document.getElementById("audio-"+id);
+  if(!audio || !audio.duration) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const dur = audio.duration;
+  if(dur > 0){
+    audio.currentTime = x * dur;
+    audio.play();
+    updatePlayhead(id);
+  }
+});
+
+function togglePlay(id){
+  const audio = document.getElementById("audio-"+id);
+  if(!audio) return;
+  const label = document.getElementById("playlabel-"+id);
+  if(audio.paused){
+    audio.play();
+    if(label) label.textContent = "⏸ Playing";
+  } else {
+    audio.pause();
+    if(label) label.textContent = "▶ Paused";
+  }
+}
+
+function updatePlayhead(id){
+  const audio = document.getElementById("audio-"+id);
+  const canvas = document.getElementById("plot-"+id);
+  const label = document.getElementById("playlabel-"+id);
+  const timeLabel = document.getElementById("time-"+id);
+  if(!audio || !canvas) return;
+
+  const dur = audio.duration || 0;
+  const ct = audio.currentTime || 0;
+  if(timeLabel) timeLabel.textContent = formatTime(ct)+" / "+formatTime(dur);
+  if(label) label.textContent = audio.paused ? "▶ Paused" : "⏸ Playing";
+
+  // Redraw with playhead
+  const data = canvas._amplitudeData;
+  if(data) drawAmplitude(canvas, data, dur > 0 ? ct / dur : 0);
+}
+
+// Hook timeupdate on audio elements created dynamically
+const origCreate = document.createElement;
+document.createElement = function(tag, options){
+  const el = origCreate.call(document, tag, options);
+  if(tag.toLowerCase() === "audio"){
+    el.addEventListener("timeupdate", function(){
+      const id = this.id ? this.id.replace("audio-","") : null;
+      if(id) updatePlayhead(id);
+    });
+    el.addEventListener("play", function(){
+      const id = this.id ? this.id.replace("audio-","") : null;
+      if(id){
+        const label = document.getElementById("playlabel-"+id);
+        if(label) label.textContent = "⏸ Playing";
+      }
+    });
+    el.addEventListener("pause", function(){
+      const id = this.id ? this.id.replace("audio-","") : null;
+      if(id){
+        const label = document.getElementById("playlabel-"+id);
+        if(label) label.textContent = "▶ Paused";
+      }
+    });
+    el.addEventListener("ended", function(){
+      const id = this.id ? this.id.replace("audio-","") : null;
+      if(id){
+        const label = document.getElementById("playlabel-"+id);
+        if(label) label.textContent = "▶ Click to replay";
+        updatePlayhead(id);
+      }
+    });
+  }
+  return el;
+};
 
 document.getElementById("refresh-btn")?.addEventListener("click", loadRecordings);
 document.getElementById("baseline-filter")?.addEventListener("change", loadRecordings);
