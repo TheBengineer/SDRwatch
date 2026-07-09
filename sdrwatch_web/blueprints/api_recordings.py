@@ -80,12 +80,15 @@ def _format_bytes(b: float) -> str:
 
 @bp.get("/api/recordings")
 def api_recordings_list():
-    """List recordings, filterable by baseline_id, modulation, status."""
+    """List recordings, filterable by baseline_id, detection_id, modulation, status, f_min_mhz, f_max_mhz."""
     require_auth()
 
     baseline_id = request.args.get("baseline_id", type=int)
+    detection_id = request.args.get("detection_id", type=int)
     modulation = request.args.get("modulation")
     status = request.args.get("status")
+    f_min_mhz = request.args.get("f_min_mhz", type=float)
+    f_max_mhz = request.args.get("f_max_mhz", type=float)
 
     con = get_con()
     conditions: List[str] = ["1=1"]
@@ -94,12 +97,21 @@ def api_recordings_list():
     if baseline_id is not None:
         conditions.append("baseline_id = ?")
         params.append(baseline_id)
+    if detection_id is not None:
+        conditions.append("detection_id = ?")
+        params.append(detection_id)
     if modulation:
         conditions.append("modulation = ?")
         params.append(modulation)
     if status:
         conditions.append("status = ?")
         params.append(status)
+    if f_min_mhz is not None:
+        conditions.append("f_center_hz >= ?")
+        params.append(int(f_min_mhz * 1e6))
+    if f_max_mhz is not None:
+        conditions.append("f_center_hz <= ?")
+        params.append(int(f_max_mhz * 1e6))
 
     where = " AND ".join(conditions)
     rows = con.execute(

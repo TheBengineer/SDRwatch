@@ -2,7 +2,10 @@
 {% block content %}
 <div class="space-y-4">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Recordings</h1>
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-bold">Recordings</h1>
+      <span id="signal-badge" class="chip text-xs bg-sky-600/60 text-sky-100" style="display:none"></span>
+    </div>
     <span class="text-sm text-slate-400" id="rec-count">0 recordings</span>
   </div>
 
@@ -35,6 +38,14 @@
         <option value="compressed">Compressed</option>
         <option value="compression_failed">Failed</option>
       </select>
+    </div>
+    <div class="field">
+      <label for="f-min">Min MHz</label>
+      <input id="f-min" class="input" type="number" step="0.1" placeholder="e.g. 88" onchange="loadRecordings()">
+    </div>
+    <div class="field">
+      <label for="f-max">Max MHz</label>
+      <input id="f-max" class="input" type="number" step="0.1" placeholder="e.g. 108" onchange="loadRecordings()">
     </div>
     <div class="flex items-end gap-2">
       <button class="btn text-sm" id="refresh-btn">↻ Refresh</button>
@@ -97,12 +108,26 @@ async function loadRecordings(){
   if(bl) params.set("baseline_id", bl);
   if(mod) params.set("modulation", mod);
   if(st) params.set("status", st);
+  const fmin = document.getElementById("f-min")?.value;
+  const fmax = document.getElementById("f-max")?.value;
+  if(fmin) params.set("f_min_mhz", fmin);
+  if(fmax) params.set("f_max_mhz", fmax);
+  if(filterDetectionId) params.set("detection_id", filterDetectionId);
   try{
     const r = await fetch("/api/recordings?" + params.toString(), { headers: auth({}) });
     if(!r.ok) throw new Error("fetch failed");
     const data = await r.json();
     const list = data.recordings || [];
     document.getElementById("rec-count").textContent = list.length + " recordings";
+    const badge = document.getElementById("signal-badge");
+    if(badge){
+      if(filterDetectionId){
+        badge.style.display = "inline";
+        badge.innerHTML = `Signal #${filterDetectionId} <a href="/signal/${filterDetectionId}" class="text-sky-200 hover:text-white ml-1">→</a>`;
+      } else {
+        badge.style.display = "none";
+      }
+    }
     const tbody = document.getElementById("recordings-body");
     if(list.length === 0){
       tbody.innerHTML = '<tr><td colspan="10" class="td text-center text-slate-500 py-8">No recordings yet. Run a scan with --capture-iq to create recordings.</td></tr>';
@@ -163,6 +188,8 @@ async function loadRecordings(){
 }
 
 const selected = new Set();
+const urlParams = new URLSearchParams(window.location.search);
+const filterDetectionId = urlParams.get("detection_id");
 
 function updateBulkDelete(){
   const boxes = document.querySelectorAll(".rec-checkbox");
