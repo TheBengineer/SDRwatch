@@ -36,13 +36,13 @@ Adversarial UX review (UX Researcher, Power User, Architect, Design Critic) dist
 
 ### Wave 3 — Quality of Life (P2, depends on Wave 2)
 
-13. [ ] ControlPage scan status indicator — Add single-line "Last sweep: 2m ago, 14 signals" status line on ControlPage. Fetches from /api/jobs/active + DB stats. Category: quick. Skills: shared/programming. QA: Status line shows when history exists, hides gracefully when empty.
+13. [x] ControlPage scan status indicator — Add single-line "Last sweep: 2m ago, 14 signals" status line on ControlPage. Fetches from /api/jobs/active + DB stats. Category: quick. Skills: shared/programming. QA: Status line shows when history exists, hides gracefully when empty.
 
-14. [ ] Table UX enhancements — Enable TanStack column resizeMode on Recordings + Signals tables. Add CSS nth-child(even) row striping. Save sorting state to localStorage keyed by page+baselineId. Category: quick. Skills: shared/programming. QA: Columns resizable, sort persists across reloads, row striping visible.
+14. [x] Table UX enhancements — Enable TanStack column resizeMode on Recordings + Signals tables. Add CSS nth-child(even) row striping. Save sorting state to localStorage keyed by page+baselineId. Category: quick. Skills: shared/programming. QA: Columns resizable, sort persists across reloads, row striping visible.
 
-15. [ ] Batch operations — Add select-all-filtered checkbox to Recordings+Signals tables (shows count, e.g., "Select all 14 filtered recordings"). Bulk classify dropdown (Signals only). Replace alert()/confirm() with ConfirmDialog modal. Create ConfirmDialog.tsx with focus trap. Category: deep. Skills: shared/programming, frontend. QA: Select-all selects filtered rows, bulk classify sends PATCH, ConfirmDialog traps focus.
+15. [x] Batch operations — Add select-all-filtered checkbox to Recordings+Signals tables (shows count, e.g., "Select all 14 filtered recordings"). Bulk classify dropdown (Signals only). Replace alert()/confirm() with ConfirmDialog modal. Create ConfirmDialog.tsx with focus trap. Category: deep. Skills: shared/programming, frontend. QA: Select-all selects filtered rows, bulk classify sends PATCH, ConfirmDialog traps focus.
 
-16. [ ] Cross-page context links — Add "View Recordings" button on SignalDetail header showing recording count for that signal. Link navigates to /recordings?detection_id=<id>. Category: quick. Skills: shared/programming. QA: Recording count shown, link navigates correctly.
+16. [x] Cross-page context links — Add "View Recordings" button on SignalDetail header showing recording count for that signal. Link navigates to /recordings?detection_id=<id>. Category: quick. Skills: shared/programming. QA: Recording count shown, link navigates correctly.
 
 ### Wave 4 — Polish (P3, depends on Wave 3)
 

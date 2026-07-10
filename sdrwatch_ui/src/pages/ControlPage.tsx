@@ -192,6 +192,10 @@ export default function ControlPage() {
   const [activeJob, setActiveJob] = useState<Job | null>(null)
   const [jobError, setJobError] = useState('')
   const [logText, setLogText] = useState('')
+
+  // Sweep status indicator
+  const [lastSweepMinutes, setLastSweepMinutes] = useState<number | null>(null)
+  const [signalCount, setSignalCount] = useState<number | null>(null)
   const [creatingBaseline, setCreatingBaseline] = useState(false)
   const [baselineFormStatus, setBaselineFormStatus] = useState('')
 
@@ -298,6 +302,49 @@ export default function ControlPage() {
     }
     setF(prev => ({ ...prev, ...cleaned as Partial<FormValues> }))
   }, [f.profile, profiles])
+
+  // Poll sweep status (elapsed time + signal count)
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const r = await fetch('/api/jobs/active')
+        if (r.ok) {
+          const data = await r.json()
+          if (data?.job?.created_ts) {
+            const elapsed = Math.floor((Date.now() / 1000 - data.job.created_ts) / 60)
+            setLastSweepMinutes(elapsed)
+          } else {
+            setLastSweepMinutes(null)
+          }
+        } else {
+          setLastSweepMinutes(null)
+        }
+      } catch {
+        setLastSweepMinutes(null)
+      }
+
+      // Get signal count from baseline summaries
+      if (baselineId) {
+        try {
+          const r = await fetch('/api/baselines')
+          if (r.ok) {
+            const data = await r.json()
+            if (data?.summaries?.[baselineId]?.persistent_detections != null) {
+              setSignalCount(data.summaries[baselineId].persistent_detections)
+            } else {
+              setSignalCount(null)
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    poll()
+    const id = setInterval(poll, 15000)
+    return () => clearInterval(id)
+  }, [baselineId])
 
   // Log auto-scroll
   useEffect(() => {
@@ -570,6 +617,12 @@ export default function ControlPage() {
               <span className={`font-mono text-sm font-semibold ${stateClass}`}>{stateLabel}</span>
             </div>
           </div>
+
+          {lastSweepMinutes != null && signalCount != null && (
+            <div className="text-xs text-slate-500 mb-3">
+              Last sweep: {lastSweepMinutes}m ago, {signalCount} signals
+            </div>
+          )}
 
           <form onSubmit={e => { e.preventDefault(); handleStartJob() }} className="space-y-4">
 

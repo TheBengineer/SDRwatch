@@ -378,6 +378,12 @@ export default function SignalDetailPage() {
                 {signal.label}
               </span>
             )}
+            <Link
+              to={baselineId ? { pathname: '/recordings', search: `?detection_id=${signal.id}&baseline_id=${baselineId}` } : `/recordings?detection_id=${signal.id}`}
+              className="text-sm px-3 py-1 rounded-full font-medium bg-sky-600/60 text-sky-100 hover:bg-sky-500/80 transition-colors"
+            >
+              &#x1F399; {recordings.length} Recording{recordings.length !== 1 ? 's' : ''}
+            </Link>
             <span className={`text-sm px-3 py-1 rounded-full font-medium ${classBadgeCls(signal.classification ?? 'unknown')}`}>
               {(signal.classification ?? 'unknown').charAt(0).toUpperCase() + (signal.classification ?? 'unknown').slice(1)}
             </span>

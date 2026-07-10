@@ -18,3 +18,6 @@ export type { FilterField, DashboardFilters } from './UnifiedFilterBar'
 
 export { default as EmptyState } from './EmptyState'
 export type { EmptyStateProps, ActionDef } from './EmptyState'
+
+export { default as ConfirmDialog } from './ConfirmDialog'
+export type { ConfirmDialogProps } from './ConfirmDialog'

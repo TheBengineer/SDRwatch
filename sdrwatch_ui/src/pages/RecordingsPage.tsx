@@ -11,7 +11,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { EmptyState } from '../components/primitives'
+import { EmptyState, ConfirmDialog } from '../components/primitives'
 import type { Recording, Baseline } from '../types'
 import UnifiedFilterBar, { type FilterField } from '../components/primitives/UnifiedFilterBar'
 
@@ -172,7 +172,15 @@ export default function RecordingsPage() {
   // Recordings
   const [recordings, setRecordings] = useState<Recording[]>([])
   const [loading, setLoading] = useState(true)
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }])
+  const [sorting, setSorting] = useState<SortingState>(() => {
+    const bid = filters.baselineId || 'none'
+    try {
+      const saved = localStorage.getItem(`sort-state:recordings:${bid}`)
+      return saved ? JSON.parse(saved) : [{ id: 'id', desc: true }]
+    } catch {
+      return [{ id: 'id', desc: true }]
+    }
+  })
 
   // Expand/collapse
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -183,6 +191,21 @@ export default function RecordingsPage() {
 
   // Bulk delete
   const [selected, setSelected] = useState<Set<number>>(new Set())
+
+  // Confirm dialog
+  const [dialog, setDialog] = useState<{
+    title: string
+    message: string
+    variant?: 'danger' | 'default'
+    confirmLabel?: string
+    onConfirm: () => void
+  } | null>(null)
+
+  // Persistent sort – save to localStorage on change
+  const sortKey = `sort-state:recordings:${filters.baselineId || 'none'}`
+  useEffect(() => {
+    localStorage.setItem(sortKey, JSON.stringify(sorting))
+  }, [sorting, sortKey])
 
   // Refresh interval
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -426,28 +449,48 @@ export default function RecordingsPage() {
   // Delete single recording
   // -----------------------------------------------------------------------
 
-  const deleteRec = useCallback(async (id: number) => {
-    if (!confirm(`Delete recording #${id}?`)) return
-    const ok = await apiDelete(`/api/recordings/${id}`)
-    if (ok) fetchRecordings()
+  const deleteRec = useCallback((id: number) => {
+    setDialog({
+      title: 'Delete recording',
+      message: `Delete recording #${id}? This action cannot be undone.`,
+      variant: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setDialog(null)
+        const ok = await apiDelete(`/api/recordings/${id}`)
+        if (ok) fetchRecordings()
+      },
+    })
   }, [fetchRecordings])
 
   // -----------------------------------------------------------------------
   // Bulk delete
   // -----------------------------------------------------------------------
 
-  const bulkDelete = useCallback(async () => {
+  const bulkDelete = useCallback(() => {
     if (selected.size === 0) return
-    if (!confirm(`Delete ${selected.size} recording(s)?`)) return
-    const resp = await postJson('/api/recordings/bulk-delete', {
-      ids: Array.from(selected),
+    setDialog({
+      title: 'Delete recordings',
+      message: `Delete ${selected.size} recording(s)? This action cannot be undone.`,
+      variant: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setDialog(null)
+        const resp = await postJson('/api/recordings/bulk-delete', {
+          ids: Array.from(selected),
+        })
+        if (resp && resp.ok) {
+          setSelected(new Set())
+          fetchRecordings()
+        } else {
+          setDialog({
+            title: 'Error',
+            message: 'Bulk delete failed. Please try again.',
+            onConfirm: () => setDialog(null),
+          })
+        }
+      },
     })
-    if (resp && resp.ok) {
-      setSelected(new Set())
-      fetchRecordings()
-    } else {
-      alert('Bulk delete failed')
-    }
   }, [selected, fetchRecordings])
 
   // -----------------------------------------------------------------------
@@ -563,13 +606,17 @@ export default function RecordingsPage() {
           colHelper.display({
             id: 'select',
             header: () => (
-              <input
-                type="checkbox"
-                title="Select all"
-                className="w-4 h-4"
-                checked={selected.size === recordings.length && recordings.length > 0}
-                onChange={e => toggleSelectAll(e.target.checked)}
-              />
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={selected.size === recordings.length && recordings.length > 0}
+                  onChange={e => toggleSelectAll(e.target.checked)}
+                />
+                <span className="text-xs text-slate-400 whitespace-nowrap">
+                  Select all {recordings.length} filtered recordings
+                </span>
+              </label>
             ),
             cell: ({ row }) => (
               <input
@@ -624,13 +671,15 @@ export default function RecordingsPage() {
           columns,
           state: { sorting },
           onSortingChange: setSorting,
+          enableColumnResizing: true,
+          columnResizeMode: 'onChange',
           getCoreRowModel: getCoreRowModel(),
           getSortedRowModel: getSortedRowModel(),
         })
 
         return (
           <div className="card overflow-x-auto">
-            <table className="table" role="table" aria-label="Recordings">
+            <table className="table recordings-table" role="table" aria-label="Recordings">
               <thead>
                 {table.getHeaderGroups().map(hg => (
                   <tr key={hg.id} className="text-xs uppercase text-slate-400">
@@ -641,7 +690,7 @@ export default function RecordingsPage() {
                           key={header.id}
                           className={`th${isSelect ? '' : ' cursor-pointer hover:text-sky-400 select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400'}`}
                           onClick={isSelect ? undefined : header.column.getToggleSortingHandler()}
-                          style={isSelect ? { width: 32 } : undefined}
+                          style={{ width: header.getSize(), position: 'relative' }}
                           tabIndex={isSelect ? undefined : 0}
                           aria-sort={isSelect ? undefined : (
                             header.column.getIsSorted() === 'asc' ? 'ascending' as const
@@ -660,6 +709,13 @@ export default function RecordingsPage() {
                               {flexRender(header.column.columnDef.header, header.getContext())}
                               {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? <span className="ml-1 text-slate-400">↕</span>}
                             </>
+                          )}
+                          {header.column.getCanResize() && (
+                            <div
+                              onMouseDown={header.getResizeHandler()}
+                              onTouchStart={header.getResizeHandler()}
+                              className={`resizer ${header.column.getIsResizing() ? 'isResizing' : ''}`}
+                            />
                           )}
                         </th>
                       )
@@ -680,8 +736,8 @@ export default function RecordingsPage() {
                         className={`cursor-pointer hover:bg-slate-800/40 ${isChecked ? 'bg-sky-900/20' : ''} ${isExpanded ? 'bg-slate-800/30' : ''}`}
                         onClick={() => toggleExpand(rec.id)}
                       >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="td text-sm" style={cell.column.id === 'select' ? { width: 32 } : undefined}>
+                          {row.getVisibleCells().map(cell => (
+                          <td key={cell.id} className="td text-sm" style={{ width: cell.column.getSize() }}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}
@@ -724,6 +780,17 @@ export default function RecordingsPage() {
           </div>
         )
       })()}
+      {/* Confirm dialog */}
+      <ConfirmDialog
+        open={dialog !== null}
+        title={dialog?.title ?? ''}
+        confirmLabel={dialog?.confirmLabel}
+        variant={dialog?.variant}
+        onConfirm={() => dialog?.onConfirm()}
+        onCancel={() => setDialog(null)}
+      >
+        {dialog?.message}
+      </ConfirmDialog>
     </div>
   )
 }

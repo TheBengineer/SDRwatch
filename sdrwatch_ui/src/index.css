@@ -105,6 +105,31 @@
     @apply px-3 py-2 text-left;
     border-bottom: 1px solid var(--table-border);
   }
+  /* Column resize handle */
+  .resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    cursor: col-resize;
+    user-select: none;
+    touch-action: none;
+    background: transparent;
+    z-index: 1;
+  }
+  .resizer:hover,
+  .resizer.isResizing {
+    background: rgba(14, 165, 233, 0.35);
+  }
+  /* Row striping – SignalsListPage (flat tbody > tr) */
+  .signals-table tbody tr:nth-child(even):not(:hover) {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+  /* Row striping – RecordingsPage (tbody > tbody > tr) */
+  .recordings-table > tbody > tbody:nth-child(even) > tr:first-child:not(:hover) {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
   .field {
     @apply flex flex-col gap-1;
   }
