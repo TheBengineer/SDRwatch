@@ -111,7 +111,7 @@ CMD ["python3", "sdrwatch-control.py", "serve", "--host", "0.0.0.0", "--port", "
 FROM node:20 AS frontend
 WORKDIR /build
 COPY sdrwatch_ui/package.json sdrwatch_ui/package-lock.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 COPY sdrwatch_ui/ .
 RUN npm run build
 
