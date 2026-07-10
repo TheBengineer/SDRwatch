@@ -2,6 +2,7 @@
 // audio player, demodulation, bulk delete, and polling — all in one unified UI surface.
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useBaseline } from '../context/BaselineContext'
 import {
   createColumnHelper,
   flexRender,
@@ -152,12 +153,19 @@ const DEFAULT_FILTERS: RecFilters = {
 export default function RecordingsPage() {
   const [searchParams] = useSearchParams()
   const detectionId = searchParams.get('detection_id')
+  const { baselineId: contextBaselineId } = useBaseline()
 
   // Baselines list for filter
   const [baselines, setBaselines] = useState<Baseline[]>([])
 
-  // Filters
-  const [filters, setFilters] = useState<RecFilters>(DEFAULT_FILTERS)
+  // Filters — initialize baseline_id from URL, fall back to context
+  const [filters, setFilters] = useState<RecFilters>(() => {
+    const urlBid = searchParams.get('baseline_id')
+    return {
+      ...DEFAULT_FILTERS,
+      baselineId: urlBid ?? (contextBaselineId?.toString() ?? ''),
+    }
+  })
 
   // Recordings
   const [recordings, setRecordings] = useState<Recording[]>([])

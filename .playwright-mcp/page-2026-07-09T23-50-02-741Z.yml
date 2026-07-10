@@ -1,0 +1,1067 @@
+- generic [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - generic [ref=f1e4]: 📡 SDRwatch
+      - navigation [ref=f1e5]:
+        - link "Control" [ref=f1e6] [cursor=pointer]:
+          - /url: /control
+        - link "Dashboard" [ref=f1e7] [cursor=pointer]:
+          - /url: /
+        - link "Signals" [ref=f1e8] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f1e9] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f1e10] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f1e11] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f1e12] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f1e13] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f1e14] [cursor=pointer]:
+          - /url: /debug
+  - main [ref=f1e15]:
+    - generic [ref=f1e17]:
+      - generic [ref=f1e18]:
+        - generic [ref=f1e19]:
+          - generic [ref=f1e20]: Quick navigation
+          - generic [ref=f1e21]: Jump between tactical views.
+        - generic "Dashboard shortcuts" [ref=f1e22]:
+          - link "Dashboard" [ref=f1e23] [cursor=pointer]:
+            - /url: "#baseline-overview"
+          - link "Changes" [ref=f1e24] [cursor=pointer]:
+            - /url: /changes
+          - link "Spur map" [ref=f1e25] [cursor=pointer]:
+            - /url: /spur-map
+          - link "Control" [ref=f1e26] [cursor=pointer]:
+            - /url: /control
+      - generic [ref=f1e27]:
+        - generic [ref=f1e28]:
+          - generic [ref=f1e29]:
+            - heading "Baseline overview" [level=2] [ref=f1e30]
+            - paragraph [ref=f1e31]: Understand what “normal” looks like for the active baseline.
+          - generic [ref=f1e32]:
+            - generic [ref=f1e33]: Baseline
+            - combobox "Baseline" [ref=f1e34]:
+              - option "#2 · Office SDR (88.000–174.000 MHz)" [selected]
+              - option "#1 · docker-test-baseline (88.000–108.000 MHz)"
+            - button "Refresh" [ref=f1e35] [cursor=pointer]
+        - generic [ref=f1e36]:
+          - generic [ref=f1e37]:
+            - generic [ref=f1e38]: Baseline
+            - generic [ref=f1e39]: "#2 · Office SDR"
+            - generic [ref=f1e40]: 88.000–174.000 MHz
+          - generic [ref=f1e41]:
+            - generic [ref=f1e42]: Total windows
+            - generic [ref=f1e43]: "60374"
+            - generic [ref=f1e44]: derived from scan updates
+          - generic [ref=f1e45]:
+            - generic [ref=f1e46]: Persistent signals
+            - generic [ref=f1e47]: "24"
+            - generic [ref=f1e48]: updated per sweep
+          - generic [ref=f1e49]:
+            - generic [ref=f1e50]: Last update
+            - generic [ref=f1e51]: Jul 09 23:50
+            - generic [ref=f1e52]: 0 new in 30 min
+        - generic [ref=f1e53]:
+          - generic [ref=f1e54]:
+            - heading "Band summary" [level=3] [ref=f1e55]
+            - generic [ref=f1e56]: 6 bands · 14.3 MHz slices
+          - generic [ref=f1e57]:
+            - generic [ref=f1e58]:
+              - generic [ref=f1e59]:
+                - generic [ref=f1e60]:
+                  - generic [ref=f1e61]: 88–102 MHz
+                  - generic [ref=f1e62]: 0% occupied · Low
+                - generic [ref=f1e63]: Stable
+              - generic [ref=f1e64]:
+                - generic [ref=f1e65]: Persistent 12
+                - generic [ref=f1e66]: Recent new 0
+                - generic [ref=f1e67]: Noise -92.1 dB
+            - generic [ref=f1e68]:
+              - generic [ref=f1e69]:
+                - generic [ref=f1e70]:
+                  - generic [ref=f1e71]: 102–117 MHz
+                  - generic [ref=f1e72]: 0% occupied · Low
+                - generic [ref=f1e73]: Stable
+              - generic [ref=f1e74]:
+                - generic [ref=f1e75]: Persistent 11
+                - generic [ref=f1e76]: Recent new 0
+                - generic [ref=f1e77]: Noise -87.1 dB
+            - generic [ref=f1e78]:
+              - generic [ref=f1e79]:
+                - generic [ref=f1e80]:
+                  - generic [ref=f1e81]: 117–131 MHz
+                  - generic [ref=f1e82]: 0% occupied · Low
+                - generic [ref=f1e83]: Quiet
+              - generic [ref=f1e84]:
+                - generic [ref=f1e85]: Persistent 0
+                - generic [ref=f1e86]: Recent new 0
+            - generic [ref=f1e87]:
+              - generic [ref=f1e88]:
+                - generic [ref=f1e89]:
+                  - generic [ref=f1e90]: 131–145 MHz
+                  - generic [ref=f1e91]: 0% occupied · Low
+                - generic [ref=f1e92]: Quiet
+              - generic [ref=f1e93]:
+                - generic [ref=f1e94]: Persistent 0
+                - generic [ref=f1e95]: Recent new 0
+            - generic [ref=f1e96]:
+              - generic [ref=f1e97]:
+                - generic [ref=f1e98]:
+                  - generic [ref=f1e99]: 145–160 MHz
+                  - generic [ref=f1e100]: 0% occupied · Low
+                - generic [ref=f1e101]: Quiet
+              - generic [ref=f1e102]:
+                - generic [ref=f1e103]: Persistent 0
+                - generic [ref=f1e104]: Recent new 0
+                - generic [ref=f1e105]: Noise -66.1 dB
+            - generic [ref=f1e106]:
+              - generic [ref=f1e107]:
+                - generic [ref=f1e108]:
+                  - generic [ref=f1e109]: 160–174 MHz
+                  - generic [ref=f1e110]: 0% occupied · Low
+                - generic [ref=f1e111]: Quiet
+              - generic [ref=f1e112]:
+                - generic [ref=f1e113]: Persistent 0
+                - generic [ref=f1e114]: Recent new 0
+                - generic [ref=f1e115]: Noise -66.4 dB
+        - generic [ref=f1e116]:
+          - generic [ref=f1e117]:
+            - heading "Hotspots" [level=3] [ref=f1e118]
+            - generic [ref=f1e119]: 60 buckets · 1.433 MHz each
+          - generic "Hotspot strip" [ref=f1e120]:
+            - generic:
+              - generic "88.000–89.433 MHz · occ 0.0%"
+            - generic:
+              - generic "89.433–90.867 MHz · occ 0.0%"
+            - generic:
+              - generic "90.867–92.300 MHz · occ 0.0%"
+            - generic:
+              - generic "92.300–93.733 MHz · occ 0.0%"
+            - generic:
+              - generic "93.733–95.167 MHz · occ 0.0%"
+            - generic:
+              - generic "95.167–96.600 MHz · occ 0.0%"
+            - generic:
+              - generic "96.600–98.033 MHz · occ 0.0%"
+            - generic:
+              - generic "98.033–99.467 MHz · occ 0.0%"
+            - generic:
+              - generic "99.467–100.900 MHz · occ 0.0%"
+            - generic:
+              - generic "100.900–102.333 MHz · occ 0.0%"
+            - generic:
+              - generic "102.333–103.767 MHz · occ 0.0%"
+            - generic:
+              - generic "103.767–105.200 MHz · occ 0.0%"
+            - generic:
+              - generic "105.200–106.633 MHz · occ 0.0%"
+            - generic:
+              - generic "106.633–108.067 MHz · occ 0.0%"
+            - generic:
+              - generic "108.067–109.500 MHz · occ 0.0%"
+            - generic:
+              - generic "109.500–110.933 MHz · occ 0.0%"
+            - generic:
+              - generic "110.933–112.367 MHz · occ 0.0%"
+            - generic:
+              - generic "112.367–113.800 MHz · occ 0.0%"
+            - generic:
+              - generic "113.800–115.233 MHz · occ 0.0%"
+            - generic:
+              - generic "115.233–116.667 MHz · occ 0.0%"
+            - generic:
+              - generic "116.667–118.100 MHz · occ 0.0%"
+            - generic:
+              - generic "118.100–119.533 MHz · occ 0.0%"
+            - generic:
+              - generic "119.533–120.967 MHz · occ 0.0%"
+            - generic:
+              - generic "120.967–122.400 MHz · occ 0.0%"
+            - generic:
+              - generic "122.400–123.833 MHz · occ 0.0%"
+            - generic:
+              - generic "123.833–125.267 MHz · occ 0.0%"
+            - generic:
+              - generic "125.267–126.700 MHz · occ 0.0%"
+            - generic:
+              - generic "126.700–128.133 MHz · occ 0.0%"
+            - generic:
+              - generic "128.133–129.567 MHz · occ 0.0%"
+            - generic:
+              - generic "129.567–131.000 MHz · occ 0.0%"
+            - generic:
+              - generic "131.000–132.433 MHz · occ 0.0%"
+            - generic:
+              - generic "132.433–133.867 MHz · occ 0.0%"
+            - generic:
+              - generic "133.867–135.300 MHz · occ 0.0%"
+            - generic:
+              - generic "135.300–136.733 MHz · occ 0.0%"
+            - generic:
+              - generic "136.733–138.167 MHz · occ 0.0%"
+            - generic:
+              - generic "138.167–139.600 MHz · occ 0.0%"
+            - generic:
+              - generic "139.600–141.033 MHz · occ 0.0%"
+            - generic:
+              - generic "141.033–142.467 MHz · occ 0.0%"
+            - generic:
+              - generic "142.467–143.900 MHz · occ 0.0%"
+            - generic:
+              - generic "143.900–145.333 MHz · occ 0.0%"
+            - generic:
+              - generic "145.333–146.767 MHz · occ 0.0%"
+            - generic:
+              - generic "146.767–148.200 MHz · occ 0.0%"
+            - generic "148.200–149.633 MHz · occ 0.0%" [ref=f1e122]
+            - generic "149.633–151.067 MHz · occ 0.0%" [ref=f1e124]
+            - generic "151.067–152.500 MHz · occ 0.0%" [ref=f1e126]
+            - generic "152.500–153.933 MHz · occ 0.0%" [ref=f1e128]
+            - generic "153.933–155.367 MHz · occ 0.0%" [ref=f1e130]
+            - generic "155.367–156.800 MHz · occ 0.0%" [ref=f1e132]
+            - generic "156.800–158.233 MHz · occ 0.0%" [ref=f1e134]
+            - generic "158.233–159.667 MHz · occ 0.0%" [ref=f1e136]
+            - generic "159.667–161.100 MHz · occ 0.0%" [ref=f1e138]
+            - generic "161.100–162.533 MHz · occ 0.0%" [ref=f1e140]
+            - generic "162.533–163.967 MHz · occ 0.0%" [ref=f1e142]
+            - generic "163.967–165.400 MHz · occ 0.0%" [ref=f1e144]
+            - generic "165.400–166.833 MHz · occ 0.0%" [ref=f1e146]
+            - generic "166.833–168.267 MHz · occ 0.0%" [ref=f1e148]
+            - generic "168.267–169.700 MHz · occ 0.0%" [ref=f1e150]
+            - generic "169.700–171.133 MHz · occ 0.0%" [ref=f1e152]
+            - generic "171.133–172.567 MHz · occ 0.0%" [ref=f1e154]
+            - generic "172.567–174.000 MHz · occ 0.0%" [ref=f1e156]
+          - generic [ref=f1e157]:
+            - generic [ref=f1e158]: 88.000 MHz
+            - generic [ref=f1e159]: 131.000 MHz
+            - generic [ref=f1e160]: 174.000 MHz
+      - generic [ref=f1e161]:
+        - generic [ref=f1e162]:
+          - generic [ref=f1e163]:
+            - heading "Signal cards" [level=2] [ref=f1e164]
+            - paragraph [ref=f1e165]: Active detections observed in the past 15 minutes.
+          - generic [ref=f1e166]:
+            - link "View all signals" [ref=f1e167] [cursor=pointer]:
+              - /url: /signals?baseline_id=2
+            - generic [ref=f1e168]: 22 signals
+        - generic [ref=f1e169]:
+          - article [ref=f1e170]:
+            - generic [ref=f1e171]:
+              - generic [ref=f1e172]:
+                - link "SIG-0026" [ref=f1e174] [cursor=pointer]:
+                  - /url: /signal/26
+                - generic [ref=f1e175]: 107.497 MHz
+              - generic [ref=f1e176]:
+                - button "☆" [ref=f1e177] [cursor=pointer]
+                - button "🔇" [ref=f1e178] [cursor=pointer]
+                - generic [ref=f1e179]: Unknown
+            - generic [ref=f1e180]:
+              - generic [ref=f1e181]:
+                - generic [ref=f1e182]: Bandwidth
+                - generic [ref=f1e183]: 80.0 kHz
+              - generic [ref=f1e184]:
+                - generic [ref=f1e185]: Confidence
+                - generic [ref=f1e186]: 68.0%
+            - generic [ref=f1e187]:
+              - generic [ref=f1e188]:
+                - generic [ref=f1e189]: First seen
+                - generic [ref=f1e190]: Jul 09 02:14
+              - generic [ref=f1e191]:
+                - generic [ref=f1e192]: Last seen
+                - generic [ref=f1e193]: Jul 09 02:19
+            - generic [ref=f1e194]:
+              - generic [ref=f1e195]: Hits 2
+              - generic [ref=f1e196]: Windows 1
+              - generic [ref=f1e197]: Hit ratio 200%
+            - generic [ref=f1e198]:
+              - link "Details" [ref=f1e199] [cursor=pointer]:
+                - /url: /signal/26
+              - combobox "Classify signal" [ref=f1e200]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e201]:
+            - generic [ref=f1e202]:
+              - generic [ref=f1e203]:
+                - link "SIG-0022" [ref=f1e205] [cursor=pointer]:
+                  - /url: /signal/22
+                - generic [ref=f1e206]: 105.522 MHz
+              - generic [ref=f1e207]:
+                - button "☆" [ref=f1e208] [cursor=pointer]
+                - button "🔇" [ref=f1e209] [cursor=pointer]
+                - generic [ref=f1e210]: Unknown
+            - generic [ref=f1e211]:
+              - generic [ref=f1e212]:
+                - generic [ref=f1e213]: Bandwidth
+                - generic [ref=f1e214]: 80.0 kHz
+              - generic [ref=f1e215]:
+                - generic [ref=f1e216]: Confidence
+                - generic [ref=f1e217]: 67.0%
+            - generic [ref=f1e218]:
+              - generic [ref=f1e219]:
+                - generic [ref=f1e220]: First seen
+                - generic [ref=f1e221]: Jul 08 22:04
+              - generic [ref=f1e222]:
+                - generic [ref=f1e223]: Last seen
+                - generic [ref=f1e224]: Jul 09 02:19
+            - generic [ref=f1e225]:
+              - generic [ref=f1e226]: Hits 2
+              - generic [ref=f1e227]: Windows 1
+              - generic [ref=f1e228]: Hit ratio 200%
+            - generic [ref=f1e229]:
+              - link "Details" [ref=f1e230] [cursor=pointer]:
+                - /url: /signal/22
+              - combobox "Classify signal" [ref=f1e231]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e232]:
+            - generic [ref=f1e233]:
+              - generic [ref=f1e234]:
+                - link "SIG-0024" [ref=f1e236] [cursor=pointer]:
+                  - /url: /signal/24
+                - generic [ref=f1e237]: 103.669 MHz
+              - generic [ref=f1e238]:
+                - button "☆" [ref=f1e239] [cursor=pointer]
+                - button "🔇" [ref=f1e240] [cursor=pointer]
+                - generic [ref=f1e241]: Unknown
+            - generic [ref=f1e242]:
+              - generic [ref=f1e243]:
+                - generic [ref=f1e244]: Bandwidth
+                - generic [ref=f1e245]: 80.0 kHz
+              - generic [ref=f1e246]:
+                - generic [ref=f1e247]: Confidence
+                - generic [ref=f1e248]: 55.0%
+            - generic [ref=f1e249]:
+              - generic [ref=f1e250]:
+                - generic [ref=f1e251]: First seen
+                - generic [ref=f1e252]: Jul 09 02:14
+              - generic [ref=f1e253]:
+                - generic [ref=f1e254]: Last seen
+                - generic [ref=f1e255]: Jul 09 02:18
+            - generic [ref=f1e256]:
+              - generic [ref=f1e257]: Hits 1
+              - generic [ref=f1e258]: Windows 1
+              - generic [ref=f1e259]: Hit ratio 100%
+            - generic [ref=f1e260]:
+              - link "Details" [ref=f1e261] [cursor=pointer]:
+                - /url: /signal/24
+              - combobox "Classify signal" [ref=f1e262]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e263]:
+            - generic [ref=f1e264]:
+              - generic [ref=f1e265]:
+                - link "SIG-0018" [ref=f1e267] [cursor=pointer]:
+                  - /url: /signal/18
+                - generic [ref=f1e268]: 103.068 MHz
+              - generic [ref=f1e269]:
+                - button "☆" [ref=f1e270] [cursor=pointer]
+                - button "🔇" [ref=f1e271] [cursor=pointer]
+                - generic [ref=f1e272]: Unknown
+            - generic [ref=f1e273]:
+              - generic [ref=f1e274]:
+                - generic [ref=f1e275]: Bandwidth
+                - generic [ref=f1e276]: 80.0 kHz
+              - generic [ref=f1e277]:
+                - generic [ref=f1e278]: Confidence
+                - generic [ref=f1e279]: 56.0%
+            - generic [ref=f1e280]:
+              - generic [ref=f1e281]:
+                - generic [ref=f1e282]: First seen
+                - generic [ref=f1e283]: Jul 08 22:04
+              - generic [ref=f1e284]:
+                - generic [ref=f1e285]: Last seen
+                - generic [ref=f1e286]: Jul 09 02:18
+            - generic [ref=f1e287]:
+              - generic [ref=f1e288]: Hits 1
+              - generic [ref=f1e289]: Windows 1
+              - generic [ref=f1e290]: Hit ratio 100%
+            - generic [ref=f1e291]:
+              - link "Details" [ref=f1e292] [cursor=pointer]:
+                - /url: /signal/18
+              - combobox "Classify signal" [ref=f1e293]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e294]:
+            - generic [ref=f1e295]:
+              - generic [ref=f1e296]:
+                - link "SIG-0017" [ref=f1e298] [cursor=pointer]:
+                  - /url: /signal/17
+                - generic [ref=f1e299]: 101.246 MHz
+              - generic [ref=f1e300]:
+                - button "☆" [ref=f1e301] [cursor=pointer]
+                - button "🔇" [ref=f1e302] [cursor=pointer]
+                - generic [ref=f1e303]: Unknown
+            - generic [ref=f1e304]:
+              - generic [ref=f1e305]:
+                - generic [ref=f1e306]: Bandwidth
+                - generic [ref=f1e307]: 80.0 kHz
+              - generic [ref=f1e308]:
+                - generic [ref=f1e309]: Confidence
+                - generic [ref=f1e310]: 55.0%
+            - generic [ref=f1e311]:
+              - generic [ref=f1e312]:
+                - generic [ref=f1e313]: First seen
+                - generic [ref=f1e314]: Jul 08 22:04
+              - generic [ref=f1e315]:
+                - generic [ref=f1e316]: Last seen
+                - generic [ref=f1e317]: Jul 09 02:18
+            - generic [ref=f1e318]:
+              - generic [ref=f1e319]: Hits 1
+              - generic [ref=f1e320]: Windows 1
+              - generic [ref=f1e321]: Hit ratio 100%
+            - generic [ref=f1e322]:
+              - link "Details" [ref=f1e323] [cursor=pointer]:
+                - /url: /signal/17
+              - combobox "Classify signal" [ref=f1e324]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e325]:
+            - generic [ref=f1e326]:
+              - generic [ref=f1e327]:
+                - link "SIG-0023" [ref=f1e329] [cursor=pointer]:
+                  - /url: /signal/23
+                - generic [ref=f1e330]: 88.778 MHz
+              - generic [ref=f1e331]:
+                - button "☆" [ref=f1e332] [cursor=pointer]
+                - button "🔇" [ref=f1e333] [cursor=pointer]
+                - generic [ref=f1e334]: Unknown
+            - generic [ref=f1e335]:
+              - generic [ref=f1e336]:
+                - generic [ref=f1e337]: Bandwidth
+                - generic [ref=f1e338]: 80.0 kHz
+              - generic [ref=f1e339]:
+                - generic [ref=f1e340]: Confidence
+                - generic [ref=f1e341]: 53.0%
+            - generic [ref=f1e342]:
+              - generic [ref=f1e343]:
+                - generic [ref=f1e344]: First seen
+                - generic [ref=f1e345]: Jul 09 02:14
+              - generic [ref=f1e346]:
+                - generic [ref=f1e347]: Last seen
+                - generic [ref=f1e348]: Jul 09 02:18
+            - generic [ref=f1e349]:
+              - generic [ref=f1e350]: Hits 1
+              - generic [ref=f1e351]: Windows 1
+              - generic [ref=f1e352]: Hit ratio 100%
+            - generic [ref=f1e353]:
+              - link "Details" [ref=f1e354] [cursor=pointer]:
+                - /url: /signal/23
+              - combobox "Classify signal" [ref=f1e355]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e356]:
+            - generic [ref=f1e357]:
+              - generic [ref=f1e358]:
+                - link "SIG-0011" [ref=f1e360] [cursor=pointer]:
+                  - /url: /signal/11
+                - generic [ref=f1e361]: 88.345 MHz
+              - generic [ref=f1e362]:
+                - button "☆" [ref=f1e363] [cursor=pointer]
+                - button "🔇" [ref=f1e364] [cursor=pointer]
+                - generic [ref=f1e365]: Unknown
+            - generic [ref=f1e366]:
+              - generic [ref=f1e367]:
+                - generic [ref=f1e368]: Bandwidth
+                - generic [ref=f1e369]: 80.0 kHz
+              - generic [ref=f1e370]:
+                - generic [ref=f1e371]: Confidence
+                - generic [ref=f1e372]: 52.0%
+            - generic [ref=f1e373]:
+              - generic [ref=f1e374]:
+                - generic [ref=f1e375]: First seen
+                - generic [ref=f1e376]: Jul 08 22:04
+              - generic [ref=f1e377]:
+                - generic [ref=f1e378]: Last seen
+                - generic [ref=f1e379]: Jul 09 02:18
+            - generic [ref=f1e380]:
+              - generic [ref=f1e381]: Hits 1
+              - generic [ref=f1e382]: Windows 1
+              - generic [ref=f1e383]: Hit ratio 100%
+            - generic [ref=f1e384]:
+              - link "Details" [ref=f1e385] [cursor=pointer]:
+                - /url: /signal/11
+              - combobox "Classify signal" [ref=f1e386]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e387]:
+            - generic [ref=f1e388]:
+              - generic [ref=f1e389]:
+                - link "SIG-0010" [ref=f1e391] [cursor=pointer]:
+                  - /url: /signal/10
+                - generic [ref=f1e392]: 87.896 MHz
+              - generic [ref=f1e393]:
+                - button "☆" [ref=f1e394] [cursor=pointer]
+                - button "🔇" [ref=f1e395] [cursor=pointer]
+                - generic [ref=f1e396]: Unknown
+            - generic [ref=f1e397]:
+              - generic [ref=f1e398]:
+                - generic [ref=f1e399]: Bandwidth
+                - generic [ref=f1e400]: 80.0 kHz
+              - generic [ref=f1e401]:
+                - generic [ref=f1e402]: Confidence
+                - generic [ref=f1e403]: 68.0%
+            - generic [ref=f1e404]:
+              - generic [ref=f1e405]:
+                - generic [ref=f1e406]: First seen
+                - generic [ref=f1e407]: Jul 08 22:04
+              - generic [ref=f1e408]:
+                - generic [ref=f1e409]: Last seen
+                - generic [ref=f1e410]: Jul 09 02:18
+            - generic [ref=f1e411]:
+              - generic [ref=f1e412]: Hits 3
+              - generic [ref=f1e413]: Windows 2
+              - generic [ref=f1e414]: Hit ratio 150%
+            - generic [ref=f1e415]:
+              - link "Details" [ref=f1e416] [cursor=pointer]:
+                - /url: /signal/10
+              - combobox "Classify signal" [ref=f1e417]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e418]:
+            - generic [ref=f1e419]:
+              - generic [ref=f1e420]:
+                - link "SIG-0034" [ref=f1e422] [cursor=pointer]:
+                  - /url: /signal/34
+                - generic [ref=f1e423]: 106.255 MHz
+              - generic [ref=f1e424]:
+                - button "☆" [ref=f1e425] [cursor=pointer]
+                - button "🔇" [ref=f1e426] [cursor=pointer]
+                - generic [ref=f1e427]: Unknown
+            - generic [ref=f1e428]:
+              - generic [ref=f1e429]:
+                - generic [ref=f1e430]: Bandwidth
+                - generic [ref=f1e431]: 80.0 kHz
+              - generic [ref=f1e432]:
+                - generic [ref=f1e433]: Confidence
+                - generic [ref=f1e434]: 56.0%
+            - generic [ref=f1e435]:
+              - generic [ref=f1e436]:
+                - generic [ref=f1e437]: First seen
+                - generic [ref=f1e438]: Jul 09 02:18
+              - generic [ref=f1e439]:
+                - generic [ref=f1e440]: Last seen
+                - generic [ref=f1e441]: Jul 09 02:18
+            - generic [ref=f1e442]:
+              - generic [ref=f1e443]: Hits 1
+              - generic [ref=f1e444]: Windows 1
+              - generic [ref=f1e445]: Hit ratio 100%
+            - generic [ref=f1e446]:
+              - link "Details" [ref=f1e447] [cursor=pointer]:
+                - /url: /signal/34
+              - combobox "Classify signal" [ref=f1e448]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e449]:
+            - generic [ref=f1e450]:
+              - generic [ref=f1e451]:
+                - link "SIG-0032" [ref=f1e453] [cursor=pointer]:
+                  - /url: /signal/32
+                - generic [ref=f1e454]: 100.444 MHz
+              - generic [ref=f1e455]:
+                - button "☆" [ref=f1e456] [cursor=pointer]
+                - button "🔇" [ref=f1e457] [cursor=pointer]
+                - generic [ref=f1e458]: Unknown
+            - generic [ref=f1e459]:
+              - generic [ref=f1e460]:
+                - generic [ref=f1e461]: Bandwidth
+                - generic [ref=f1e462]: 80.0 kHz
+              - generic [ref=f1e463]:
+                - generic [ref=f1e464]: Confidence
+                - generic [ref=f1e465]: 72.0%
+            - generic [ref=f1e466]:
+              - generic [ref=f1e467]:
+                - generic [ref=f1e468]: First seen
+                - generic [ref=f1e469]: Jul 09 02:18
+              - generic [ref=f1e470]:
+                - generic [ref=f1e471]: Last seen
+                - generic [ref=f1e472]: Jul 09 02:18
+            - generic [ref=f1e473]:
+              - generic [ref=f1e474]: Hits 1
+              - generic [ref=f1e475]: Windows 1
+              - generic [ref=f1e476]: Hit ratio 100%
+            - generic [ref=f1e477]:
+              - link "Details" [ref=f1e478] [cursor=pointer]:
+                - /url: /signal/32
+              - combobox "Classify signal" [ref=f1e479]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e480]:
+            - generic [ref=f1e481]:
+              - generic [ref=f1e482]:
+                - link "SIG-0031" [ref=f1e484] [cursor=pointer]:
+                  - /url: /signal/31
+                - generic [ref=f1e485]: 98.950 MHz
+              - generic [ref=f1e486]:
+                - button "☆" [ref=f1e487] [cursor=pointer]
+                - button "🔇" [ref=f1e488] [cursor=pointer]
+                - generic [ref=f1e489]: Unknown
+            - generic [ref=f1e490]:
+              - generic [ref=f1e491]:
+                - generic [ref=f1e492]: Bandwidth
+                - generic [ref=f1e493]: 80.0 kHz
+              - generic [ref=f1e494]:
+                - generic [ref=f1e495]: Confidence
+                - generic [ref=f1e496]: 72.0%
+            - generic [ref=f1e497]:
+              - generic [ref=f1e498]:
+                - generic [ref=f1e499]: First seen
+                - generic [ref=f1e500]: Jul 09 02:18
+              - generic [ref=f1e501]:
+                - generic [ref=f1e502]: Last seen
+                - generic [ref=f1e503]: Jul 09 02:18
+            - generic [ref=f1e504]:
+              - generic [ref=f1e505]: Hits 1
+              - generic [ref=f1e506]: Windows 1
+              - generic [ref=f1e507]: Hit ratio 100%
+            - generic [ref=f1e508]:
+              - link "Details" [ref=f1e509] [cursor=pointer]:
+                - /url: /signal/31
+              - combobox "Classify signal" [ref=f1e510]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e511]:
+            - generic [ref=f1e512]:
+              - generic [ref=f1e513]:
+                - link "SIG-0030" [ref=f1e515] [cursor=pointer]:
+                  - /url: /signal/30
+                - generic [ref=f1e516]: 96.219 MHz
+              - generic [ref=f1e517]:
+                - button "☆" [ref=f1e518] [cursor=pointer]
+                - button "🔇" [ref=f1e519] [cursor=pointer]
+                - generic [ref=f1e520]: Unknown
+            - generic [ref=f1e521]:
+              - generic [ref=f1e522]:
+                - generic [ref=f1e523]: Bandwidth
+                - generic [ref=f1e524]: 80.0 kHz
+              - generic [ref=f1e525]:
+                - generic [ref=f1e526]: Confidence
+                - generic [ref=f1e527]: 55.0%
+            - generic [ref=f1e528]:
+              - generic [ref=f1e529]:
+                - generic [ref=f1e530]: First seen
+                - generic [ref=f1e531]: Jul 09 02:18
+              - generic [ref=f1e532]:
+                - generic [ref=f1e533]: Last seen
+                - generic [ref=f1e534]: Jul 09 02:18
+            - generic [ref=f1e535]:
+              - generic [ref=f1e536]: Hits 1
+              - generic [ref=f1e537]: Windows 1
+              - generic [ref=f1e538]: Hit ratio 100%
+            - generic [ref=f1e539]:
+              - link "Details" [ref=f1e540] [cursor=pointer]:
+                - /url: /signal/30
+              - combobox "Classify signal" [ref=f1e541]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e542]:
+            - generic [ref=f1e543]:
+              - generic [ref=f1e544]:
+                - link "SIG-0033" [ref=f1e546] [cursor=pointer]:
+                  - /url: /signal/33
+                - generic [ref=f1e547]: 102.910 MHz
+              - generic [ref=f1e548]:
+                - button "☆" [ref=f1e549] [cursor=pointer]
+                - button "🔇" [ref=f1e550] [cursor=pointer]
+                - generic [ref=f1e551]: Unknown
+            - generic [ref=f1e552]:
+              - generic [ref=f1e553]:
+                - generic [ref=f1e554]: Bandwidth
+                - generic [ref=f1e555]: 126.5 kHz
+              - generic [ref=f1e556]:
+                - generic [ref=f1e557]: Confidence
+                - generic [ref=f1e558]: 58.0%
+            - generic [ref=f1e559]:
+              - generic [ref=f1e560]:
+                - generic [ref=f1e561]: First seen
+                - generic [ref=f1e562]: Jul 09 02:18
+              - generic [ref=f1e563]:
+                - generic [ref=f1e564]: Last seen
+                - generic [ref=f1e565]: Jul 09 02:18
+            - generic [ref=f1e566]:
+              - generic [ref=f1e567]: Hits 4
+              - generic [ref=f1e568]: Windows 3
+              - generic [ref=f1e569]: Hit ratio 133%
+            - generic [ref=f1e570]:
+              - link "Details" [ref=f1e571] [cursor=pointer]:
+                - /url: /signal/33
+              - combobox "Classify signal" [ref=f1e572]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e573]:
+            - generic [ref=f1e574]:
+              - generic [ref=f1e575]:
+                - link "SIG-0021" [ref=f1e577] [cursor=pointer]:
+                  - /url: /signal/21
+                - generic [ref=f1e578]: 102.731 MHz
+              - generic [ref=f1e579]:
+                - button "☆" [ref=f1e580] [cursor=pointer]
+                - button "🔇" [ref=f1e581] [cursor=pointer]
+                - generic [ref=f1e582]: Unknown
+            - generic [ref=f1e583]:
+              - generic [ref=f1e584]:
+                - generic [ref=f1e585]: Bandwidth
+                - generic [ref=f1e586]: 80.0 kHz
+              - generic [ref=f1e587]:
+                - generic [ref=f1e588]: Confidence
+                - generic [ref=f1e589]: 73.0%
+            - generic [ref=f1e590]:
+              - generic [ref=f1e591]:
+                - generic [ref=f1e592]: First seen
+                - generic [ref=f1e593]: Jul 08 22:04
+              - generic [ref=f1e594]:
+                - generic [ref=f1e595]: Last seen
+                - generic [ref=f1e596]: Jul 09 02:18
+            - generic [ref=f1e597]:
+              - generic [ref=f1e598]: Hits 2
+              - generic [ref=f1e599]: Windows 2
+              - generic [ref=f1e600]: Hit ratio 100%
+            - generic [ref=f1e601]:
+              - link "Details" [ref=f1e602] [cursor=pointer]:
+                - /url: /signal/21
+              - combobox "Classify signal" [ref=f1e603]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e604]:
+            - generic [ref=f1e605]:
+              - generic [ref=f1e606]:
+                - link "SIG-0020" [ref=f1e608] [cursor=pointer]:
+                  - /url: /signal/20
+                - generic [ref=f1e609]: 104.525 MHz
+              - generic [ref=f1e610]:
+                - button "☆" [ref=f1e611] [cursor=pointer]
+                - button "🔇" [ref=f1e612] [cursor=pointer]
+                - generic [ref=f1e613]: Unknown
+            - generic [ref=f1e614]:
+              - generic [ref=f1e615]:
+                - generic [ref=f1e616]: Bandwidth
+                - generic [ref=f1e617]: 80.0 kHz
+              - generic [ref=f1e618]:
+                - generic [ref=f1e619]: Confidence
+                - generic [ref=f1e620]: 56.0%
+            - generic [ref=f1e621]:
+              - generic [ref=f1e622]:
+                - generic [ref=f1e623]: First seen
+                - generic [ref=f1e624]: Jul 08 22:04
+              - generic [ref=f1e625]:
+                - generic [ref=f1e626]: Last seen
+                - generic [ref=f1e627]: Jul 09 02:18
+            - generic [ref=f1e628]:
+              - generic [ref=f1e629]: Hits 2
+              - generic [ref=f1e630]: Windows 2
+              - generic [ref=f1e631]: Hit ratio 100%
+            - generic [ref=f1e632]:
+              - link "Details" [ref=f1e633] [cursor=pointer]:
+                - /url: /signal/20
+              - combobox "Classify signal" [ref=f1e634]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e635]:
+            - generic [ref=f1e636]:
+              - generic [ref=f1e637]:
+                - link "SIG-0019" [ref=f1e639] [cursor=pointer]:
+                  - /url: /signal/19
+                - generic [ref=f1e640]: 101.571 MHz
+              - generic [ref=f1e641]:
+                - button "☆" [ref=f1e642] [cursor=pointer]
+                - button "🔇" [ref=f1e643] [cursor=pointer]
+                - generic [ref=f1e644]: Unknown
+            - generic [ref=f1e645]:
+              - generic [ref=f1e646]:
+                - generic [ref=f1e647]: Bandwidth
+                - generic [ref=f1e648]: 80.0 kHz
+              - generic [ref=f1e649]:
+                - generic [ref=f1e650]: Confidence
+                - generic [ref=f1e651]: 72.0%
+            - generic [ref=f1e652]:
+              - generic [ref=f1e653]:
+                - generic [ref=f1e654]: First seen
+                - generic [ref=f1e655]: Jul 08 22:04
+              - generic [ref=f1e656]:
+                - generic [ref=f1e657]: Last seen
+                - generic [ref=f1e658]: Jul 09 02:18
+            - generic [ref=f1e659]:
+              - generic [ref=f1e660]: Hits 2
+              - generic [ref=f1e661]: Windows 2
+              - generic [ref=f1e662]: Hit ratio 100%
+            - generic [ref=f1e663]:
+              - link "Details" [ref=f1e664] [cursor=pointer]:
+                - /url: /signal/19
+              - combobox "Classify signal" [ref=f1e665]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e666]:
+            - generic [ref=f1e667]:
+              - generic [ref=f1e668]:
+                - link "SIG-0015" [ref=f1e670] [cursor=pointer]:
+                  - /url: /signal/15
+                - generic [ref=f1e671]: 97.979 MHz
+              - generic [ref=f1e672]:
+                - button "☆" [ref=f1e673] [cursor=pointer]
+                - button "🔇" [ref=f1e674] [cursor=pointer]
+                - generic [ref=f1e675]: Unknown
+            - generic [ref=f1e676]:
+              - generic [ref=f1e677]:
+                - generic [ref=f1e678]: Bandwidth
+                - generic [ref=f1e679]: 80.0 kHz
+              - generic [ref=f1e680]:
+                - generic [ref=f1e681]: Confidence
+                - generic [ref=f1e682]: 70.0%
+            - generic [ref=f1e683]:
+              - generic [ref=f1e684]:
+                - generic [ref=f1e685]: First seen
+                - generic [ref=f1e686]: Jul 08 22:04
+              - generic [ref=f1e687]:
+                - generic [ref=f1e688]: Last seen
+                - generic [ref=f1e689]: Jul 09 02:18
+            - generic [ref=f1e690]:
+              - generic [ref=f1e691]: Hits 2
+              - generic [ref=f1e692]: Windows 2
+              - generic [ref=f1e693]: Hit ratio 100%
+            - generic [ref=f1e694]:
+              - link "Details" [ref=f1e695] [cursor=pointer]:
+                - /url: /signal/15
+              - combobox "Classify signal" [ref=f1e696]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e697]:
+            - generic [ref=f1e698]:
+              - generic [ref=f1e699]:
+                - link "SIG-0012" [ref=f1e701] [cursor=pointer]:
+                  - /url: /signal/12
+                - generic [ref=f1e702]: 96.858 MHz
+              - generic [ref=f1e703]:
+                - button "☆" [ref=f1e704] [cursor=pointer]
+                - button "🔇" [ref=f1e705] [cursor=pointer]
+                - generic [ref=f1e706]: Unknown
+            - generic [ref=f1e707]:
+              - generic [ref=f1e708]:
+                - generic [ref=f1e709]: Bandwidth
+                - generic [ref=f1e710]: 232.1 kHz
+              - generic [ref=f1e711]:
+                - generic [ref=f1e712]: Confidence
+                - generic [ref=f1e713]: 67.0%
+            - generic [ref=f1e714]:
+              - generic [ref=f1e715]:
+                - generic [ref=f1e716]: First seen
+                - generic [ref=f1e717]: Jul 08 22:04
+              - generic [ref=f1e718]:
+                - generic [ref=f1e719]: Last seen
+                - generic [ref=f1e720]: Jul 09 02:18
+            - generic [ref=f1e721]:
+              - generic [ref=f1e722]: Hits 5
+              - generic [ref=f1e723]: Windows 3
+              - generic [ref=f1e724]: Hit ratio 167%
+            - generic [ref=f1e725]:
+              - link "Details" [ref=f1e726] [cursor=pointer]:
+                - /url: /signal/12
+              - combobox "Classify signal" [ref=f1e727]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e728]:
+            - generic [ref=f1e729]:
+              - generic [ref=f1e730]:
+                - link "SIG-0029" [ref=f1e732] [cursor=pointer]:
+                  - /url: /signal/29
+                - generic [ref=f1e733]: 96.849 MHz
+              - generic [ref=f1e734]:
+                - button "☆" [ref=f1e735] [cursor=pointer]
+                - button "🔇" [ref=f1e736] [cursor=pointer]
+                - generic [ref=f1e737]: Unknown
+            - generic [ref=f1e738]:
+              - generic [ref=f1e739]:
+                - generic [ref=f1e740]: Bandwidth
+                - generic [ref=f1e741]: 80.0 kHz
+              - generic [ref=f1e742]:
+                - generic [ref=f1e743]: Confidence
+                - generic [ref=f1e744]: 55.0%
+            - generic [ref=f1e745]:
+              - generic [ref=f1e746]:
+                - generic [ref=f1e747]: First seen
+                - generic [ref=f1e748]: Jul 09 02:18
+              - generic [ref=f1e749]:
+                - generic [ref=f1e750]: Last seen
+                - generic [ref=f1e751]: Jul 09 02:18
+            - generic [ref=f1e752]:
+              - generic [ref=f1e753]: Hits 2
+              - generic [ref=f1e754]: Windows 2
+              - generic [ref=f1e755]: Hit ratio 100%
+            - generic [ref=f1e756]:
+              - link "Details" [ref=f1e757] [cursor=pointer]:
+                - /url: /signal/29
+              - combobox "Classify signal" [ref=f1e758]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e759]:
+            - generic [ref=f1e760]:
+              - generic [ref=f1e761]:
+                - link "SIG-0014" [ref=f1e763] [cursor=pointer]:
+                  - /url: /signal/14
+                - generic [ref=f1e764]: 95.958 MHz
+              - generic [ref=f1e765]:
+                - button "☆" [ref=f1e766] [cursor=pointer]
+                - button "🔇" [ref=f1e767] [cursor=pointer]
+                - generic [ref=f1e768]: Unknown
+            - generic [ref=f1e769]:
+              - generic [ref=f1e770]:
+                - generic [ref=f1e771]: Bandwidth
+                - generic [ref=f1e772]: 225.1 kHz
+              - generic [ref=f1e773]:
+                - generic [ref=f1e774]: Confidence
+                - generic [ref=f1e775]: 73.0%
+            - generic [ref=f1e776]:
+              - generic [ref=f1e777]:
+                - generic [ref=f1e778]: First seen
+                - generic [ref=f1e779]: Jul 08 22:04
+              - generic [ref=f1e780]:
+                - generic [ref=f1e781]: Last seen
+                - generic [ref=f1e782]: Jul 09 02:14
+            - generic [ref=f1e783]:
+              - generic [ref=f1e784]: Hits 4
+              - generic [ref=f1e785]: Windows 3
+              - generic [ref=f1e786]: Hit ratio 133%
+            - generic [ref=f1e787]:
+              - link "Details" [ref=f1e788] [cursor=pointer]:
+                - /url: /signal/14
+              - combobox "Classify signal" [ref=f1e789]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e790]:
+            - generic [ref=f1e791]:
+              - generic [ref=f1e792]:
+                - link "SIG-0027" [ref=f1e794] [cursor=pointer]:
+                  - /url: /signal/27
+                - generic [ref=f1e795]: 107.960 MHz
+              - generic [ref=f1e796]:
+                - button "☆" [ref=f1e797] [cursor=pointer]
+                - button "🔇" [ref=f1e798] [cursor=pointer]
+                - generic [ref=f1e799]: Unknown
+            - generic [ref=f1e800]:
+              - generic [ref=f1e801]:
+                - generic [ref=f1e802]: Bandwidth
+                - generic [ref=f1e803]: 80.0 kHz
+              - generic [ref=f1e804]:
+                - generic [ref=f1e805]: Confidence
+                - generic [ref=f1e806]: 82.0%
+            - generic [ref=f1e807]:
+              - generic [ref=f1e808]:
+                - generic [ref=f1e809]: First seen
+                - generic [ref=f1e810]: Jul 09 02:14
+              - generic [ref=f1e811]:
+                - generic [ref=f1e812]: Last seen
+                - generic [ref=f1e813]: Jul 09 02:14
+            - generic [ref=f1e814]:
+              - generic [ref=f1e815]: Hits 1
+              - generic [ref=f1e816]: Windows 1
+              - generic [ref=f1e817]: Hit ratio 100%
+            - generic [ref=f1e818]:
+              - link "Details" [ref=f1e819] [cursor=pointer]:
+                - /url: /signal/27
+              - combobox "Classify signal" [ref=f1e820]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+          - article [ref=f1e821]:
+            - generic [ref=f1e822]:
+              - generic [ref=f1e823]:
+                - link "SIG-0025" [ref=f1e825] [cursor=pointer]:
+                  - /url: /signal/25
+                - generic [ref=f1e826]: 106.778 MHz
+              - generic [ref=f1e827]:
+                - button "☆" [ref=f1e828] [cursor=pointer]
+                - button "🔇" [ref=f1e829] [cursor=pointer]
+                - generic [ref=f1e830]: Unknown
+            - generic [ref=f1e831]:
+              - generic [ref=f1e832]:
+                - generic [ref=f1e833]: Bandwidth
+                - generic [ref=f1e834]: 80.0 kHz
+              - generic [ref=f1e835]:
+                - generic [ref=f1e836]: Confidence
+                - generic [ref=f1e837]: 64.0%
+            - generic [ref=f1e838]:
+              - generic [ref=f1e839]:
+                - generic [ref=f1e840]: First seen
+                - generic [ref=f1e841]: Jul 09 02:14
+              - generic [ref=f1e842]:
+                - generic [ref=f1e843]: Last seen
+                - generic [ref=f1e844]: Jul 09 02:14
+            - generic [ref=f1e845]:
+              - generic [ref=f1e846]: Hits 1
+              - generic [ref=f1e847]: Windows 1
+              - generic [ref=f1e848]: Hit ratio 100%
+            - generic [ref=f1e849]:
+              - link "Details" [ref=f1e850] [cursor=pointer]:
+                - /url: /signal/25
+              - combobox "Classify signal" [ref=f1e851]:
+                - option "Unknown" [selected]
+                - option "Friendly"
+                - option "Ambient"
+                - option "Hostile"
+      - generic [ref=f1e852]:
+        - generic [ref=f1e853]:
+          - generic [ref=f1e854]:
+            - heading "Current changes / deltas" [level=2] [ref=f1e855]
+            - paragraph [ref=f1e856]: Surface the last 60 minutes of change events.
+          - generic [ref=f1e857]:
+            - link "All" [ref=f1e858] [cursor=pointer]:
+              - /url: /?baseline_id=2
+            - link "New" [ref=f1e859] [cursor=pointer]:
+              - /url: /?baseline_id=2&change_filter=NEW_SIGNAL
+            - link "Power shifts" [ref=f1e860] [cursor=pointer]:
+              - /url: /?baseline_id=2&change_filter=POWER_SHIFT
+            - link "Quieted" [ref=f1e861] [cursor=pointer]:
+              - /url: /?baseline_id=2&change_filter=QUIETED
+        - generic [ref=f1e862]: 1 events · window 60 min · refreshed Jul 09 23:50
+        - generic [ref=f1e864]:
+          - generic [ref=f1e865]:
+            - generic [ref=f1e866]: POWER_SHIFT
+            - generic [ref=f1e867]: Power shift at 171.365 MHz (+6.0 dB)
+          - generic [ref=f1e868]: Power shift at 171.365 MHz (+6.0 dB)
+          - generic [ref=f1e869]: Power EMA -58.3 dB vs noise -64.4 dB.
+          - generic [ref=f1e870]:
+            - generic [ref=f1e871]: 171.365 MHz
+            - generic [ref=f1e872]: 293 Hz
+            - generic [ref=f1e873]: Δ 6.0 dB

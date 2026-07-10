@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button } from './primitives'
 
 export interface DashboardFilters {
   service: string
@@ -93,13 +94,9 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
       >
         Apply
       </button>
-      <button
-        onClick={reset}
-        className="px-3 py-1.5 rounded-lg text-xs"
-        style={{background:'var(--chip-bg)', color:'var(--text-secondary)'}}
-      >
+      <Button variant="secondary" size="sm" onClick={reset}>
         Reset
-      </button>
+      </Button>
     </div>
   )
 }

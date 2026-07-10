@@ -1,0 +1,37 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - generic [ref=f2e6]: 📡 SDRwatch
+      - navigation [ref=f2e7]:
+        - link "Dashboard" [ref=f2e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f2e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f2e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f2e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f2e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f2e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f2e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f2e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f2e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f2e17]:
+        - combobox [ref=f2e18] [cursor=pointer]:
+          - option "Office SDR" [selected]
+          - option "docker-test-baseline"
+        - button "Set Token" [ref=f2e20] [cursor=pointer]
+  - main [ref=f2e21]:
+    - generic [ref=f2e22]:
+      - link "← Dashboard" [ref=f2e23] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f2e24]:
+        - heading "Signal not found" [level=1] [ref=f2e25]
+        - paragraph [ref=f2e26]: HTTP 404
+        - link "Browse all signals" [ref=f2e27] [cursor=pointer]:
+          - /url: /signals

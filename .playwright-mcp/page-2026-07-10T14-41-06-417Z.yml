@@ -1,0 +1,34 @@
+- generic [ref=f6e3]:
+  - banner [ref=f6e4]:
+    - generic [ref=f6e5]:
+      - generic [ref=f6e6]: 📡 SDRwatch
+      - navigation [ref=f6e7]:
+        - link "Dashboard" [ref=f6e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f6e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f6e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f6e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f6e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f6e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f6e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f6e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f6e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f6e17]:
+        - combobox [ref=f6e18] [cursor=pointer]:
+          - option "Office SDR" [selected]
+          - option "docker-test-baseline"
+        - button "Set Token" [ref=f6e20] [cursor=pointer]
+  - main [ref=f6e21]:
+    - generic [ref=f6e22]:
+      - generic [ref=f6e23]:
+        - heading "Spectrum" [level=1] [ref=f6e24]
+        - button "↺ Reset view" [ref=f6e25] [cursor=pointer]
+      - generic [ref=f6e26]: Loading spectrum data...

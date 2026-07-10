@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useBaseline } from '../context/BaselineContext'
 import type { Signal, ChangePayload } from '../types'
 import TacticalSnapshotView from '../components/TacticalSnapshot'
@@ -8,6 +9,7 @@ import TimelineChart from '../components/TimelineChart'
 import CoverageHeatmap from '../components/CoverageHeatmap'
 import SNRHistogram from '../components/SNRHistogram'
 import FilterBar, { type DashboardFilters } from '../components/FilterBar'
+import { Card } from '../components/primitives'
 import ChangeFeedPreview from '../components/ChangeFeedPreview'
 
 // ---------------------------------------------------------------------------
@@ -336,12 +338,12 @@ export default function DashboardPage() {
   if (!baselineId) {
     return (
       <div className="space-y-6">
-        <div className="card">
+        <Card variant="bordered">
           <h2 className="text-lg font-semibold mb-2">Dashboard</h2>
           <p className="text-sm text-slate-300">
             Select a baseline from the header to populate the dashboard with tactical data, signal cards, and charts.
           </p>
-        </div>
+        </Card>
       </div>
     )
   }
@@ -362,10 +364,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="card space-y-3">
+      <Card variant="bordered" className="space-y-3">
         <h3 className="text-xs uppercase tracking-wide" style={{color:'var(--text-secondary)'}}>Filters</h3>
         <FilterBar filters={filters} onChange={handleFilterChange} />
-      </div>
+      </Card>
 
       {/* Tactical snapshot */}
       <section className="space-y-4">
@@ -496,7 +498,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold">Change feed</h2>
             <p className="text-sm text-slate-300">Recent signal change events</p>
           </div>
-          <a href="/changes" className="btn text-xs text-sky-400 hover:underline">View all changes →</a>
+          <Link to={baselineId ? `/changes?baseline_id=${baselineId}` : '/changes'} className="btn text-xs text-sky-400 hover:underline">View all changes →</Link>
         </div>
         {errors.changes && <div className="text-xs text-red-400">{errors.changes}</div>}
         <ChangeFeedPreview

@@ -1,0 +1,258 @@
+- generic [ref=f13e3]:
+  - banner [ref=f13e4]:
+    - generic [ref=f13e5]:
+      - generic [ref=f13e6]: 📡 SDRwatch
+      - navigation [ref=f13e7]:
+        - link "Dashboard" [ref=f13e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f13e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f13e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f13e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f13e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f13e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f13e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f13e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f13e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f13e17]:
+        - combobox [ref=f13e18] [cursor=pointer]:
+          - option "Office SDR" [selected]
+          - option "docker-test-baseline"
+        - button "Set Token" [ref=f13e20] [cursor=pointer]
+  - main [ref=f13e21]:
+    - generic [ref=f13e22]:
+      - generic [ref=f13e23]:
+        - heading "Debug Panel" [level=1] [ref=f13e24]
+        - button "↻ Refresh All" [ref=f13e25] [cursor=pointer]
+      - generic [ref=f13e26]:
+        - button "Health ▼" [ref=f13e27] [cursor=pointer]:
+          - heading "Health" [level=2] [ref=f13e28]
+          - generic [ref=f13e29]: ▼
+        - generic [ref=f13e31]:
+          - generic [ref=f13e32]:
+            - generic [ref=f13e33]: Status
+            - generic [ref=f13e34]: OK
+          - generic [ref=f13e36]:
+            - generic [ref=f13e37]: Database
+            - generic [ref=f13e38]: connected
+          - generic [ref=f13e39]:
+            - generic [ref=f13e40]: Controller
+            - generic [ref=f13e41]: reachable
+          - generic [ref=f13e42]:
+            - generic [ref=f13e43]: WAL Size
+            - generic [ref=f13e44]: 0.0 KB
+      - generic [ref=f13e45]:
+        - button "Database Statistics ▼" [ref=f13e46] [cursor=pointer]:
+          - heading "Database Statistics" [level=2] [ref=f13e47]
+          - generic [ref=f13e48]: ▼
+        - generic [ref=f13e50]:
+          - generic [ref=f13e51]:
+            - heading "Table Row Counts" [level=3] [ref=f13e52]
+            - table [ref=f13e53]:
+              - rowgroup [ref=f13e54]:
+                - row [ref=f13e55]:
+                  - columnheader "Table" [ref=f13e56]
+                  - columnheader "Rows" [ref=f13e57]
+              - rowgroup [ref=f13e58]:
+                - row [ref=f13e59]:
+                  - cell "baseline_band_summary" [ref=f13e60]
+                  - cell "8" [ref=f13e61]
+                - row [ref=f13e62]:
+                  - cell "baseline_detections" [ref=f13e63]
+                  - cell "33" [ref=f13e64]
+                - row [ref=f13e65]:
+                  - cell "baseline_noise" [ref=f13e66]
+                  - cell "145,410" [ref=f13e67]
+                - row [ref=f13e68]:
+                  - cell "baseline_occupancy" [ref=f13e69]
+                  - cell "145,410" [ref=f13e70]
+                - row [ref=f13e71]:
+                  - cell "baseline_snapshot" [ref=f13e72]
+                  - cell "2" [ref=f13e73]
+                - row [ref=f13e74]:
+                  - cell "baselines" [ref=f13e75]
+                  - cell "2" [ref=f13e76]
+                - row [ref=f13e77]:
+                  - cell "scan_updates" [ref=f13e78]
+                  - cell "14,114" [ref=f13e79]
+                - row [ref=f13e80]:
+                  - cell "spur_map" [ref=f13e81]
+                  - cell "0" [ref=f13e82]
+          - generic [ref=f13e83]:
+            - heading "Recent Scans (last 10)" [level=3] [ref=f13e84]
+            - generic [ref=f13e85]:
+              - generic [ref=f13e86]: Sweep duration (ms)
+              - generic [ref=f13e87]:
+                - generic "6816 ms" [ref=f13e88]
+                - generic "1156 ms" [ref=f13e89]
+                - generic "1073 ms" [ref=f13e90]
+                - generic "1074 ms" [ref=f13e91]
+                - generic "1153 ms" [ref=f13e92]
+                - generic "1076 ms" [ref=f13e93]
+                - generic "1059 ms" [ref=f13e94]
+                - generic "1077 ms" [ref=f13e95]
+                - generic "1151 ms" [ref=f13e96]
+                - generic "1166 ms" [ref=f13e97]
+                - generic "1079 ms" [ref=f13e98]
+                - generic "1136 ms" [ref=f13e99]
+                - generic "1168 ms" [ref=f13e100]
+                - generic "1066 ms" [ref=f13e101]
+                - generic "1061 ms" [ref=f13e102]
+                - generic "1056 ms" [ref=f13e103]
+                - generic "1084 ms" [ref=f13e104]
+                - generic "1060 ms" [ref=f13e105]
+                - generic "1155 ms" [ref=f13e106]
+                - generic "1105 ms" [ref=f13e107]
+            - table [ref=f13e109]:
+              - rowgroup [ref=f13e110]:
+                - row [ref=f13e111]:
+                  - columnheader "ID" [ref=f13e112]
+                  - columnheader "Baseline" [ref=f13e113]
+                  - columnheader "Hits" [ref=f13e114]
+                  - columnheader "Segs" [ref=f13e115]
+                  - columnheader "New" [ref=f13e116]
+                  - columnheader "Duration" [ref=f13e117]
+              - rowgroup [ref=f13e118]:
+                - row [ref=f13e119]:
+                  - cell "14114" [ref=f13e120]
+                  - cell "2" [ref=f13e121]
+                  - cell "0" [ref=f13e122]
+                  - cell "0" [ref=f13e123]
+                  - cell "0" [ref=f13e124]
+                  - cell "6816 ms" [ref=f13e125]
+                - row [ref=f13e126]:
+                  - cell "14113" [ref=f13e127]
+                  - cell "2" [ref=f13e128]
+                  - cell "108" [ref=f13e129]
+                  - cell "108" [ref=f13e130]
+                  - cell "0" [ref=f13e131]
+                  - cell "1156 ms" [ref=f13e132]
+                - row [ref=f13e133]:
+                  - cell "14112" [ref=f13e134]
+                  - cell "2" [ref=f13e135]
+                  - cell "79" [ref=f13e136]
+                  - cell "79" [ref=f13e137]
+                  - cell "0" [ref=f13e138]
+                  - cell "1073 ms" [ref=f13e139]
+                - row [ref=f13e140]:
+                  - cell "14111" [ref=f13e141]
+                  - cell "2" [ref=f13e142]
+                  - cell "83" [ref=f13e143]
+                  - cell "83" [ref=f13e144]
+                  - cell "0" [ref=f13e145]
+                  - cell "1074 ms" [ref=f13e146]
+                - row [ref=f13e147]:
+                  - cell "14110" [ref=f13e148]
+                  - cell "2" [ref=f13e149]
+                  - cell "30" [ref=f13e150]
+                  - cell "30" [ref=f13e151]
+                  - cell "0" [ref=f13e152]
+                  - cell "1153 ms" [ref=f13e153]
+                - row [ref=f13e154]:
+                  - cell "14109" [ref=f13e155]
+                  - cell "2" [ref=f13e156]
+                  - cell "27" [ref=f13e157]
+                  - cell "27" [ref=f13e158]
+                  - cell "0" [ref=f13e159]
+                  - cell "1076 ms" [ref=f13e160]
+                - row [ref=f13e161]:
+                  - cell "14108" [ref=f13e162]
+                  - cell "2" [ref=f13e163]
+                  - cell "39" [ref=f13e164]
+                  - cell "39" [ref=f13e165]
+                  - cell "0" [ref=f13e166]
+                  - cell "1059 ms" [ref=f13e167]
+                - row [ref=f13e168]:
+                  - cell "14107" [ref=f13e169]
+                  - cell "2" [ref=f13e170]
+                  - cell "48" [ref=f13e171]
+                  - cell "48" [ref=f13e172]
+                  - cell "0" [ref=f13e173]
+                  - cell "1077 ms" [ref=f13e174]
+                - row [ref=f13e175]:
+                  - cell "14106" [ref=f13e176]
+                  - cell "2" [ref=f13e177]
+                  - cell "43" [ref=f13e178]
+                  - cell "43" [ref=f13e179]
+                  - cell "0" [ref=f13e180]
+                  - cell "1151 ms" [ref=f13e181]
+                - row [ref=f13e182]:
+                  - cell "14105" [ref=f13e183]
+                  - cell "2" [ref=f13e184]
+                  - cell "41" [ref=f13e185]
+                  - cell "41" [ref=f13e186]
+                  - cell "0" [ref=f13e187]
+                  - cell "1166 ms" [ref=f13e188]
+      - generic [ref=f13e189]:
+        - button "Configuration ▼" [ref=f13e190] [cursor=pointer]:
+          - heading "Configuration" [level=2] [ref=f13e191]
+          - generic [ref=f13e192]: ▼
+        - generic [ref=f13e194]:
+          - generic [ref=f13e195]:
+            - heading "Environment Variables" [level=3] [ref=f13e196]
+            - table [ref=f13e197]:
+              - rowgroup [ref=f13e198]:
+                - row [ref=f13e199]:
+                  - cell "SDRWATCH_CONTROL_TOKEN" [ref=f13e200]
+                  - cell "***" [ref=f13e201]
+                - row [ref=f13e202]:
+                  - cell "SDRWATCH_CONTROL_URL" [ref=f13e203]
+                  - cell "http://sdrwatch-control:8765" [ref=f13e204]
+                - row [ref=f13e205]:
+                  - cell "SDRWATCH_DEBUG" [ref=f13e206]
+                  - cell "(not set)" [ref=f13e207]
+                - row [ref=f13e208]:
+                  - cell "SDRWATCH_LOG_LEVEL" [ref=f13e209]
+                  - cell "(not set)" [ref=f13e210]
+                - row [ref=f13e211]:
+                  - cell "SDRWATCH_TOKEN" [ref=f13e212]
+                  - cell "(not set)" [ref=f13e213]
+          - generic [ref=f13e214]:
+            - heading "Runtime Constants" [level=3] [ref=f13e215]
+            - table [ref=f13e216]:
+              - rowgroup [ref=f13e217]:
+                - row [ref=f13e218]:
+                  - cell "ACTIVE_SIGNAL_WINDOW_MINUTES" [ref=f13e219]
+                  - cell "15" [ref=f13e220]
+                - row [ref=f13e221]:
+                  - cell "BAND_SUMMARY_MAX_BANDS" [ref=f13e222]
+                  - cell "6" [ref=f13e223]
+                - row [ref=f13e224]:
+                  - cell "BAND_SUMMARY_TARGET_WIDTH_HZ" [ref=f13e225]
+                  - cell "10,000,000" [ref=f13e226]
+                - row [ref=f13e227]:
+                  - cell "CHANGE_EVENT_LIMIT" [ref=f13e228]
+                  - cell "120" [ref=f13e229]
+                - row [ref=f13e230]:
+                  - cell "CHANGE_WINDOW_MINUTES" [ref=f13e231]
+                  - cell "60" [ref=f13e232]
+                - row [ref=f13e233]:
+                  - cell "HOTSPOT_BUCKET_COUNT" [ref=f13e234]
+                  - cell "60" [ref=f13e235]
+                - row [ref=f13e236]:
+                  - cell "NEW_SIGNAL_WINDOW_MINUTES" [ref=f13e237]
+                  - cell "60" [ref=f13e238]
+                - row [ref=f13e239]:
+                  - cell "POWER_SHIFT_THRESHOLD_DB" [ref=f13e240]
+                  - cell "6" [ref=f13e241]
+                - row [ref=f13e242]:
+                  - cell "QUIETED_MIN_WINDOWS" [ref=f13e243]
+                  - cell "20" [ref=f13e244]
+                - row [ref=f13e245]:
+                  - cell "QUIETED_TIMEOUT_MINUTES" [ref=f13e246]
+                  - cell "15" [ref=f13e247]
+                - row [ref=f13e248]:
+                  - cell "TACTICAL_RECENT_MINUTES" [ref=f13e249]
+                  - cell "30" [ref=f13e250]
+      - generic [ref=f13e251]:
+        - button "Recent Errors ▼" [ref=f13e252] [cursor=pointer]:
+          - heading "Recent Errors" [level=2] [ref=f13e253]
+          - generic [ref=f13e254]: ▼
+        - generic [ref=f13e255]: No errors captured. That's good!

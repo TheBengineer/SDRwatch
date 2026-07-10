@@ -1,0 +1,248 @@
+- generic [ref=f7e3]:
+  - banner [ref=f7e4]:
+    - generic [ref=f7e5]:
+      - generic [ref=f7e6]: 📡 SDRwatch
+      - navigation [ref=f7e7]:
+        - link "Dashboard" [ref=f7e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f7e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f7e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f7e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f7e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f7e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f7e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f7e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f7e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f7e17]:
+        - combobox [disabled] [ref=f7e18] [cursor=pointer]:
+          - option "Loading..." [selected]
+        - button "Set Token" [ref=f7e20] [cursor=pointer]
+  - main [ref=f7e21]:
+    - generic [ref=f7e22]:
+      - generic [ref=f7e24]:
+        - generic [ref=f7e25]:
+          - heading "SDRwatch Control" [level=2] [ref=f7e26]
+          - generic [ref=f7e27]:
+            - generic [ref=f7e28]: "State:"
+            - generic [ref=f7e29]: Idle
+        - generic [ref=f7e30]:
+          - generic [ref=f7e31]:
+            - generic [ref=f7e32]: Baseline
+            - generic [ref=f7e33]:
+              - generic [ref=f7e34]:
+                - generic [ref=f7e35]: Active baseline
+                - combobox [disabled] [ref=f7e36]
+                - generic [ref=f7e37]: Select a baseline to tie scans to persistent history.
+              - generic [ref=f7e38]:
+                - generic [ref=f7e39]: Baseline info
+                - generic [ref=f7e40]: Select a baseline from the header selector, or create a new one on the right.
+          - generic [ref=f7e41]:
+            - generic [ref=f7e42]: Device
+            - generic [ref=f7e43]:
+              - generic [ref=f7e44]:
+                - generic [ref=f7e45]: Select SDR
+                - combobox [ref=f7e46] [cursor=pointer]:
+                  - option "(select device)" [selected]
+              - generic [ref=f7e47]:
+                - generic [ref=f7e48]: Driver (hint)
+                - textbox [ref=f7e49]: rtlsdr
+              - generic [ref=f7e50]:
+                - generic [ref=f7e51]: Gain (dB or auto)
+                - textbox "auto or number" [ref=f7e52]: auto
+              - generic [ref=f7e53]:
+                - generic [ref=f7e54]: Sample rate (Hz)
+                - textbox [ref=f7e55]: "2.4e6"
+              - generic [ref=f7e56]:
+                - generic [ref=f7e57]: Bandplan CSV (optional)
+                - textbox "bandplan.csv" [ref=f7e58]
+            - generic [ref=f7e59]:
+              - generic [ref=f7e60]: Devices enumerated from the controller.
+              - button "↺ Refresh devices" [ref=f7e61] [cursor=pointer]
+          - generic [ref=f7e62]:
+            - generic [ref=f7e63]: Profile & Modes
+            - generic [ref=f7e64]:
+              - generic [ref=f7e65]:
+                - generic [ref=f7e66]: Profile
+                - combobox [ref=f7e67] [cursor=pointer]:
+                  - option "(manual selection)" [selected]
+                - generic [ref=f7e68]: Select a profile to preview its range and defaults.
+              - generic [ref=f7e69]:
+                - generic [ref=f7e70]: Scan mode
+                - combobox [ref=f7e71] [cursor=pointer]:
+                  - option "Normal scan" [selected]
+                  - option "Spur calibration"
+                - generic [ref=f7e72]: Spur calibration populates the spur map.
+          - button "Continuous Capture ▶" [ref=f7e74] [cursor=pointer]:
+            - generic [ref=f7e75]: Continuous Capture
+            - generic [ref=f7e76]: ▶
+          - generic [ref=f7e77]:
+            - generic [ref=f7e78]: Sweep
+            - generic [ref=f7e79]:
+              - generic [ref=f7e80]:
+                - generic [ref=f7e81]: Start frequency (Hz)
+                - textbox [ref=f7e82]: "88e6"
+              - generic [ref=f7e83]:
+                - generic [ref=f7e84]: Stop frequency (Hz)
+                - textbox [ref=f7e85]: "108e6"
+              - generic [ref=f7e86]:
+                - generic [ref=f7e87]: Step (Hz)
+                - textbox [ref=f7e88]: "2.4e6"
+              - generic [ref=f7e89]:
+                - generic [ref=f7e90]: FFT bins
+                - textbox [ref=f7e91]: "4096"
+              - generic [ref=f7e92]:
+                - generic [ref=f7e93]: Averaging (frames)
+                - textbox [ref=f7e94]: "8"
+              - generic [ref=f7e95]:
+                - generic [ref=f7e96]: Sleep between sweeps (s)
+                - textbox [ref=f7e97]: "0"
+          - generic [ref=f7e98]:
+            - generic [ref=f7e99]: Detection
+            - generic [ref=f7e100]:
+              - generic [ref=f7e101]:
+                - generic [ref=f7e102]: Threshold (dB above noise)
+                - textbox [ref=f7e103]: "8"
+              - generic [ref=f7e104]:
+                - generic [ref=f7e105]: Guard bins
+                - textbox [ref=f7e106]: "1"
+              - generic [ref=f7e107]:
+                - generic [ref=f7e108]: Min width (bins)
+                - textbox [ref=f7e109]: "2"
+              - generic [ref=f7e110]:
+                - generic [ref=f7e111]: New EMA occ (0–1)
+                - textbox [ref=f7e112]: "0.02"
+              - generic [ref=f7e113]:
+                - generic [ref=f7e114]: Cluster merge span (Hz)
+                - textbox "(auto)" [ref=f7e115]
+                - generic [ref=f7e116]: Overrides merge distance; blank keeps scanner default.
+              - generic [ref=f7e117]:
+                - generic [ref=f7e118]: Max width ratio
+                - textbox [ref=f7e119]: "3"
+                - generic [ref=f7e120]: Rejects merges wider than ratio × persisted width.
+              - generic [ref=f7e121]:
+                - generic [ref=f7e122]: Max detection width (Hz)
+                - textbox "(unbounded)" [ref=f7e123]
+                - generic [ref=f7e124]: Optional hard cap for persistent bandwidth.
+          - button "Verification (Two-pass) ▶" [ref=f7e126] [cursor=pointer]:
+            - generic [ref=f7e127]: Verification (Two-pass)
+            - generic [ref=f7e128]: ▶
+          - generic [ref=f7e129]:
+            - generic [ref=f7e130]: Persistence
+            - generic [ref=f7e131]:
+              - generic [ref=f7e132]:
+                - generic [ref=f7e133]: Persistence mode
+                - combobox [ref=f7e134] [cursor=pointer]:
+                  - option "Hits / window ratio" [selected]
+                  - option "Wall-clock duration"
+                  - option "Both"
+                - generic [ref=f7e135]: How clusters become persistent.
+              - generic [ref=f7e136]:
+                - generic [ref=f7e137]: Hit ratio (0–1)
+                - textbox [ref=f7e138]: "0.6"
+                - generic [ref=f7e139]: Min coverage of occupied windows.
+              - generic [ref=f7e140]:
+                - generic [ref=f7e141]: Min duration (s)
+                - textbox [ref=f7e142]: "10"
+                - generic [ref=f7e143]: For duration-based modes.
+              - generic [ref=f7e144]:
+                - generic [ref=f7e145]: Min hits
+                - textbox [ref=f7e146]: "2"
+              - generic [ref=f7e147]:
+                - generic [ref=f7e148]: Min windows
+                - textbox [ref=f7e149]: "2"
+          - generic [ref=f7e150]:
+            - generic [ref=f7e151]: CFAR
+            - generic [ref=f7e152]:
+              - generic [ref=f7e153]:
+                - generic [ref=f7e154]: CFAR mode
+                - combobox [ref=f7e155] [cursor=pointer]:
+                  - option "OS (ordered-statistics)" [selected]
+                  - option "Off"
+                - generic [ref=f7e156]: If off, fixed threshold is used.
+              - generic [ref=f7e157]:
+                - generic [ref=f7e158]: Train cells
+                - textbox [ref=f7e159]: "24"
+              - generic [ref=f7e160]:
+                - generic [ref=f7e161]: Guard cells
+                - textbox [ref=f7e162]: "4"
+              - generic [ref=f7e163]:
+                - generic [ref=f7e164]: Quantile (0–1)
+                - textbox [ref=f7e165]: "0.75"
+              - generic [ref=f7e166]:
+                - generic [ref=f7e167]: Alpha (dB, optional)
+                - textbox "e.g. 2.5" [ref=f7e168]
+          - button "Output & Logs ▶" [ref=f7e170] [cursor=pointer]:
+            - generic [ref=f7e171]: Output & Logs
+            - generic [ref=f7e172]: ▶
+          - generic [ref=f7e173]:
+            - generic [ref=f7e174]: Run
+            - generic [ref=f7e176]:
+              - generic [ref=f7e177]: Mode
+              - combobox [ref=f7e178] [cursor=pointer]:
+                - option "Single sweep" [selected]
+                - option "Loop"
+                - option "Repeat N"
+                - option "Duration"
+          - generic [ref=f7e179]:
+            - button "▶ Start" [disabled] [ref=f7e180]
+            - button "■ Stop" [disabled] [ref=f7e181]
+            - button "↺ Reset" [ref=f7e182] [cursor=pointer]
+            - button "⟳ Refresh devices" [ref=f7e183] [cursor=pointer]
+        - generic [ref=f7e184]:
+          - generic [ref=f7e185]: Live logs
+          - generic [ref=f7e186]: No logs yet. Start a scan to see output.
+      - generic [ref=f7e187]:
+        - generic [ref=f7e188]:
+          - heading "Create baseline" [level=3] [ref=f7e189]
+          - paragraph [ref=f7e190]: Define the antenna/location pair. The frequency span grows automatically.
+          - generic [ref=f7e191]:
+            - generic [ref=f7e192]:
+              - generic [ref=f7e193]: Name
+              - textbox "Roof VHF" [ref=f7e194]
+            - generic [ref=f7e195]:
+              - generic [ref=f7e196]:
+                - generic [ref=f7e197]: Latitude
+                - textbox "41.878" [ref=f7e198]
+              - generic [ref=f7e199]:
+                - generic [ref=f7e200]: Longitude
+                - textbox "-87.629" [ref=f7e201]
+            - generic [ref=f7e202]:
+              - generic [ref=f7e203]:
+                - generic [ref=f7e204]: SDR serial
+                - textbox "rtl0001" [ref=f7e205]
+              - generic [ref=f7e206]:
+                - generic [ref=f7e207]: Antenna
+                - textbox "Discone" [ref=f7e208]
+            - generic [ref=f7e209]:
+              - generic [ref=f7e210]: Notes
+              - textbox "Roof mount, 50ft LMR-400." [ref=f7e211]
+            - button "＋ Create baseline" [disabled] [ref=f7e212]
+        - generic [ref=f7e213]:
+          - heading "Quick presets" [level=3] [ref=f7e214]
+          - generic [ref=f7e215]:
+            - button "FULL" [ref=f7e216] [cursor=pointer]
+            - button "FM" [ref=f7e217] [cursor=pointer]
+            - button "VHF_AIR" [ref=f7e218] [cursor=pointer]
+            - button "UHF_MILAIR" [ref=f7e219] [cursor=pointer]
+            - button "2m" [ref=f7e220] [cursor=pointer]
+            - button "70cm" [ref=f7e221] [cursor=pointer]
+            - button "MARINE" [ref=f7e222] [cursor=pointer]
+            - button "NOAA" [ref=f7e223] [cursor=pointer]
+            - button "AIS" [ref=f7e224] [cursor=pointer]
+            - button "ADSB" [ref=f7e225] [cursor=pointer]
+            - button "PMR446" [ref=f7e226] [cursor=pointer]
+            - button "TETRA" [ref=f7e227] [cursor=pointer]
+            - button "LTE800" [ref=f7e228] [cursor=pointer]
+          - heading "Scan parameter presets" [level=3] [ref=f7e229]
+          - generic [ref=f7e230]:
+            - button "FAST" [ref=f7e231] [cursor=pointer]
+            - button "BALANCED" [ref=f7e232] [cursor=pointer]
+            - button "FIDELITY" [ref=f7e233] [cursor=pointer]

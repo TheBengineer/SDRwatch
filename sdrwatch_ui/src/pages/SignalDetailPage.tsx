@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useBaseline } from '../context/BaselineContext'
 import { apiGet, apiPatch, apiPost } from '../api/client'
 import type { SignalDetail, CollectionContext, Recording, LiveWindow } from '../types'
 
@@ -70,6 +71,7 @@ function classBadgeCls(cls: string): string {
 export default function SignalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const signalId = Number(id)
+  const { baselineId } = useBaseline()
 
   // Data state
   const [signal, setSignal] = useState<SignalDetail | null>(null)
@@ -531,7 +533,7 @@ export default function SignalDetailPage() {
               </div>
             )}
             <Link
-              to={`/recordings?detection_id=${signal.id}`}
+              to={baselineId ? { pathname: '/recordings', search: `?detection_id=${signal.id}&baseline_id=${baselineId}` } : `/recordings?detection_id=${signal.id}`}
               className="text-xs text-slate-400 hover:text-sky-400 mt-3 inline-block transition-colors"
             >
               View all captures for this signal &rarr;

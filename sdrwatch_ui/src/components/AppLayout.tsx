@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { Outlet, useSearchParams } from 'react-router-dom'
 import NavBar from './NavBar'
+import NoBaselineCTA from './NoBaselineCTA'
 import { BaselineContext } from '../context/BaselineContext'
+import StartHereCTA from './StartHereCTA'
 
 interface Baseline {
   id: number
@@ -19,6 +21,8 @@ export default function AppLayout() {
   const [tokenInput, setTokenInput] = useState('')
   const [usbWarning, setUsbWarning] = useState(false)
   const [usbDismissed, setUsbDismissed] = useState(false)
+  const [fetched, setFetched] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   // Poll USB device availability
   useEffect(() => {
@@ -41,7 +45,7 @@ export default function AppLayout() {
   }, [])
 
   // Fetch baselines on mount
-  useEffect(() => {
+  const refetchBaselines = useCallback(() => {
     fetch('/api/baselines')
       .then(r => r.json())
       .then(data => {
@@ -51,7 +55,12 @@ export default function AppLayout() {
       .catch(() => {
         // API unavailable — leave baselines empty
       })
+      .finally(() => setFetched(true))
   }, [])
+
+  useEffect(() => {
+    refetchBaselines()
+  }, [refetchBaselines])
 
   // After baselines load, ensure baselineId is valid; fallback to first baseline
   useEffect(() => {
@@ -119,6 +128,16 @@ export default function AppLayout() {
             <div className="text-xl font-semibold">📡 SDRwatch</div>
             <NavBar />
             <div className="ml-auto flex items-center gap-3">
+              {/* Help / Onboarding */}
+              <button
+                onClick={() => setShowOnboarding(v => !v)}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                style={{ background: 'var(--chip-bg)', color: 'var(--text-secondary)' }}
+                title="Getting started guide"
+              >
+                ?
+              </button>
+
               {/* Baseline Selector */}
               <select
                 value={baselineId ?? ''}
@@ -202,8 +221,14 @@ export default function AppLayout() {
           </div>
         )}
         <main className="max-w-7xl mx-auto px-4 py-6">
-          <Outlet />
+          {fetched && baselines.length === 0 ? (
+            <NoBaselineCTA onBaselineCreated={refetchBaselines} />
+          ) : (
+            <Outlet />
+          )}
         </main>
+
+        <StartHereCTA isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
       </div>
     </BaselineContext.Provider>
   )

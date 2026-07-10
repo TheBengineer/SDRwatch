@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "active_work_id": "sdrwatch-ux-improvements-11052b7c",
+  "works": {
+    "sdrwatch-ux-improvements-11052b7c": {
+      "work_id": "sdrwatch-ux-improvements-11052b7c",
+      "active_plan": "/home/bengi/SDRWatch/.omo/plans/sdrwatch-ux-improvements.md",
+      "plan_name": "sdrwatch-ux-improvements",
+      "status": "active",
+      "started_at": "2026-07-10T18:01:17.407Z",
+      "updated_at": "2026-07-10T18:03:56.641Z",
+      "session_ids": [
+        "opencode:ses_0bc58d9d0ffeIwwU25BhKP2DUd",
+        "opencode:ses_0b2ce4731ffeG3mZEMQoeSfbGm",
+        "opencode:ses_0b2ce036affedAofXois5qMsk4",
+        "opencode:ses_0b2cdd08cffegmplTm673OokMa",
+        "opencode:ses_0b2cda1eaffeH5y86pi7um3p3h",
+        "opencode:ses_0b2cd6c56ffeENi6gbww78A5HD",
+        "opencode:ses_0b2ccb17cffeBtGAbOd0Zv4hMh"
+      ],
+      "session_origins": {
+        "opencode:ses_0bc58d9d0ffeIwwU25BhKP2DUd": "direct",
+        "opencode:ses_0b2ce4731ffeG3mZEMQoeSfbGm": "appended",
+        "opencode:ses_0b2ce036affedAofXois5qMsk4": "appended",
+        "opencode:ses_0b2cdd08cffegmplTm673OokMa": "appended",
+        "opencode:ses_0b2cda1eaffeH5y86pi7um3p3h": "appended",
+        "opencode:ses_0b2cd6c56ffeENi6gbww78A5HD": "appended",
+        "opencode:ses_0b2ccb17cffeBtGAbOd0Zv4hMh": "appended"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
+    }
+  },
+  "active_plan": "/home/bengi/SDRWatch/.omo/plans/sdrwatch-ux-improvements.md",
+  "started_at": "2026-07-10T18:01:17.407Z",
+  "status": "active",
+  "updated_at": "2026-07-10T18:03:56.641Z",
+  "session_ids": [
+    "opencode:ses_0bc58d9d0ffeIwwU25BhKP2DUd",
+    "opencode:ses_0b2ce4731ffeG3mZEMQoeSfbGm",
+    "opencode:ses_0b2ce036affedAofXois5qMsk4",
+    "opencode:ses_0b2cdd08cffegmplTm673OokMa",
+    "opencode:ses_0b2cda1eaffeH5y86pi7um3p3h",
+    "opencode:ses_0b2cd6c56ffeENi6gbww78A5HD",
+    "opencode:ses_0b2ccb17cffeBtGAbOd0Zv4hMh"
+  ],
+  "session_origins": {
+    "opencode:ses_0bc58d9d0ffeIwwU25BhKP2DUd": "direct",
+    "opencode:ses_0b2ce4731ffeG3mZEMQoeSfbGm": "appended",
+    "opencode:ses_0b2ce036affedAofXois5qMsk4": "appended",
+    "opencode:ses_0b2cdd08cffegmplTm673OokMa": "appended",
+    "opencode:ses_0b2cda1eaffeH5y86pi7um3p3h": "appended",
+    "opencode:ses_0b2cd6c56ffeENi6gbww78A5HD": "appended",
+    "opencode:ses_0b2ccb17cffeBtGAbOd0Zv4hMh": "appended"
+  },
+  "plan_name": "sdrwatch-ux-improvements",
+  "task_sessions": {},
+  "agent": "atlas"
+}

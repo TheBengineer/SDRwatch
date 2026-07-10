@@ -28,6 +28,24 @@
   --chip-bg: rgba(255, 255, 255, 0.10);
   --btn-primary-bg: #0284c7;
   --btn-primary-text: #ffffff;
+  --btn-primary-hover: #0369a1;
+  --btn-secondary-bg: rgba(255, 255, 255, 0.08);
+  --btn-secondary-text: #e2e8f0;
+  --btn-secondary-hover: rgba(255, 255, 255, 0.14);
+  --btn-danger-bg: #b91c1c;
+  --btn-danger-text: #ffffff;
+  --btn-danger-hover: #991b1b;
+  --btn-ghost-bg: transparent;
+  --btn-ghost-text: #94a3b8;
+  --btn-ghost-hover: rgba(255, 255, 255, 0.08);
+  --card-elevated-bg: #1e293b;
+  --card-elevated-border: transparent;
+  --card-elevated-shadow: 0 4px 24px rgba(0, 0, 0, 0.30);
+  --card-bordered-bg: rgba(255, 255, 255, 0.03);
+  --card-bordered-border: rgba(255, 255, 255, 0.12);
+  --card-inset-bg: rgba(255, 255, 255, 0.03);
+  --card-inset-border: transparent;
+  --focus-ring: 0 0 0 2px #0ea5e9;
   --table-border: rgba(255, 255, 255, 0.10);
   --autofill-bg: #1e293b;
   --autofill-text: #f1f5f9;
@@ -53,7 +71,7 @@
     color: var(--btn-primary-text);
   }
   .btn:hover {
-    @apply opacity-90;
+    background: var(--btn-primary-hover);
   }
   .input {
     @apply px-3 py-2 rounded-xl border font-medium outline-none transition-colors;

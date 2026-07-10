@@ -1,0 +1,36 @@
+- generic [ref=f9e3]:
+  - banner [ref=f9e4]:
+    - generic [ref=f9e5]:
+      - generic [ref=f9e6]: 📡 SDRwatch
+      - navigation [ref=f9e7]:
+        - link "Dashboard" [ref=f9e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f9e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f9e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f9e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f9e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f9e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f9e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f9e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f9e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f9e17]:
+        - combobox [ref=f9e18] [cursor=pointer]:
+          - option "Office SDR" [selected]
+          - option "docker-test-baseline"
+        - button "Set Token" [ref=f9e20] [cursor=pointer]
+  - main [ref=f9e21]:
+    - generic [ref=f9e23]:
+      - generic [ref=f9e24]:
+        - generic [ref=f9e25]:
+          - heading "Spur Map" [level=1] [ref=f9e26]
+          - paragraph [ref=f9e27]: Read-only view of stored spur bins
+        - generic [ref=f9e28]: 0 spurs
+      - generic [ref=f9e29]: No spur map data yet. Run a spur calibration sweep to populate this table.

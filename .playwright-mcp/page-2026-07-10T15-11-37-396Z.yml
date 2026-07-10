@@ -1,0 +1,84 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]: 📡 SDRwatch
+      - navigation [ref=f1e7]:
+        - link "Dashboard" [ref=f1e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f1e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f1e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f1e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f1e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f1e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f1e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f1e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f1e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f1e17]:
+        - combobox [ref=f1e18] [cursor=pointer]:
+          - option "Office SDR" [selected]
+          - option "docker-test-baseline"
+        - button "Set Token" [ref=f1e20] [cursor=pointer]
+  - main [ref=f1e21]:
+    - generic [ref=f1e22]:
+      - generic [ref=f1e24]:
+        - heading "Dashboard" [level=1] [ref=f1e25]
+        - paragraph [ref=f1e26]: "Tactical spectrum awareness for baseline #2"
+      - generic [ref=f1e27]:
+        - heading "Filters" [level=3] [ref=f1e28]
+        - generic [ref=f1e29]:
+          - generic [ref=f1e30]:
+            - generic [ref=f1e31]: Service
+            - textbox "FM, ISM..." [ref=f1e32]
+          - generic [ref=f1e33]:
+            - generic [ref=f1e34]: Min SNR
+            - spinbutton "dB" [ref=f1e35]
+          - generic [ref=f1e36]:
+            - generic [ref=f1e37]: Lookback
+            - combobox [ref=f1e38]:
+              - option "1 hour"
+              - option "6 hours"
+              - option "24 hours"
+              - option "3 days"
+              - option "7 days" [selected]
+              - option "30 days"
+          - generic [ref=f1e39]:
+            - generic [ref=f1e40]: Freq low
+            - spinbutton "MHz" [ref=f1e41]
+          - generic [ref=f1e42]:
+            - generic [ref=f1e43]: Freq high
+            - spinbutton "MHz" [ref=f1e44]
+          - button "Apply" [ref=f1e45] [cursor=pointer]
+          - button "Reset" [ref=f1e46] [cursor=pointer]
+      - heading "Tactical snapshot" [level=2] [ref=f1e48]
+      - generic [ref=f1e67]:
+        - generic [ref=f1e68]:
+          - heading "Active signals" [level=2] [ref=f1e69]
+          - paragraph [ref=f1e70]: Active signals detected in recent sweeps
+        - generic [ref=f1e71]: 0 signals
+      - generic [ref=f1e101]:
+        - generic [ref=f1e102]:
+          - heading "Frequency spectrum" [level=2] [ref=f1e103]
+          - paragraph [ref=f1e104]: Latest scan bins and all-scans average
+        - generic [ref=f1e110]:
+          - heading "Timeline" [level=2] [ref=f1e111]
+          - paragraph [ref=f1e112]: Detections, scans, and max SNR over time
+        - generic [ref=f1e115]:
+          - heading "SNR distribution" [level=2] [ref=f1e116]
+          - paragraph [ref=f1e117]: Signal-to-noise ratio histogram across detections
+        - generic [ref=f1e120]:
+          - heading "Coverage heatmap" [level=2] [ref=f1e121]
+          - paragraph [ref=f1e122]: Detection density by scan and frequency
+      - generic [ref=f1e126]:
+        - generic [ref=f1e127]:
+          - heading "Change feed" [level=2] [ref=f1e128]
+          - paragraph [ref=f1e129]: Recent signal change events
+        - link "View all changes →" [ref=f1e130] [cursor=pointer]:
+          - /url: /changes

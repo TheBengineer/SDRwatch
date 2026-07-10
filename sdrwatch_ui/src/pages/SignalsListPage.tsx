@@ -39,7 +39,7 @@ export default function SignalsListPage() {
       header: 'ID',
       cell: info => (
         <Link
-          to={`/signal/${info.row.original.id}`}
+          to={baselineId ? { pathname: `/signal/${info.row.original.id}`, search: `?baseline_id=${baselineId}` } : `/signal/${info.row.original.id}`}
           className="text-sky-400 hover:underline font-mono text-sm"
           onClick={e => e.stopPropagation()}
         >
@@ -149,7 +149,7 @@ export default function SignalsListPage() {
                 <div className="text-sm text-slate-400 border border-dashed border-white/20 rounded-xl p-4">No signals match the current filters.</div>
               </td></tr>
             ) : table.getRowModel().rows.map(row => (
-              <tr key={row.id} className={`border-b border-white/10 hover:bg-slate-800/40 cursor-pointer ${row.original.selected ? 'bg-sky-900/20' : ''}`} onClick={() => window.location.href = `/signal/${row.original.id}`}>
+              <tr key={row.id} className={`border-b border-white/10 hover:bg-slate-800/40 cursor-pointer ${row.original.selected ? 'bg-sky-900/20' : ''}`} onClick={() => window.location.href = `/signal/${row.original.id}${baselineId ? `?baseline_id=${baselineId}` : ''}`}>
                 {row.getVisibleCells().map(cell => (
                   <td key={cell.id} className="td text-sm">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

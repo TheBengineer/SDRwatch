@@ -1,0 +1,207 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - generic [ref=f3e6]: 📡 SDRwatch
+      - navigation [ref=f3e7]:
+        - link "Dashboard" [ref=f3e8] [cursor=pointer]:
+          - /url: /
+        - link "Control" [ref=f3e9] [cursor=pointer]:
+          - /url: /control
+        - link "Signals" [ref=f3e10] [cursor=pointer]:
+          - /url: /signals
+        - link "Changes" [ref=f3e11] [cursor=pointer]:
+          - /url: /changes
+        - link "Recordings" [ref=f3e12] [cursor=pointer]:
+          - /url: /recordings
+        - link "Spur Map" [ref=f3e13] [cursor=pointer]:
+          - /url: /spur-map
+        - link "Spectrum" [ref=f3e14] [cursor=pointer]:
+          - /url: /spectrum
+        - link "Live" [ref=f3e15] [cursor=pointer]:
+          - /url: /live
+        - link "Debug" [ref=f3e16] [cursor=pointer]:
+          - /url: /debug
+      - generic [ref=f3e17]:
+        - combobox [ref=f3e18] [cursor=pointer]:
+          - option "Office SDR" [selected]
+          - option "docker-test-baseline"
+        - button "Set Token" [ref=f3e20] [cursor=pointer]
+  - main [ref=f3e21]:
+    - generic [ref=f3e22]:
+      - generic [ref=f3e24]:
+        - generic [ref=f3e25]:
+          - generic [ref=f3e26]:
+            - link "← Dashboard" [ref=f3e27] [cursor=pointer]:
+              - /url: /
+            - generic [ref=f3e28]: ·
+            - 'link "Baseline #1" [ref=f3e29] [cursor=pointer]':
+              - /url: /?baseline_id=1
+          - heading "SIG-0001 89.556548 MHz ☆" [level=1] [ref=f3e30]:
+            - generic [ref=f3e31]: SIG-0001
+            - generic [ref=f3e32]: 89.556548 MHz
+            - button "☆" [ref=f3e33] [cursor=pointer]
+          - paragraph [ref=f3e34]: "Baseline: docker-test-baseline"
+        - generic [ref=f3e35]:
+          - generic [ref=f3e36]: (%)
+          - generic [ref=f3e38]: Unknown
+      - generic [ref=f3e39]:
+        - button "Historical Data" [ref=f3e40] [cursor=pointer]
+        - button "Real-Time" [disabled] [ref=f3e41]
+      - generic [ref=f3e42]:
+        - generic [ref=f3e43]:
+          - generic [ref=f3e44]:
+            - heading "Recording" [level=2] [ref=f3e45]
+            - generic [ref=f3e46]:
+              - button "🎙 Record IQ" [ref=f3e47] [cursor=pointer]
+              - button "🔇 Mute" [ref=f3e48] [cursor=pointer]
+          - generic [ref=f3e49]:
+            - heading "Captures" [level=2] [ref=f3e50]
+            - generic [ref=f3e51]:
+              - generic [ref=f3e52]:
+                - generic [ref=f3e53]:
+                  - generic [ref=f3e54]: fm
+                  - generic [ref=f3e55]: 3.0s
+                  - generic [ref=f3e56]: 54.9 MB
+                - generic [ref=f3e57]:
+                  - generic [ref=f3e58]: raw only
+                  - link "⬇" [ref=f3e59] [cursor=pointer]:
+                    - /url: /api/recordings/87/download/raw
+              - generic [ref=f3e60]:
+                - generic [ref=f3e61]:
+                  - generic [ref=f3e62]: wbfm
+                  - generic [ref=f3e63]: 2.0s
+                  - generic [ref=f3e64]: 36.6 MB
+                - generic [ref=f3e65]:
+                  - generic [ref=f3e66]: raw only
+                  - link "⬇" [ref=f3e67] [cursor=pointer]:
+                    - /url: /api/recordings/78/download/raw
+              - generic [ref=f3e68]:
+                - generic [ref=f3e69]:
+                  - generic [ref=f3e70]: raw
+                  - generic [ref=f3e71]: 2.0s
+                  - generic [ref=f3e72]: 36.6 MB
+                - link "⬇" [ref=f3e75] [cursor=pointer]:
+                  - /url: /api/recordings/69/download/raw
+              - generic [ref=f3e76]:
+                - generic [ref=f3e77]:
+                  - generic [ref=f3e78]: raw
+                  - generic [ref=f3e79]: 2.0s
+                  - generic [ref=f3e80]: 36.6 MB
+                - generic [ref=f3e81]:
+                  - generic [ref=f3e82]: raw only
+                  - link "⬇" [ref=f3e83] [cursor=pointer]:
+                    - /url: /api/recordings/59/download/raw
+              - generic [ref=f3e84]:
+                - generic [ref=f3e85]:
+                  - generic [ref=f3e86]: raw
+                  - generic [ref=f3e87]: 3.0s
+                  - generic [ref=f3e88]: 54.9 MB
+                - generic [ref=f3e89]:
+                  - generic [ref=f3e90]: raw only
+                  - link "⬇" [ref=f3e91] [cursor=pointer]:
+                    - /url: /api/recordings/49/download/raw
+            - link "View all captures for this signal →" [ref=f3e92] [cursor=pointer]:
+              - /url: /recordings?detection_id=1
+          - generic [ref=f3e93]:
+            - heading "📊 Signal Characterization" [level=2] [ref=f3e94]
+            - generic [ref=f3e95]:
+              - generic [ref=f3e96]:
+                - generic [ref=f3e97]: Peak Power
+                - generic [ref=f3e98]: —
+              - generic [ref=f3e99]:
+                - generic [ref=f3e100]: Noise Floor
+                - generic [ref=f3e101]: —
+              - generic [ref=f3e102]:
+                - generic [ref=f3e103]: SNR
+                - generic [ref=f3e104]: —
+              - generic [ref=f3e105]:
+                - generic [ref=f3e106]: Confidence
+                - generic [ref=f3e107]: 61.6%
+          - generic [ref=f3e108]:
+            - heading "📡 Allocation Context" [level=2] [ref=f3e109]
+            - generic [ref=f3e110]:
+              - generic [ref=f3e111]:
+                - generic [ref=f3e112]: Center Frequency
+                - generic [ref=f3e113]: 89.556548 MHz
+              - generic [ref=f3e114]:
+                - generic [ref=f3e115]: Lower Bound
+                - generic [ref=f3e116]: 89.465881 MHz
+              - generic [ref=f3e117]:
+                - generic [ref=f3e118]: Upper Bound
+                - generic [ref=f3e119]: 89.545881 MHz
+              - generic [ref=f3e120]:
+                - generic [ref=f3e121]: Bandwidth
+                - generic [ref=f3e122]: 80.0 kHz
+              - generic [ref=f3e123]:
+                - generic [ref=f3e124]: Service
+                - generic [ref=f3e125]: UNALLOCATED
+              - generic [ref=f3e126]:
+                - generic [ref=f3e127]: Region
+                - generic [ref=f3e128]: —
+          - generic [ref=f3e129]:
+            - heading "⏱️ Temporal Behavior" [level=2] [ref=f3e130]
+            - generic [ref=f3e131]:
+              - generic [ref=f3e132]:
+                - generic [ref=f3e133]: First Seen
+                - generic [ref=f3e134]: Jul 8, 05:45 PM
+              - generic [ref=f3e135]:
+                - generic [ref=f3e136]: Last Seen
+                - generic [ref=f3e137]: Jul 8, 05:45 PM
+              - generic [ref=f3e138]:
+                - generic [ref=f3e139]: Total Hits
+                - generic [ref=f3e140]: "1"
+              - generic [ref=f3e141]:
+                - generic [ref=f3e142]: Total Windows
+                - generic [ref=f3e143]: "1"
+            - generic [ref=f3e144]:
+              - generic "Segment detections per observation window. Values over 100% indicate wideband signals detected as multiple segments per window." [ref=f3e146]: Segment Density
+              - generic [ref=f3e149]: 100.0% · 1 hits / 1 windows
+        - generic [ref=f3e150]:
+          - generic [ref=f3e151]:
+            - heading "Classification & Labeling" [level=2] [ref=f3e152]
+            - generic [ref=f3e153]:
+              - generic [ref=f3e154]:
+                - generic [ref=f3e155]: Label
+                - textbox "Label" [ref=f3e156]:
+                  - /placeholder: e.g., Local FM, ATC, etc.
+                - generic [ref=f3e157]: Short identifier (max 64 chars)
+              - generic [ref=f3e158]:
+                - generic [ref=f3e159]: Classification
+                - combobox "Classification" [ref=f3e160]:
+                  - option "Unknown" [selected]
+                  - option "Friendly"
+                  - option "Ambient"
+                  - option "Hostile"
+              - generic [ref=f3e161]:
+                - generic [ref=f3e162]: Corrected Bandwidth (Hz)
+                - spinbutton "Corrected Bandwidth (Hz)" [ref=f3e163]
+                - generic [ref=f3e164]: Override display bandwidth (leave empty to use detected)
+              - generic [ref=f3e165]:
+                - generic [ref=f3e166]: Notes
+                - textbox "Notes" [ref=f3e167]:
+                  - /placeholder: Add any observations or context...
+                - generic [ref=f3e168]: Max 1024 characters
+              - generic [ref=f3e169]:
+                - button "Save Changes" [ref=f3e170] [cursor=pointer]
+                - button "Reset" [ref=f3e171] [cursor=pointer]
+          - generic [ref=f3e172]:
+            - heading "Quick Actions" [level=2] [ref=f3e173]
+            - generic [ref=f3e174]:
+              - button "✓ Mark as Friendly" [ref=f3e175] [cursor=pointer]
+              - button "○ Mark as Ambient" [ref=f3e176] [cursor=pointer]
+              - button "⚠ Mark as Hostile" [ref=f3e177] [cursor=pointer]
+          - generic [ref=f3e178]:
+            - heading "EP/COMSEC Quick Reference" [level=2] [ref=f3e179]
+            - generic [ref=f3e180]:
+              - paragraph [ref=f3e181]:
+                - strong [ref=f3e182]: "Hostile:"
+                - text: Confirmed adversary emissions, jammers, surveillance
+              - paragraph [ref=f3e183]:
+                - strong [ref=f3e184]: "Friendly:"
+                - text: Own-force communications, authorized equipment
+              - paragraph [ref=f3e185]:
+                - strong [ref=f3e186]: "Ambient:"
+                - text: Expected background (broadcast, nav aids)
+              - paragraph [ref=f3e187]:
+                - strong [ref=f3e188]: "Unknown:"
+                - text: Requires further analysis
