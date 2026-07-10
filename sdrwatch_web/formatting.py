@@ -6,11 +6,11 @@ and other values for human-readable display in templates.
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 
-def format_ts_label(ts: str | None) -> str:
+def format_ts_label(ts: Optional[str]) -> str:
     """
     Format an ISO timestamp for display (e.g., "Jan 15 14:30").
 
@@ -32,7 +32,7 @@ def format_ts_label(ts: str | None) -> str:
         return ts
 
 
-def format_freq_label(freq_hz: float | None) -> str:
+def format_freq_label(freq_hz: Optional[float]) -> str:
     """
     Format a frequency in Hz for display (e.g., "100.5 MHz").
 
@@ -59,7 +59,7 @@ def format_freq_label(freq_hz: float | None) -> str:
         return f"{freq:.0f} Hz"
 
 
-def format_bandwidth_khz(bw_hz: float | None) -> str:
+def format_bandwidth_khz(bw_hz: Optional[float]) -> str:
     """
     Format bandwidth in Hz as kHz display.
 
@@ -84,7 +84,7 @@ def format_bandwidth_khz(bw_hz: float | None) -> str:
         return f"{bw:.0f} Hz"
 
 
-def format_change_summary(event: dict[str, Any]) -> str:
+def format_change_summary(event: Dict[str, Any]) -> str:
     """
     Generate a human-readable summary for a change event.
 
@@ -128,11 +128,11 @@ def format_change_summary(event: dict[str, Any]) -> str:
 
 
 def compute_display_bandwidth_hz(
-    baseline_row: dict[str, Any],
-    f_low_hz: float | None,
-    f_high_hz: float | None,
-    bandwidth_hz: float | None,
-) -> float | None:
+    baseline_row: Dict[str, Any],
+    f_low_hz: Optional[float],
+    f_high_hz: Optional[float],
+    bandwidth_hz: Optional[float],
+) -> Optional[float]:
     """
     Compute display bandwidth, clamping to baseline bin_hz minimum.
 
@@ -185,7 +185,7 @@ def compute_display_bandwidth_hz(
 
 def now_utc() -> datetime:
     """Get current UTC datetime."""
-    return datetime.now(UTC)
+    return datetime.now(timezone.utc)
 
 
 def isoformat_utc(dt: datetime) -> str:
@@ -193,7 +193,7 @@ def isoformat_utc(dt: datetime) -> str:
     return dt.isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def parse_ts_utc(ts: str | None) -> datetime | None:
+def parse_ts_utc(ts: Optional[str]) -> Optional[datetime]:
     """
     Parse an ISO timestamp string to datetime.
 

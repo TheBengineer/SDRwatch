@@ -7,7 +7,7 @@ plus helper functions for common controller interactions.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Dict, List, Optional
 from urllib import error as urlerr
 from urllib import parse as urlparse
 from urllib import request as urlreq
@@ -40,8 +40,8 @@ class ControllerClient:
         self,
         method: str,
         path: str,
-        params: dict[str, Any] | None = None,
-        body: dict[str, Any] | None = None,
+        params: Optional[Dict[str, Any]] = None,
+        body: Optional[Dict[str, Any]] = None,
         want_text: bool = False,
     ) -> Any:
         """
@@ -81,9 +81,9 @@ class ControllerClient:
                     return raw.decode('utf-8', errors='replace')
                 return json.loads(raw.decode('utf-8'))
         except urlerr.HTTPError as e:
-            raise RuntimeError(f"controller HTTP {e.code}: {e.read().decode('utf-8', errors='replace')}") from e
+            raise RuntimeError(f"controller HTTP {e.code}: {e.read().decode('utf-8', errors='replace')}")
         except Exception as e:
-            raise RuntimeError(str(e)) from e
+            raise RuntimeError(str(e))
 
     # -----------------------------------------------------------------------
     # Device discovery
@@ -97,7 +97,7 @@ class ControllerClient:
     # Job management
     # -----------------------------------------------------------------------
 
-    def list_jobs(self) -> list[dict[str, Any]]:
+    def list_jobs(self) -> List[Dict[str, Any]]:
         """List all jobs (running and completed)."""
         return self._req('GET', '/jobs')
 
@@ -106,8 +106,8 @@ class ControllerClient:
         device_key: str,
         label: str,
         baseline_id: int,
-        params: dict[str, Any],
-    ) -> dict[str, Any]:
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
         Start a new scan job.
 
@@ -128,15 +128,15 @@ class ControllerClient:
         }
         return self._req('POST', '/jobs', body=body)
 
-    def job_detail(self, job_id: str) -> dict[str, Any]:
+    def job_detail(self, job_id: str) -> Dict[str, Any]:
         """Get details for a specific job."""
         return self._req('GET', f'/jobs/{job_id}')
 
-    def stop_job(self, job_id: str) -> dict[str, Any]:
+    def stop_job(self, job_id: str) -> Dict[str, Any]:
         """Stop a running job."""
         return self._req('DELETE', f'/jobs/{job_id}')
 
-    def job_logs(self, job_id: str, tail: int | None = None) -> str:
+    def job_logs(self, job_id: str, tail: Optional[int] = None) -> str:
         """
         Get log output for a job.
 
@@ -188,7 +188,7 @@ def init_controller(app) -> None:
     app.extensions['sdrwatch_controller'] = ControllerClient(CONTROL_URL, CONTROL_TOKEN)
 
 
-def controller_active_job() -> dict[str, Any] | None:
+def controller_active_job() -> Optional[Dict[str, Any]]:
     """
     Get the currently running job, if any.
 
@@ -206,7 +206,7 @@ def controller_active_job() -> dict[str, Any] | None:
     return running[0] if running else None
 
 
-def controller_profiles() -> list[dict[str, Any]]:
+def controller_profiles() -> List[Dict[str, Any]]:
     """
     Fetch scan profiles from the controller.
 

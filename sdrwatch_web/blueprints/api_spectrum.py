@@ -6,7 +6,7 @@ bounds and configurable downsampling for the React UI spectrum viewer.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, jsonify, request
 
@@ -49,7 +49,7 @@ def api_spectrum() -> Any:
 
     # Build query with optional freq bounds
     where = ["baseline_id = ?"]
-    params: list[Any] = [baseline_id]
+    params: List[Any] = [baseline_id]
     if f_min is not None:
         bin_min = max(0, int((f_min - freq_start) / bin_hz))
         where.append("bin_index >= ?")
@@ -69,9 +69,9 @@ def api_spectrum() -> Any:
         return jsonify({"freqs": [], "power_db": [], "noise_db": []})
 
     # Build arrays
-    freqs: list[float] = [freq_start + r["bin_index"] * bin_hz for r in rows]
-    power_db: list[float] = [r["power_ema"] if r["power_ema"] is not None else -999.0 for r in rows]
-    noise_db: list[float] = [r["noise_floor_ema"] if r["noise_floor_ema"] is not None else -999.0 for r in rows]
+    freqs: List[float] = [freq_start + r["bin_index"] * bin_hz for r in rows]
+    power_db: List[float] = [r["power_ema"] if r["power_ema"] is not None else -999.0 for r in rows]
+    noise_db: List[float] = [r["noise_floor_ema"] if r["noise_floor_ema"] is not None else -999.0 for r in rows]
 
     # Downsample to requested points (uniform decimation)
     n = len(freqs)

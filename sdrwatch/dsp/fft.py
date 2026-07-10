@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import List, Tuple
+
 import numpy as np  # type: ignore
 
 from sdrwatch.util.math import db10
@@ -15,7 +17,7 @@ except Exception:  # pragma: no cover - optional dependency
     welch = None  # type: ignore
 
 
-def _welch_psd(samples: np.ndarray, samp_rate: float, fft_size: int) -> tuple[np.ndarray, np.ndarray]:
+def _welch_psd(samples: np.ndarray, samp_rate: float, fft_size: int) -> Tuple[np.ndarray, np.ndarray]:
     """Compute PSD via scipy.signal.welch (complex-friendly)."""
     assert welch is not None  # noqa: S101 - guarded by HAVE_SCIPY
     freqs, psd = welch(  # type: ignore[misc]
@@ -35,10 +37,10 @@ def _welch_psd(samples: np.ndarray, samp_rate: float, fft_size: int) -> tuple[np
     return freqs, psd
 
 
-def _manual_psd(samples: np.ndarray, samp_rate: float, fft_size: int, avg: int) -> tuple[np.ndarray, np.ndarray]:
+def _manual_psd(samples: np.ndarray, samp_rate: float, fft_size: int, avg: int) -> Tuple[np.ndarray, np.ndarray]:
     """Fallback PSD computation using numpy FFT + Hann windows."""
     seg = fft_size
-    windows: list[np.ndarray] = []
+    windows: List[np.ndarray] = []
     for i in range(avg):
         start = i * seg
         chunk = samples[start : start + seg]
@@ -61,7 +63,7 @@ def _manual_psd(samples: np.ndarray, samp_rate: float, fft_size: int, avg: int) 
     return freqs, psd
 
 
-def compute_psd_db(samples: np.ndarray, samp_rate: float, fft_size: int, avg: int) -> tuple[np.ndarray, np.ndarray]:
+def compute_psd_db(samples: np.ndarray, samp_rate: float, fft_size: int, avg: int) -> Tuple[np.ndarray, np.ndarray]:
     """Return (freqs, psd_db) for complex IQ input samples."""
     if HAVE_SCIPY:
         freqs, psd = _welch_psd(samples, samp_rate, fft_size)

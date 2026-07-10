@@ -56,11 +56,7 @@ def export_csv():
     if state != "ready":
         return Response("Database not ready", mimetype="text/plain", status=503)
 
-    from sdrwatch_web.db import (
-        detection_predicates,
-        detections_have_confidence,
-        parse_detection_filters,
-    )
+    from sdrwatch_web.db import detection_predicates, detections_have_confidence, parse_detection_filters
 
     con = get_con()
     filters, _ = parse_detection_filters(request.args, default_since_hours=168)

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from typing import List, Optional, Tuple
+
 import numpy as np
 
 from sdrwatch.detection.types import Segment
 
 from .cfar import cfar_os_mask
-from .clustering import estimate_bandwidth, expand_peak_bandwidth
+from .clustering import expand_peak_bandwidth, estimate_bandwidth
 from .noise_estimation import robust_noise_floor_db
 
 
@@ -22,7 +24,7 @@ def split_segment_by_valleys(
     min_valley_bins: int,
     min_segment_bins: int,
     min_peak_prominence_db: float,
-) -> list[tuple[int, int]]:
+) -> List[Tuple[int, int]]:
     """Split merged lobes by searching for deep valleys between peaks."""
 
     start_idx = int(start_idx)
@@ -48,9 +50,9 @@ def split_segment_by_valleys(
     min_segment_bins = max(1, int(min_segment_bins))
     drop_db = max(0.0, float(drop_db))
     noise_margin_db = max(0.0, float(noise_margin_db))
-    boundaries: list[int] = [start_idx]
+    boundaries: List[int] = [start_idx]
 
-    for left_idx, right_idx in zip(peaks[:-1], peaks[1:], strict=False):
+    for left_idx, right_idx in zip(peaks[:-1], peaks[1:]):
         if (right_idx - left_idx) < min_valley_bins:
             continue
         valley_slice = slice(start_idx + left_idx, start_idx + right_idx + 1)
@@ -74,14 +76,14 @@ def split_segment_by_valleys(
         boundaries.append(split_idx)
 
     boundaries.append(end_idx)
-    result: list[tuple[int, int]] = []
-    for a, b in zip(boundaries[:-1], boundaries[1:], strict=False):
+    result: List[Tuple[int, int]] = []
+    for a, b in zip(boundaries[:-1], boundaries[1:]):
         if (b - a) >= min_segment_bins:
             result.append((a, b))
     return result or [(start_idx, end_idx)]
 
 
-def _find_local_peaks(window: np.ndarray, min_prominence_db: float) -> list[int]:
+def _find_local_peaks(window: np.ndarray, min_prominence_db: float) -> List[int]:
     data = np.asarray(window, dtype=np.float64)
     if data.size == 0:
         return []
@@ -94,7 +96,7 @@ def _find_local_peaks(window: np.ndarray, min_prominence_db: float) -> list[int]
     if peak_indices.size == 0:
         return [int(np.argmax(data))]
     prominence_threshold = float(np.max(data) - min_prominence_db)
-    filtered: list[int] = []
+    filtered: List[int] = []
     for idx in peak_indices:
         if data[idx] >= prominence_threshold:
             filtered.append(int(idx))
@@ -113,14 +115,14 @@ def detect_segments(
     cfar_train: int = 24,
     cfar_guard: int = 4,
     cfar_quantile: float = 0.75,
-    cfar_alpha_db: float | None = None,
-    abs_power_floor_db: float | None = None,
+    cfar_alpha_db: Optional[float] = None,
+    abs_power_floor_db: Optional[float] = None,
     *,
     bandwidth_floor_db: float = 2.0,
     bandwidth_peak_drop_db: float = 18.0,
     bandwidth_gap_hz: float = 15_000.0,
     bandshape_mode: str = "minus6db",
-    bandshape_drop_db: float | None = None,
+    bandshape_drop_db: Optional[float] = None,
     bandshape_window_bins: int = 24,
     bandshape_curvature_db: float = 3.0,
     bandshape_min_prominence_db: float = 1.0,
@@ -133,7 +135,7 @@ def detect_segments(
     centroid_span_hz: float = 240_000.0,
     centroid_drop_db: float = 20.0,
     centroid_floor_margin_db: float = 2.0,
-) -> tuple[list[Segment], np.ndarray, np.ndarray]:
+) -> Tuple[List[Segment], np.ndarray, np.ndarray]:
     """Detect contiguous energy segments from a PSD in dB."""
     psd_db = np.asarray(psd_db).astype(np.float64)
     freqs_hz = np.asarray(freqs_hz).astype(np.float64)
@@ -207,7 +209,7 @@ def detect_segments(
         return float(np.sum(sel_freq * weights) / wsum)
 
 
-    segs: list[Segment] = []
+    segs: List[Segment] = []
     i = 0
     while i < N:
         if bool(above[i]):

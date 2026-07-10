@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import os
 import traceback as tb
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from time import perf_counter
+from typing import Any, Dict, List, Optional, Set
 
 from flask import Flask, abort, g, request, send_from_directory
 
@@ -75,7 +76,7 @@ def create_app(db_path: str) -> Flask:
         from werkzeug.exceptions import HTTPException
         if isinstance(exc, HTTPException):
             entry = {
-                "ts": datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+                "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
                 "path": request.path,
                 "method": request.method,
                 "error": str(exc),
@@ -87,7 +88,7 @@ def create_app(db_path: str) -> Flask:
                 app.config["ERROR_RING"].pop(0)
             return exc
         entry = {
-            "ts": datetime.now(UTC)
+            "ts": datetime.now(timezone.utc)
             .isoformat(timespec="milliseconds")
             .replace("+00:00", "Z"),
             "path": request.path,
@@ -107,10 +108,10 @@ def create_app(db_path: str) -> Flask:
     from sdrwatch_web.blueprints.api_baselines import bp as api_baselines_bp
     from sdrwatch_web.blueprints.api_charts import bp as api_charts_bp
     from sdrwatch_web.blueprints.api_debug import bp as api_debug_bp
+    from sdrwatch_web.blueprints.api_spectrum import bp as api_spectrum_bp
     from sdrwatch_web.blueprints.api_jobs import bp as api_jobs_bp
     from sdrwatch_web.blueprints.api_recordings import bp as api_recordings_bp
     from sdrwatch_web.blueprints.api_signals import bp as api_signals_bp
-    from sdrwatch_web.blueprints.api_spectrum import bp as api_spectrum_bp
     from sdrwatch_web.blueprints.ctl import bp as ctl_bp
     from sdrwatch_web.blueprints.views import bp as views_bp
 

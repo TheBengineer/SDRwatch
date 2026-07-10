@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import sys
 import time
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import numpy as np  # type: ignore
 
@@ -22,9 +23,10 @@ from sdrwatch.dsp.fft import compute_psd_db
 from sdrwatch.dsp.noise_estimation import robust_noise_floor_db
 from sdrwatch.dsp.power_monitor import WindowPowerMonitor
 from sdrwatch.io.bandplan import Bandplan
-from sdrwatch.recording.recorder import IQRecorder
 from sdrwatch.sweep.scheduler import WindowScheduler
 from sdrwatch.util.scan_logger import ScanLogger
+
+from sdrwatch.recording.recorder import IQRecorder
 
 
 class _QueuedTarget:
@@ -36,10 +38,11 @@ class _QueuedTarget:
         self.snr_db = 0.0
         self.f_low_hz = self.f_center_hz - 50000
         self.f_high_hz = self.f_center_hz + 50000
+from sdrwatch.recording.compressor import compress_to_ogg
 from sdrwatch.recording.cleanup import enforce_retention
 
 
-def _select_revisit_segment(tag: RevisitTag, segments: list[Segment]) -> Segment | None:
+def _select_revisit_segment(tag: RevisitTag, segments: List[Segment]) -> Optional[Segment]:
     for seg in segments:
         if seg.f_low_hz <= tag.f_center_hz <= seg.f_high_hz:
             return seg
@@ -48,7 +51,7 @@ def _select_revisit_segment(tag: RevisitTag, segments: list[Segment]) -> Segment
     return None
 
 
-def _segment_shape_kwargs_from_args(args) -> dict[str, Any]:
+def _segment_shape_kwargs_from_args(args) -> Dict[str, Any]:
     def _clean_float(attr: str, default: float) -> float:
         val = getattr(args, attr, None)
         if val in (None, ""):
@@ -95,10 +98,10 @@ def _run_revisit_pass(
     args,
     src,
     detection_engine: DetectionEngine,
-    tags: list[RevisitTag],
-    logger: ScanLogger | None = None,
-    segment_shape_kwargs: dict[str, Any] | None = None,
-) -> dict[str, int]:
+    tags: List[RevisitTag],
+    logger: Optional[ScanLogger] = None,
+    segment_shape_kwargs: Optional[Dict[str, Any]] = None,
+) -> Dict[str, int]:
     stats = {"total": len(tags), "confirmed": 0, "false_positive": 0}
     if not tags:
         return stats
@@ -215,7 +218,7 @@ class Sweeper:
         store: Store,
         bandplan: Bandplan,
         baseline_ctx: BaselineContext,
-        logger: ScanLogger | None = None,
+        logger: Optional[ScanLogger] = None,
     ) -> None:
         self.args = args
         self.store = store
@@ -223,7 +226,7 @@ class Sweeper:
         self.baseline_ctx = baseline_ctx
         self.logger = logger
 
-    def _sweep_params(self) -> dict[str, Any]:
+    def _sweep_params(self) -> Dict[str, Any]:
         args = self.args
         return {
             "start_hz": args.start,
@@ -283,7 +286,7 @@ class Sweeper:
         event_writer = BaselineEventWriter(store, baseline_ctx, logger)
         segment_shape_kwargs = _segment_shape_kwargs_from_args(args)
         if args.spur_calibration:
-            detection_engine: DetectionEngine | None = None
+            detection_engine: Optional[DetectionEngine] = None
         else:
             detection_engine = DetectionEngine(
                 store,
@@ -356,7 +359,7 @@ class Sweeper:
 
                 if logger:
                     widths = np.array([max(float(seg.bandwidth_hz), 0.0) for seg in segs], dtype=float)
-                    float(np.mean(widths)) if widths.size else None
+                    avg_bw = float(np.mean(widths)) if widths.size else None
                     min_bw = float(np.min(widths)) if widths.size else None
                     median_bw = float(np.median(widths)) if widths.size else None
                     max_bw = float(np.max(widths)) if widths.size else None
@@ -414,7 +417,7 @@ class Sweeper:
                     spur_ignored,
                 )
 
-            revisit_tags: list[RevisitTag] = []
+            revisit_tags: List[RevisitTag] = []
             if detection_engine:
                 revisit_tags = detection_engine.finalize_coarse_pass()
             if detection_engine and getattr(args, "two_pass", False) and revisit_tags:
@@ -477,6 +480,7 @@ class Sweeper:
         _log.info("recording pass: capturing IQ for detected signals")
 
         import os
+        from datetime import datetime, timezone
 
         capture_dir = getattr(args, "capture_dir", "./captures")
         duration_s = getattr(args, "capture_duration", 10.0)
@@ -621,7 +625,7 @@ def run_sweep(
     src,
     baseline_ctx: BaselineContext,
     sweep_seq: int,
-    logger: ScanLogger | None = None,
+    logger: Optional[ScanLogger] = None,
 ) -> None:
     """Backwards-compatible helper that instantiates a Sweeper and runs it."""
 

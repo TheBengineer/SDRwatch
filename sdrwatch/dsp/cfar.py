@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Tuple
+
 import numpy as np
 
 from .windowing import _sliding_window_view
 
 
-def cfar_os_mask(psd_db: np.ndarray, train: int, guard: int, quantile: float, alpha_db: float) -> tuple[np.ndarray, np.ndarray]:
+def cfar_os_mask(psd_db: np.ndarray, train: int, guard: int, quantile: float, alpha_db: float) -> Tuple[np.ndarray, np.ndarray]:
     """Order-Statistic CFAR (OS-CFAR) operating on 1D PSD arrays."""
     psd_db = np.asarray(psd_db).astype(np.float64)
     N = psd_db.size

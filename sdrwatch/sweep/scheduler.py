@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Iterator, List
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ class WindowScheduler:
             idx += 1
             center += self._step_hz
 
-    def windows(self) -> list[SweepWindow]:
+    def windows(self) -> List[SweepWindow]:
         """Eagerly materialize the scheduled windows."""
 
         return list(iter(self))

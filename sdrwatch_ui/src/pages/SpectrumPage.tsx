@@ -55,9 +55,7 @@ export default function SpectrumPage() {
     const id = setInterval(async () => {
       try {
         setSignals(await apiGet<Signal[]>('/api/signals', { baseline_id: baselineId }))
-      } catch {
-        console.error('Failed to fetch signals')
-      }
+      } catch {}
     }, 5000)
     return () => clearInterval(id)
   }, [baselineId])
@@ -70,9 +68,7 @@ export default function SpectrumPage() {
         const params: Record<string, string | number> = { baseline_id: baselineId }
         const resp = await apiGet<{ recordings: Recording[] }>('/api/recordings', params)
         setRecordings(resp.recordings || [])
-      } catch {
-        console.error('Failed to fetch recordings')
-      }
+      } catch {}
     }, 5000)
     return () => clearInterval(id)
   }, [baselineId])

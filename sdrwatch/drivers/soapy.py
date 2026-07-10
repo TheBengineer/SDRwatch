@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import time
+from typing import Dict, List, Optional
 
-import numpy as np  # type: ignore
+import numpy as np # type: ignore
 
 from sdrwatch.util.logging import get_logger
 
@@ -25,10 +26,10 @@ except Exception:  # pragma: no cover - optional dependency
 class SDRSource:
     """Thin convenience wrapper around SoapySDR.Device."""
 
-    def __init__(self, driver: str, samp_rate: float, gain: str | float, soapy_args: dict[str, str] | None = None):
+    def __init__(self, driver: str, samp_rate: float, gain: str | float, soapy_args: Optional[Dict[str, str]] = None):
         if not HAVE_SOAPY:
             raise RuntimeError("SoapySDR not available")
-        dev_args: dict[str, str] = {"driver": driver}
+        dev_args: Dict[str, str] = {"driver": driver}
         if soapy_args:
             dev_args.update({str(k): str(v) for k, v in soapy_args.items()})
         self.dev = SoapySDR.Device(dev_args)  # type: ignore[call-arg]
@@ -47,7 +48,7 @@ class SDRSource:
         self.dev.setFrequency(SOAPY_SDR_RX, 0, center_hz)
 
     def read(self, count: int) -> np.ndarray:
-        buffs: list[np.ndarray] = []
+        buffs: List[np.ndarray] = []
         got = 0
         while got < count:
             sr = int(min(8192, count - got))

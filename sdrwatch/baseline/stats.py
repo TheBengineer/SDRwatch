@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import sys
+from typing import Tuple
+
 import numpy as np  # type: ignore
 
 from sdrwatch.baseline.model import BaselineContext
@@ -31,7 +34,7 @@ class BaselineStatsUpdater:
         dwell_ms: float = 0.0,
     ) -> bool:
         """Update per-bin EMA stats for a single sweep window.
-
+        
         Args:
             rf_freqs: RF frequencies for each bin (Hz).
             psd_db: Power spectral density in dB for each bin.
@@ -76,7 +79,7 @@ class BaselineStatsUpdater:
         self.baseline_ctx.total_windows = total_windows
         return True
 
-    def update_span(self, planned: tuple[int, int]) -> None:
+    def update_span(self, planned: Tuple[int, int]) -> None:
         """Expand the baseline span to cover the planned sweep if needed."""
 
         start, stop = (int(planned[0]), int(planned[1]))
@@ -97,11 +100,17 @@ class BaselineStatsUpdater:
         if diff <= max(1.0, self.baseline_ctx.bin_hz * 0.05):
             return
         self._warned_bin_mismatch = True
+        msg = (
+            f"[baseline] WARNING: sweep bin {self.sweep_bin_hz:.2f} Hz differs from baseline bin "
+            f"{self.baseline_ctx.bin_hz:.2f} Hz"
+        )
+        print(msg, file=sys.stderr)
 
     def _warn_invalid_bin(self) -> None:
         if self._warned_bin_invalid:
             return
         self._warned_bin_invalid = True
+        print("[baseline] bin_hz invalid; skipping stats update", file=sys.stderr)
 
     def _warn_span_outside(self, rf_freqs: np.ndarray) -> None:
         if self._warned_span:
@@ -110,7 +119,8 @@ class BaselineStatsUpdater:
         low = float(np.min(rf_freqs)) if rf_freqs.size else 0.0
         high = float(np.max(rf_freqs)) if rf_freqs.size else 0.0
         ctx = self.baseline_ctx
-        (
+        msg = (
             f"[baseline] sweep window {low/1e6:.3f}-{high/1e6:.3f} MHz outside baseline span "
             f"{ctx.freq_start_hz/1e6:.3f}-{ctx.freq_stop_hz/1e6:.3f} MHz"
         )
+        print(msg, file=sys.stderr)

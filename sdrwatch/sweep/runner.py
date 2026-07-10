@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+import sys
 import time
+from typing import Dict, Optional
 
 from sdrwatch.baseline.context import resolve_baseline_context
 from sdrwatch.baseline.store import Store
@@ -27,7 +29,7 @@ class ScannerRunner:
         self.bandplan = Bandplan(args.bandplan)
         self.logger = ScanLogger.from_db_path(args.db, extra_targets=self._extra_targets())
         self.src = None
-        self.sweeper: Sweeper | None = None
+        self.sweeper: Optional[Sweeper] = None
 
     def _extra_targets(self):
         jsonl_path = getattr(self.args, "jsonl", None)
@@ -78,7 +80,7 @@ class ScannerRunner:
 
     def _select_source(self):
         args = self.args
-        soapy_args_dict: dict[str, str] | None = None
+        soapy_args_dict: Optional[Dict[str, str]] = None
         if getattr(args, "soapy_args", None):
             soapy_args_dict = {}
             for kv in str(args.soapy_args).split(","):
@@ -88,7 +90,7 @@ class ScannerRunner:
 
         if args.driver == "rtlsdr_native":
             src = RTLSDRSource(samp_rate=args.samp_rate, gain=args.gain)
-            src.device = "RTL-SDR (native)"
+            setattr(src, "device", "RTL-SDR (native)")
             return src
 
         try:
@@ -120,22 +122,20 @@ class ScannerRunner:
                             device_index=idx_hint,
                             serial_number=serial_hint,
                         )
-                        src.device = "RTL-SDR (native fallback)"
+                        setattr(src, "device", "RTL-SDR (native fallback)")
                         args.driver = "rtlsdr_native"
                         return src
                     except Exception as retry_exc:  # pragma: no cover - hardware specific
                         last_err = retry_exc
                         time.sleep(0.2)
-                if last_err is not None:
-                    raise last_err from exc
-                raise exc
+                raise last_err if last_err else exc
             raise
 
     def _termination_policy(self):
         duration_s = parse_duration_to_seconds(self.args.duration)
         start_time = time.time()
         if self.args.loop:
-            sweeps_remaining: int | None = None
+            sweeps_remaining: Optional[int] = None
         elif self.args.repeat is not None:
             sweeps_remaining = int(self.args.repeat)
         elif duration_s is not None:

@@ -1,7 +1,7 @@
 """IQ recording — tune, capture, persist to disk."""
 
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import numpy as np  # noqa: F401 — samples from SDR driver are ndarrays
 
@@ -76,7 +76,7 @@ class IQRecorder:
             _log.error("read returned 0 samples at %d Hz", f_center_hz)
             return None, None
 
-        ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         filename = f"{baseline_id}_{detection_id}_{f_center_hz}_{ts}.cf32"
         file_path = os.path.join(self.capture_dir, "raw", filename)
         duration_ms = int((len(samples) / samp_rate) * 1000) if samp_rate > 0 else 0
@@ -93,7 +93,7 @@ class IQRecorder:
                 detection_id=detection_id,
                 f_center_hz=f_center_hz,
                 bandwidth_hz=0.0,  # filled later by classifier
-                started_utc=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S"),
+                started_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
                 duration_ms=duration_ms,
                 sample_rate_hz=samp_rate,
                 raw_path=file_path,

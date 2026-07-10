@@ -6,12 +6,11 @@ schema probing (table_exists, table_columns), and state checking (db_state).
 """
 from __future__ import annotations
 
-import contextlib
 import os
 import sqlite3
-from typing import Any
+from typing import Any, Dict, Optional, Set, Tuple
 
-from flask import Flask, current_app
+from flask import Flask, current_app, g
 
 
 def open_db_ro(path: str) -> sqlite3.Connection:
@@ -31,7 +30,7 @@ def open_db_ro(path: str) -> sqlite3.Connection:
     return con
 
 
-def q1(con: sqlite3.Connection, sql: str, params: Any = ()) -> dict[str, Any] | None:
+def q1(con: sqlite3.Connection, sql: str, params: Any = ()) -> Optional[Dict[str, Any]]:
     """Execute SQL and return the first row as a dict, or None."""
     cur = con.execute(sql, params)
     return cur.fetchone()
@@ -96,7 +95,7 @@ def _run_startup_migrations(db_path: str) -> None:
         pass
 
 
-def _ensure_con(app: Flask) -> sqlite3.Connection | None:
+def _ensure_con(app: Flask) -> Optional[sqlite3.Connection]:
     """Lazy-open the read-only connection, caching on success."""
     if app.config.get('SDRWATCH_DB_CON') is not None:
         return app.config['SDRWATCH_DB_CON']
@@ -114,8 +113,10 @@ def _ensure_con(app: Flask) -> sqlite3.Connection | None:
 def reset_ro_connection(app: Flask) -> None:
     """Close and reset the cached read-only connection."""
     if app.config.get('SDRWATCH_DB_CON') is not None:
-        with contextlib.suppress(Exception):
+        try:
             app.config['SDRWATCH_DB_CON'].close()
+        except Exception:
+            pass
     app.config['SDRWATCH_DB_CON'] = None
     app.config['SDRWATCH_DB_COLUMNS_CACHE'] = {}
     app.config['SDRWATCH_DB_EXISTS_CACHE'] = {}
@@ -137,12 +138,12 @@ def get_con() -> sqlite3.Connection:
     return connection
 
 
-def get_con_optional() -> sqlite3.Connection | None:
+def get_con_optional() -> Optional[sqlite3.Connection]:
     """Get the current connection, or None if unavailable."""
     return _ensure_con(current_app)
 
 
-def table_columns(table_name: str) -> set[str]:
+def table_columns(table_name: str) -> Set[str]:
     """
     Get the set of column names for a table (cached).
 
@@ -158,7 +159,7 @@ def table_columns(table_name: str) -> set[str]:
         return cache[key]
 
     connection = _ensure_con(current_app)
-    columns: set[str] = set()
+    columns: Set[str] = set()
     if connection is None:
         cache[key] = columns
         return columns
@@ -211,7 +212,7 @@ def table_exists(table_name: str) -> bool:
     return exists
 
 
-def db_state() -> tuple[str, str]:
+def db_state() -> Tuple[str, str]:
     """
     Check database readiness state.
 
@@ -229,9 +230,12 @@ def db_state() -> tuple[str, str]:
         )
     try:
         cur = connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        names: set[str] = set()
+        names: Set[str] = set()
         for row in cur.fetchall():
-            value = row.get('name', '') if isinstance(row, dict) else row[0]
+            if isinstance(row, dict):
+                value = row.get('name', '')
+            else:
+                value = row[0]
             if value:
                 names.add(str(value).lower())
 
@@ -249,7 +253,7 @@ def db_state() -> tuple[str, str]:
         )
 
 
-def db_waiting_context(state: str, message: str) -> dict[str, Any]:
+def db_waiting_context(state: str, message: str) -> Dict[str, Any]:
     """
     Build template context for database waiting/unavailable states.
 

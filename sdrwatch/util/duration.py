@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import argparse
-from typing import Any
+from typing import Any, Optional
 
 
-def parse_duration_to_seconds(spec: Any | None) -> float | None:
+def parse_duration_to_seconds(spec: Optional[Any]) -> Optional[float]:
     """Parse strings like '30', '10m', '2h', returning seconds as float."""
 
     if spec is None:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class DetectionEngine:
     def __init__(
         self,
         store: Store,
-        bandplan: Bandplan,
+        bandplan: "Bandplan",
         args,
         *,
         bin_hz: float,
@@ -29,8 +29,8 @@ class DetectionEngine:
         min_hits: int = 2,
         min_windows: int = 2,
         max_gap_windows: int = 3,
-        freq_merge_hz: float | None = None,
-        logger: ScanLogger | None = None,
+        freq_merge_hz: Optional[float] = None,
+        logger: Optional["ScanLogger"] = None,
     ):
         self.store = store
         self.bandplan = bandplan
@@ -41,7 +41,7 @@ class DetectionEngine:
         self.min_windows = max(1, int(min_windows))
         self.max_gap_windows = max(1, int(max_gap_windows))
         merge_override = getattr(args, "cluster_merge_hz", None)
-        merge_override_val: float | None
+        merge_override_val: Optional[float]
         try:
             merge_override_val = float(merge_override) if merge_override not in (None, "") else None
         except Exception:
@@ -85,7 +85,7 @@ class DetectionEngine:
         except Exception:
             width_cap_val = 0.0
         self.max_detection_width_hz = max(0.0, width_cap_val)
-        self.clusters: list[DetectionCluster] = []
+        self.clusters: List[DetectionCluster] = []
         self._last_window_idx = -1
         self.spur_tolerance_hz = 5_000.0
         self.spur_margin_db = 4.0
@@ -163,7 +163,7 @@ class DetectionEngine:
             payload.setdefault("profile", self.profile_name)
         self.logger.log(event, **payload)
 
-    def ingest(self, window_idx: int, segments: list[Segment]) -> tuple[int, int, int, int]:
+    def ingest(self, window_idx: int, segments: List[Segment]) -> Tuple[int, int, int, int]:
         self._last_window_idx = max(self._last_window_idx, window_idx)
         accepted = 0
         spur_ignored = 0
@@ -182,7 +182,7 @@ class DetectionEngine:
         emitted, new_emitted = self._drain_pending_emits()
         return accepted, spur_ignored, emitted, new_emitted
 
-    def flush(self) -> tuple[int, int]:
+    def flush(self) -> Tuple[int, int]:
         self._prune_clusters(self._last_window_idx if self._last_window_idx >= 0 else 0, force=True)
         return self._drain_pending_emits()
 
@@ -238,7 +238,7 @@ class DetectionEngine:
         *,
         pad_hz: float,
         min_bw_hz: float,
-    ) -> tuple[int, int]:
+    ) -> Tuple[int, int]:
         # Ensure the emitted center is within the active baseline span.
         # When centroiding spans beyond the scan edges, the raw center can land
         # slightly outside the configured sweep range; clamping avoids emitting
@@ -268,7 +268,7 @@ class DetectionEngine:
             high = low + int(max(1.0, self.bin_hz))
         return low, high
 
-    def _shape_match_span(self, center_hz: int, raw_low: int, raw_high: int) -> tuple[int, int]:
+    def _shape_match_span(self, center_hz: int, raw_low: int, raw_high: int) -> Tuple[int, int]:
         return self._shape_span(
             center_hz,
             raw_low,
@@ -277,7 +277,7 @@ class DetectionEngine:
             min_bw_hz=self.min_match_bandwidth_hz,
         )
 
-    def _shape_display_span(self, center_hz: int, raw_low: int, raw_high: int) -> tuple[int, int]:
+    def _shape_display_span(self, center_hz: int, raw_low: int, raw_high: int) -> Tuple[int, int]:
         return self._shape_span(
             center_hz,
             raw_low,
@@ -306,7 +306,7 @@ class DetectionEngine:
             cleaned = cleaned[:-1] + "+00:00"
         return datetime.fromisoformat(cleaned)
 
-    def _find_cluster(self, seg: Segment) -> DetectionCluster | None:
+    def _find_cluster(self, seg: Segment) -> Optional[DetectionCluster]:
         for cluster in self.clusters:
             if self._segments_overlap(cluster, seg):
                 return cluster
@@ -342,8 +342,8 @@ class DetectionEngine:
             return
         self._emit_detection(cluster)
 
-    def _cluster_gate_status(self, cluster: DetectionCluster) -> tuple[bool, list[str]]:
-        reasons: list[str] = []
+    def _cluster_gate_status(self, cluster: DetectionCluster) -> Tuple[bool, List[str]]:
+        reasons: List[str] = []
         width_hz = float(cluster.f_high_hz - cluster.f_low_hz)
         if width_hz < self.min_width_hz:
             reasons.append(f"width={width_hz:.1f} < min_width={self.min_width_hz:.1f}")
@@ -468,7 +468,7 @@ class DetectionEngine:
         )
 
 
-    def finalize_coarse_pass(self) -> list[RevisitTag]:
+    def finalize_coarse_pass(self) -> List[RevisitTag]:
         return self.persistence.finalize_coarse_pass()
 
     def apply_revisit_confirmation(self, tag: RevisitTag, seg: Segment) -> None:
@@ -478,7 +478,7 @@ class DetectionEngine:
         self.persistence.apply_revisit_miss(tag)
 
     def _prune_clusters(self, window_idx: int, force: bool = False):
-        to_remove: list[DetectionCluster] = []
+        to_remove: List[DetectionCluster] = []
         for cluster in self.clusters:
             gap = window_idx - cluster.last_window
             if force or gap > self.max_gap_windows:
@@ -511,7 +511,7 @@ class DetectionEngine:
     def _spur_confidence_penalty(self, cluster: DetectionCluster) -> float:
         return self.spur_evaluator.confidence_penalty(cluster.best_seg, calibration_mode=self._calibration_mode)
 
-    def _drain_pending_emits(self) -> tuple[int, int]:
+    def _drain_pending_emits(self) -> Tuple[int, int]:
         emitted = self._pending_emits
         new_emitted = self._pending_new_signals
         self._pending_emits = 0

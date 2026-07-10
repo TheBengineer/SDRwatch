@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import os
 from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 
 @dataclass
@@ -17,8 +18,8 @@ class Band:
 
 
 class Bandplan:
-    def __init__(self, csv_path: str | None = None):
-        self.bands: list[Band] = []
+    def __init__(self, csv_path: Optional[str] = None):
+        self.bands: List[Band] = []
         if csv_path and os.path.exists(csv_path):
             self._load_csv(csv_path)
         else:
@@ -51,7 +52,7 @@ class Bandplan:
                 except Exception:
                     continue
 
-    def lookup(self, f_hz: int) -> tuple[str, str, str]:
+    def lookup(self, f_hz: int) -> Tuple[str, str, str]:
         for band in self.bands:
             if band.low_hz <= f_hz <= band.high_hz:
                 return band.service, band.region, band.notes

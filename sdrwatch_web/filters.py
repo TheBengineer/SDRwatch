@@ -6,14 +6,14 @@ and build SQL WHERE clauses for detection and scan queries.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def parse_detection_filters(
     args,
     *,
-    default_since_hours: int | None = None,
-) -> tuple[dict[str, Any], dict[str, str]]:
+    default_since_hours: Optional[int] = None,
+) -> Tuple[Dict[str, Any], Dict[str, str]]:
     """
     Parse query params into normalized detection filters and form defaults.
 
@@ -33,7 +33,7 @@ def parse_detection_filters(
             return val.strip()
         return str(val).strip()
 
-    def _coerce_float(text: str) -> float | None:
+    def _coerce_float(text: str) -> Optional[float]:
         if text == "":
             return None
         try:
@@ -41,7 +41,7 @@ def parse_detection_filters(
         except Exception:
             return None
 
-    filters: dict[str, Any] = {
+    filters: Dict[str, Any] = {
         "service": None,
         "min_snr": None,
         "f_min_hz": None,
@@ -49,7 +49,7 @@ def parse_detection_filters(
         "since_hours": default_since_hours,
         "min_conf": None,
     }
-    form_defaults: dict[str, str] = {
+    form_defaults: Dict[str, str] = {
         "service": "",
         "min_snr": "",
         "f_min_mhz": "",
@@ -107,10 +107,10 @@ def parse_detection_filters(
 
 
 def detection_predicates(
-    filters: dict[str, Any],
+    filters: Dict[str, Any],
     *,
     alias: str = "d",
-) -> tuple[list[str], list[Any]]:
+) -> Tuple[List[str], List[Any]]:
     """
     Build SQL WHERE conditions for detection queries.
 
@@ -121,8 +121,8 @@ def detection_predicates(
     Returns:
         Tuple of (list of SQL condition strings, list of parameter values).
     """
-    conds: list[str] = []
-    params: list[Any] = []
+    conds: List[str] = []
+    params: List[Any] = []
 
     service = filters.get("service")
     if service:
@@ -159,10 +159,10 @@ def detection_predicates(
 
 
 def scan_predicates(
-    filters: dict[str, Any],
+    filters: Dict[str, Any],
     *,
     alias: str = "s",
-) -> tuple[list[str], list[Any]]:
+) -> Tuple[List[str], List[Any]]:
     """
     Build SQL WHERE conditions for scan queries.
 
@@ -173,8 +173,8 @@ def scan_predicates(
     Returns:
         Tuple of (list of SQL condition strings, list of parameter values).
     """
-    conds: list[str] = []
-    params: list[Any] = []
+    conds: List[str] = []
+    params: List[Any] = []
 
     since_hours = filters.get("since_hours")
     if since_hours is not None and since_hours > 0:

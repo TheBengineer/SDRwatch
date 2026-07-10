@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import os
 from dataclasses import dataclass
+from typing import List, Tuple
 
 
 def _int_env(name: str, default: int) -> int:
@@ -38,7 +39,7 @@ class BandSummaryConfig:
     occ_threshold_ratio: float = 0.2
 
     @classmethod
-    def from_env(cls) -> BandSummaryConfig:
+    def from_env(cls) -> "BandSummaryConfig":
         return cls(
             max_bands=_int_env("SDRWATCH_BAND_SUMMARY_MAX_BANDS", 6),
             target_band_width_hz=_float_env("SDRWATCH_BAND_SUMMARY_TARGET_WIDTH_HZ", 10_000_000.0),
@@ -48,7 +49,7 @@ class BandSummaryConfig:
         )
 
 
-def band_partitions(freq_start_hz: float, freq_stop_hz: float, config: BandSummaryConfig) -> tuple[list[tuple[float, float]], float]:
+def band_partitions(freq_start_hz: float, freq_stop_hz: float, config: BandSummaryConfig) -> Tuple[List[Tuple[float, float]], float]:
     """Compute span partitions for a baseline."""
 
     span = freq_stop_hz - freq_start_hz
@@ -59,7 +60,7 @@ def band_partitions(freq_start_hz: float, freq_stop_hz: float, config: BandSumma
     approx_count = max(1, int(math.ceil(span / target_width)))
     band_count = max(1, min(config.max_bands, approx_count))
     band_width = span / band_count if band_count else span
-    partitions: list[tuple[float, float]] = []
+    partitions: List[Tuple[float, float]] = []
     for idx in range(band_count):
         low = freq_start_hz + idx * band_width
         high = freq_start_hz + (idx + 1) * band_width if idx < band_count - 1 else freq_stop_hz

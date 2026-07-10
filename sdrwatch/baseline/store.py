@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
-import math
 import sqlite3
-from datetime import UTC, datetime, timedelta
+import math
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np  # type: ignore
 
@@ -22,8 +22,10 @@ from sdrwatch.util.time import utc_now_str
 class Store:
     def __init__(self, path: str):
         self.con = sqlite3.connect(path, timeout=30.0)
-        with contextlib.suppress(sqlite3.OperationalError):
+        try:
             self.con.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.OperationalError:
+            pass
         self.con.execute("PRAGMA busy_timeout=5000")
         self._init()
 
@@ -330,13 +332,13 @@ class Store:
     def rollback(self) -> None:
         self.con.rollback()
 
-    def get_latest_baseline_id(self) -> int | None:
+    def get_latest_baseline_id(self) -> Optional[int]:
         cur = self.con.cursor()
         cur.execute("SELECT id FROM baselines ORDER BY id DESC LIMIT 1")
         row = cur.fetchone()
         return int(row[0]) if row else None
 
-    def get_baseline(self, baseline_id: int) -> BaselineContext | None:
+    def get_baseline(self, baseline_id: int) -> Optional[BaselineContext]:
         cur = self.con.cursor()
         cur.execute(
             """
@@ -362,7 +364,7 @@ class Store:
     def create_baseline(
         self,
         *,
-        name: str | None = None,
+        name: Optional[str] = None,
         freq_start_hz: int = 0,
         freq_stop_hz: int = 0,
         bin_hz: float = 0.0,
@@ -397,7 +399,7 @@ class Store:
 
     def update_baseline_span(
         self, baseline_id: int, low_hz: float, high_hz: float
-    ) -> tuple[int | None, int | None]:
+    ) -> Tuple[Optional[int], Optional[int]]:
         cur = self.con.cursor()
         cur.execute(
             "SELECT freq_start_hz, freq_stop_hz FROM baselines WHERE id = ?",
@@ -486,7 +488,7 @@ class Store:
         cur = self.con.cursor()
         dwell_ms_int = max(0, int(round(dwell_ms)))
         for idx, noise_db, power_db_val, occupied in zip(
-            bin_indices, noise_floor_db, power_db, occupied_mask, strict=False
+            bin_indices, noise_floor_db, power_db, occupied_mask
         ):
             idx_int = int(idx)
             noise_row = cur.execute(
@@ -573,7 +575,7 @@ class Store:
                 )
         self.con.commit()
 
-    def load_baseline_detections(self, baseline_id: int) -> list[PersistentDetection]:
+    def load_baseline_detections(self, baseline_id: int) -> List["PersistentDetection"]:
         cur = self.con.cursor()
         cur.execute(
             """
@@ -624,13 +626,13 @@ class Store:
         total_windows: int,
         confidence: float,
         *,
-        missing_since_utc: str | None = None,
-        peak_db: float | None = None,
-        noise_db: float | None = None,
-        snr_db: float | None = None,
-        service: str | None = None,
-        region: str | None = None,
-        bandplan_notes: str | None = None,
+        missing_since_utc: Optional[str] = None,
+        peak_db: Optional[float] = None,
+        noise_db: Optional[float] = None,
+        snr_db: Optional[float] = None,
+        service: Optional[str] = None,
+        region: Optional[str] = None,
+        bandplan_notes: Optional[str] = None,
     ) -> int:
         cur = self.con.cursor()
         cur.execute(
@@ -665,7 +667,7 @@ class Store:
             raise RuntimeError("Failed to insert baseline detection")
         return int(cur.lastrowid)
 
-    def update_baseline_detection(self, detection: PersistentDetection) -> None:
+    def update_baseline_detection(self, detection: "PersistentDetection") -> None:
         self.con.execute(
             """
             UPDATE baseline_detections
@@ -708,7 +710,7 @@ class Store:
         num_revisits: int = 0,
         num_confirmed: int = 0,
         num_false_positive: int = 0,
-        duration_ms: float | None = None,
+        duration_ms: Optional[float] = None,
     ) -> None:
         self.con.execute(
             """
@@ -761,7 +763,7 @@ class Store:
             (int(detection_id), int(baseline_id)),
         )
 
-    def baseline_occ_ratio(self, baseline_id: int, bin_index: int) -> float | None:
+    def baseline_occ_ratio(self, baseline_id: int, bin_index: int) -> Optional[float]:
         cur = self.con.cursor()
         cur.execute(
             "SELECT occ_count FROM baseline_occupancy WHERE baseline_id = ? AND bin_index = ?",
@@ -780,7 +782,7 @@ class Store:
             return None
         return float(occ_count) / float(total_windows)
 
-    def baseline_duty_cycle(self, baseline_id: int, bin_index: int) -> float | None:
+    def baseline_duty_cycle(self, baseline_id: int, bin_index: int) -> Optional[float]:
         """Return time-based duty cycle (occupied_ms / observed_ms) for a bin.
 
         Falls back to window-based occ_ratio if time data is not yet available.
@@ -818,11 +820,11 @@ class Store:
         baseline_ctx: BaselineContext,
         *,
         last_update_utc: str,
-        recent_minutes: int | None = None,
+        recent_minutes: Optional[int] = None,
     ) -> None:
         baseline_id = int(baseline_ctx.id)
         recent_window = max(1, int(recent_minutes or tactical_recent_minutes()))
-        cutoff_dt = datetime.now(UTC) - timedelta(minutes=recent_window)
+        cutoff_dt = datetime.now(timezone.utc) - timedelta(minutes=recent_window)
         cutoff_ts = cutoff_dt.isoformat()
         cur = self.con.cursor()
         det_row = cur.execute(
@@ -881,7 +883,7 @@ class Store:
         self,
         baseline_ctx: BaselineContext,
         *,
-        config: BandSummaryConfig | None = None,
+        config: Optional[BandSummaryConfig] = None,
     ) -> None:
         cfg = config or BandSummaryConfig.from_env()
         freq_start = float(baseline_ctx.freq_start_hz)
@@ -934,9 +936,9 @@ class Store:
         power_counts = [0 for _ in range(band_count)]
         occupied_bins = [0 for _ in range(band_count)]
         bin_counts = [0 for _ in range(band_count)]
-        registered_bins: set[tuple[int, int]] = set()
+        registered_bins: set[Tuple[int, int]] = set()
 
-        cutoff_dt = datetime.now(UTC) - timedelta(
+        cutoff_dt = datetime.now(timezone.utc) - timedelta(
             minutes=max(1, int(cfg.recent_minutes or 1))
         )
         total_windows = max(0, int(baseline_ctx.total_windows or 0))
@@ -947,7 +949,7 @@ class Store:
             else 0
         )
 
-        def band_index_for_freq(freq_hz: float) -> int | None:
+        def band_index_for_freq(freq_hz: float) -> Optional[int]:
             if freq_hz < freq_start or freq_hz > freq_stop:
                 return None
             rel = (freq_hz - freq_start) / band_width if band_width > 0 else 0.0
@@ -958,7 +960,7 @@ class Store:
                 idx_val = band_count - 1
             return idx_val
 
-        def parse_timestamp(text: str | None) -> datetime | None:
+        def parse_timestamp(text: Optional[str]) -> Optional[datetime]:
             if text in (None, ""):
                 return None
             cleaned = str(text).strip()
@@ -971,8 +973,8 @@ class Store:
             except ValueError:
                 return None
             if parsed.tzinfo is None:
-                return parsed.replace(tzinfo=UTC)
-            return parsed.astimezone(UTC)
+                return parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
 
         cur = self.con.cursor()
         det_cur = self.con.cursor()
@@ -1041,8 +1043,8 @@ class Store:
                 occupied_bins[idx] += 1
 
         summary_ts = utc_now_str()
-        rows: list[
-            tuple[
+        rows: List[
+            Tuple[
                 int,
                 int,
                 int,
@@ -1050,8 +1052,8 @@ class Store:
                 int,
                 int,
                 float,
-                float | None,
-                float | None,
+                Optional[float],
+                Optional[float],
                 str,
             ]
         ] = []
@@ -1179,7 +1181,7 @@ class Store:
 
     def lookup_spur(
         self, f_center_hz: int, tolerance_hz: int = 5_000
-    ) -> tuple[int, float, int] | None:
+    ) -> Optional[Tuple[int, float, int]]:
         cur = self.con.cursor()
         low = int(f_center_hz - tolerance_hz)
         high = int(f_center_hz + tolerance_hz)
@@ -1203,16 +1205,16 @@ class Store:
         self,
         *,
         baseline_id: int,
-        detection_id: int | None = None,
+        detection_id: Optional[int] = None,
         f_center_hz: int,
         bandwidth_hz: float = 0.0,
         started_utc: str,
         duration_ms: int,
         sample_rate_hz: float,
-        raw_path: str | None = None,
+        raw_path: Optional[str] = None,
         raw_bytes: int = 0,
         status: str = "raw",
-        error: str | None = None,
+        error: Optional[str] = None,
     ) -> int:
         """Insert a recording row and return its id."""
         cur = self.con.cursor()
@@ -1249,7 +1251,7 @@ class Store:
         baseline_id: int,
         f_center_hz: int,
         tolerance_hz: int = 50000,
-        label: str | None = None,
+        label: Optional[str] = None,
     ) -> int:
         cur = self.con.cursor()
         cur.execute(
@@ -1269,8 +1271,8 @@ class Store:
         self.con.commit()
 
     def list_ignore_rules(
-        self, baseline_id: int | None = None
-    ) -> list[dict[str, object]]:
+        self, baseline_id: Optional[int] = None
+    ) -> List[Dict[str, object]]:
         cur = self.con.cursor()
         if baseline_id is not None:
             cur.execute(
@@ -1294,7 +1296,7 @@ class Store:
             for r in rows
         ]
 
-    def get_recording(self, recording_id: int) -> dict[str, object] | None:
+    def get_recording(self, recording_id: int) -> Optional[Dict[str, object]]:
         """Get a recording row by its ID.
 
         Returns a dict of column values, or None if not found.
@@ -1338,8 +1340,8 @@ class Store:
         recording_id: int,
         status: str,
         *,
-        ogg_path: str | None = None,
-        modulation: str | None = None,
+        ogg_path: Optional[str] = None,
+        modulation: Optional[str] = None,
     ) -> None:
         """Update a recording's status, optional ogg_path, and modulation."""
         cur = self.con.cursor()
@@ -1360,7 +1362,7 @@ class Store:
             )
         self.con.commit()
 
-    def get_recordings_older_than(self, cutoff_str: str) -> list[dict[str, object]]:
+    def get_recordings_older_than(self, cutoff_str: str) -> List[Dict[str, object]]:
         """Return all recordings older than cutoff_str (UTC ISO), ignoring deleted."""
         cur = self.con.cursor()
         cur.execute(
@@ -1377,7 +1379,7 @@ class Store:
         )
         return [self._row_to_recording(row) for row in cur.fetchall()]
 
-    def get_active_recordings(self) -> list[dict[str, object]]:
+    def get_active_recordings(self) -> List[Dict[str, object]]:
         """Return all non-deleted recordings ordered by created_utc ASC."""
         cur = self.con.cursor()
         cur.execute(
@@ -1402,7 +1404,7 @@ class Store:
         self.con.commit()
 
     @staticmethod
-    def _row_to_recording(row: tuple) -> dict[str, object]:
+    def _row_to_recording(row: Tuple) -> Dict[str, object]:
         """Convert a recordings row tuple to a dict matching get_recording shape."""
         return {
             "id": int(row[0]),
@@ -1444,8 +1446,8 @@ class Store:
     def record_signal_location(self, baseline_id: int, f_center_hz: int, duration_s: float,
                                 band: str = "") -> None:
         """Update signal_locations: increment hit_count, update last_seen and avg duration."""
-        from datetime import datetime
-        now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
         self.con.execute(
             "INSERT INTO signal_locations (baseline_id, f_center_hz, last_seen_utc, avg_duration_s, band) "
             "VALUES (?, ?, ?, ?, ?) "
@@ -1464,6 +1466,7 @@ class Store:
             "ORDER BY hit_count DESC, last_seen_utc DESC",
             (baseline_id, min_hits),
         ).fetchall()
+        import sqlite3
         return [{
             "f_center_hz": r[0],
             "hit_count": r[1],

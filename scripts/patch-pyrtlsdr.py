@@ -15,11 +15,13 @@ from pathlib import Path
 
 def main() -> None:
     if len(sys.argv) < 2:
+        print("usage: patch-pyrtlsdr.py <venv_dir>", file=sys.stderr)
         sys.exit(1)
 
     venv = Path(sys.argv[1])
     lib_paths = list(venv.glob("lib/python*/site-packages/rtlsdr/librtlsdr.py"))
     if not lib_paths:
+        print("rtlsdr/librtlsdr.py not found in venv", file=sys.stderr)
         sys.exit(0)  # not fatal — might have been removed
 
     librtlsdr_py = lib_paths[0]
@@ -84,6 +86,7 @@ def main() -> None:
         i += 1
 
     librtlsdr_py.write_text("\n".join(modified))
+    print(f"patched pyrtlsdr: {changes} lines commented out")
 
 
 if __name__ == "__main__":
