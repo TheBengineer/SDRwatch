@@ -10,17 +10,18 @@ Provides functions for building baseline-related API payloads:
 """
 from __future__ import annotations
 
+import contextlib
 import math
 import sqlite3
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from collections.abc import Iterable
+from datetime import timedelta
+from typing import Any
 
 from flask import current_app
 
 from sdrwatch_web.config import (
     ACTIVE_SIGNAL_WINDOW_MINUTES,
     BAND_SUMMARY_MAX_BANDS,
-    BAND_SUMMARY_OCC_THRESHOLD,
     BAND_SUMMARY_RECENT_MINUTES,
     BAND_SUMMARY_TARGET_WIDTH_HZ,
     CHANGE_EVENT_LIMIT,
@@ -36,27 +37,24 @@ from sdrwatch_web.controller import get_controller
 from sdrwatch_web.db import get_con, get_con_optional, q1, qa, table_columns, table_exists
 from sdrwatch_web.formatting import (
     compute_display_bandwidth_hz,
-    format_bandwidth_khz,
-    format_freq_label,
     isoformat_utc,
     now_utc,
     parse_ts_utc,
 )
-
 
 # ---------------------------------------------------------------------------
 # Baseline stats span map (for controller baselines enrichment)
 # ---------------------------------------------------------------------------
 
 
-def baseline_stats_span_map() -> Dict[int, Dict[str, Optional[float]]]:
+def baseline_stats_span_map() -> dict[int, dict[str, float | None]]:
     """
     Build a map of baseline_id -> {min_hz, max_hz} from stats tables.
 
     Returns:
         Dict mapping baseline IDs to frequency span info.
     """
-    spans: Dict[int, Dict[str, Optional[float]]] = {}
+    spans: dict[int, dict[str, float | None]] = {}
     connection = get_con_optional()
     if connection is None:
         return spans
@@ -76,7 +74,7 @@ def baseline_stats_span_map() -> Dict[int, Dict[str, Optional[float]]]:
             )
             if idx_rows:
                 meta_rows = qa(connection, "SELECT id, freq_start_hz, bin_hz FROM baselines")
-                meta: Dict[int, Tuple[float, float]] = {}
+                meta: dict[int, tuple[float, float]] = {}
                 for meta_row in meta_rows:
                     raw_id = meta_row.get("id") if isinstance(meta_row, dict) else None
                     if raw_id is None:
@@ -190,8 +188,8 @@ def baseline_stats_span_map() -> Dict[int, Dict[str, Optional[float]]]:
 
 
 def apply_span_metadata(
-    records: Iterable[Dict[str, Any]],
-    span_map: Dict[int, Dict[str, Optional[float]]],
+    records: Iterable[dict[str, Any]],
+    span_map: dict[int, dict[str, float | None]],
 ) -> None:
     """
     Add stats_min_hz and stats_max_hz to records from span_map.
@@ -220,7 +218,7 @@ def apply_span_metadata(
         record["stats_max_hz"] = span.get("max_hz")
 
 
-def controller_baselines() -> List[Dict[str, Any]]:
+def controller_baselines() -> list[dict[str, Any]]:
     """
     Fetch baselines from controller and enrich with span metadata.
 
@@ -248,7 +246,7 @@ def controller_baselines() -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def baseline_summary_map() -> Dict[int, Dict[str, Any]]:
+def baseline_summary_map() -> dict[int, dict[str, Any]]:
     """
     Build a map of baseline_id -> summary stats.
 
@@ -259,9 +257,9 @@ def baseline_summary_map() -> Dict[int, Dict[str, Any]]:
     if connection is None:
         return {}
 
-    summaries: Dict[int, Dict[str, Any]] = {}
+    summaries: dict[int, dict[str, Any]] = {}
 
-    def ensure_entry(baseline_id: int) -> Dict[str, Any]:
+    def ensure_entry(baseline_id: int) -> dict[str, Any]:
         return summaries.setdefault(
             baseline_id,
             {
@@ -289,7 +287,7 @@ def baseline_summary_map() -> Dict[int, Dict[str, Any]]:
     except sqlite3.OperationalError:
         return summaries
 
-    missing_ids: Set[int] = set(summaries.keys())
+    missing_ids: set[int] = set(summaries.keys())
 
     if table_exists("baseline_snapshot"):
         try:
@@ -321,7 +319,7 @@ def baseline_summary_map() -> Dict[int, Dict[str, Any]]:
             if bid in missing_ids:
                 missing_ids.remove(bid)
 
-    def _run_det_query(target_ids: Set[int]) -> None:
+    def _run_det_query(target_ids: set[int]) -> None:
         if not target_ids or not table_exists("baseline_detections"):
             return
         placeholders = ",".join("?" for _ in target_ids)
@@ -350,7 +348,7 @@ def baseline_summary_map() -> Dict[int, Dict[str, Any]]:
             entry["persistent_detections"] = int(row.get("detection_count") or 0)
             entry["last_detection_utc"] = row.get("last_detection_utc")
 
-    def _run_update_query(target_ids: Set[int]) -> None:
+    def _run_update_query(target_ids: set[int]) -> None:
         if not target_ids or not table_exists("scan_updates"):
             return
         placeholders = ",".join("?" for _ in target_ids)
@@ -391,7 +389,7 @@ def baseline_summary_map() -> Dict[int, Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_baseline_record(baseline_id: int) -> Optional[Dict[str, Any]]:
+def fetch_baseline_record(baseline_id: int) -> dict[str, Any] | None:
     """
     Fetch a single baseline record by ID.
 
@@ -426,7 +424,7 @@ def fetch_baseline_record(baseline_id: int) -> Optional[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def _band_partitions(freq_start_hz: float, freq_stop_hz: float) -> Tuple[List[Tuple[float, float]], float]:
+def _band_partitions(freq_start_hz: float, freq_stop_hz: float) -> tuple[list[tuple[float, float]], float]:
     """Calculate band partition boundaries."""
     span = freq_stop_hz - freq_start_hz
     if span <= 0:
@@ -436,7 +434,7 @@ def _band_partitions(freq_start_hz: float, freq_stop_hz: float) -> Tuple[List[Tu
     approx_count = max(1, int(math.ceil(span / target_width)))
     band_count = max(1, min(BAND_SUMMARY_MAX_BANDS, approx_count))
     band_width = span / band_count if band_count else span
-    partitions: List[Tuple[float, float]] = []
+    partitions: list[tuple[float, float]] = []
     for idx in range(band_count):
         low = freq_start_hz + idx * band_width
         high = freq_start_hz + (idx + 1) * band_width if idx < band_count - 1 else freq_stop_hz
@@ -473,7 +471,7 @@ def _band_summary_note(persistent: int, recent: int, fraction: float) -> str:
     return "Active / changing"
 
 
-def band_summary_for_baseline(baseline_row: Dict[str, Any]) -> Dict[str, Any]:
+def band_summary_for_baseline(baseline_row: dict[str, Any]) -> dict[str, Any]:
     """
     Build band summary for a baseline.
 
@@ -493,7 +491,7 @@ def band_summary_for_baseline(baseline_row: Dict[str, Any]) -> Dict[str, Any]:
     except Exception:
         baseline_id = None
 
-    meta: Dict[str, Any] = {
+    meta: dict[str, Any] = {
         "band_count": 0,
         "band_width_mhz": None,
         "recent_minutes": BAND_SUMMARY_RECENT_MINUTES,
@@ -536,7 +534,7 @@ def band_summary_for_baseline(baseline_row: Dict[str, Any]) -> Dict[str, Any]:
                 except sqlite3.OperationalError:
                     summary_meta = None
 
-            bands: List[Dict[str, Any]] = []
+            bands: list[dict[str, Any]] = []
             for row in stored_rows:
                 low = float(row.get("f_low_hz") or 0.0)
                 high = float(row.get("f_high_hz") or 0.0)
@@ -653,7 +651,7 @@ def band_summary_for_baseline(baseline_row: Dict[str, Any]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def tactical_snapshot_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
+def tactical_snapshot_payload(baseline_id: int) -> dict[str, Any] | None:
     """
     Build tactical snapshot payload for a baseline.
 
@@ -669,7 +667,7 @@ def tactical_snapshot_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
 
     con = get_con()
 
-    def _safe_count(sql: str, params: Tuple[Any, ...], default: int = 0) -> int:
+    def _safe_count(sql: str, params: tuple[Any, ...], default: int = 0) -> int:
         try:
             row = q1(con, sql, params)
         except sqlite3.OperationalError:
@@ -682,7 +680,7 @@ def tactical_snapshot_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
             return default
 
     snapshot_row = None
-    last_update: Optional[str] = None
+    last_update: str | None = None
     recent_new = 0
 
     if table_exists("baseline_snapshot"):
@@ -768,7 +766,7 @@ def tactical_snapshot_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
     except sqlite3.OperationalError:
         active_rows = []
 
-    active_payload: List[Dict[str, Any]] = []
+    active_payload: list[dict[str, Any]] = []
     for row in active_rows:
         try:
             center = float(row.get("f_center_hz"))
@@ -802,10 +800,8 @@ def tactical_snapshot_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
         # Use user-corrected bandwidth for display if available
         user_bw = row.get("user_bw_hz")
         if user_bw is not None:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 display_bandwidth = float(user_bw)
-            except (ValueError, TypeError):
-                pass
 
         det_id = row.get("id")
         active_payload.append({
@@ -851,7 +847,7 @@ def tactical_snapshot_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def hotspots_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
+def hotspots_payload(baseline_id: int) -> dict[str, Any] | None:
     """
     Build hotspots heatmap payload for a baseline.
 
@@ -896,7 +892,7 @@ def hotspots_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
     except Exception:
         bin_hz = None
 
-    stats_rows: List[Dict[str, Any]] = []
+    stats_rows: list[dict[str, Any]] = []
     if table_exists("baseline_noise"):
         try:
             stats_rows = qa(
@@ -930,7 +926,7 @@ def hotspots_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
         except sqlite3.OperationalError:
             stats_rows = []
 
-    buckets: List[Dict[str, Any]] = []
+    buckets: list[dict[str, Any]] = []
     for idx in range(bucket_count):
         start_hz = freq_start + idx * bucket_width
         buckets.append({
@@ -942,7 +938,7 @@ def hotspots_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
             "power_samples": 0,
         })
 
-    def _row_freq(row: Dict[str, Any]) -> Optional[float]:
+    def _row_freq(row: dict[str, Any]) -> float | None:
         val = row.get("freq_hz")
         if val is not None:
             try:
@@ -1022,9 +1018,9 @@ def hotspots_payload(baseline_id: int) -> Optional[Dict[str, Any]]:
 def change_events_payload(
     baseline_id: int,
     *,
-    window_minutes: Optional[int] = None,
-    event_types: Optional[Iterable[str]] = None,
-) -> Optional[Dict[str, Any]]:
+    window_minutes: int | None = None,
+    event_types: Iterable[str] | None = None,
+) -> dict[str, Any] | None:
     """
     Build change events payload for a baseline.
 
@@ -1048,17 +1044,17 @@ def change_events_payload(
     new_window_value = NEW_SIGNAL_WINDOW_MINUTES
     quiet_timeout_value = QUIETED_TIMEOUT_MINUTES
 
-    requested_types: Set[str] = set()
+    requested_types: set[str] = set()
     if event_types:
         for t in event_types:
             requested_types.add(str(t).upper().strip())
 
     base_cutoff_dt = now_utc() - timedelta(minutes=max(1, window_value))
-    base_cutoff = isoformat_utc(base_cutoff_dt)
+    isoformat_utc(base_cutoff_dt)
 
-    events: List[Dict[str, Any]] = []
+    events: list[dict[str, Any]] = []
 
-    def append_event(ev: Dict[str, Any]) -> None:
+    def append_event(ev: dict[str, Any]) -> None:
         ev_type = str(ev.get("type", "")).upper()
         if requested_types and ev_type not in requested_types:
             return
@@ -1067,9 +1063,9 @@ def change_events_payload(
         events.append(ev)
 
     freq_start = float(baseline_row.get("freq_start_hz") or 0.0)
-    freq_stop = float(baseline_row.get("freq_stop_hz") or 0.0)
+    float(baseline_row.get("freq_stop_hz") or 0.0)
     bin_hz = float(baseline_row.get("bin_hz") or 0.0)
-    total_windows = int(baseline_row.get("total_windows") or 0)
+    int(baseline_row.get("total_windows") or 0)
 
     # NEW_SIGNAL events
     if not requested_types or "NEW_SIGNAL" in requested_types:
@@ -1244,7 +1240,7 @@ def change_events_payload(
     events.sort(key=lambda ev: ev.get("_sort_ts", base_cutoff_dt), reverse=True)
     events = events[:CHANGE_EVENT_LIMIT]
 
-    counts: Dict[str, int] = {"NEW_SIGNAL": 0, "POWER_SHIFT": 0, "QUIETED": 0}
+    counts: dict[str, int] = {"NEW_SIGNAL": 0, "POWER_SHIFT": 0, "QUIETED": 0}
     for ev in events:
         ev_type = str(ev.get("type") or "").upper()
         counts[ev_type] = counts.get(ev_type, 0) + 1

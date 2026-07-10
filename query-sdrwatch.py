@@ -34,19 +34,21 @@ Usage examples:
 """
 
 from __future__ import annotations
+
 import argparse
 import csv
 import os
 import sqlite3
 import sys
-from typing import Any, Optional, Sequence, Tuple, List
+from collections.abc import Sequence
+from typing import Any
 
 # ----------------------------
 # Helpers
 # ----------------------------
 
 def err(msg: str) -> None:
-    print(f"[error] {msg}", file=sys.stderr)
+    pass
 
 
 def open_db(path: str) -> sqlite3.Connection:
@@ -91,11 +93,11 @@ def fmt_table(rows, headers=None, max_width=28):
     return "\n".join(out)
 
 
-def to_hz(mhz: Optional[float]) -> Optional[int]:
+def to_hz(mhz: float | None) -> int | None:
     return int(mhz * 1e6) if mhz is not None else None
 
 
-def between_clause(col: str, lo: Optional[int], hi: Optional[int]) -> Tuple[str, list]:
+def between_clause(col: str, lo: int | None, hi: int | None) -> tuple[str, list]:
     if lo is not None and hi is not None:
         return f"{col} BETWEEN ? AND ?", [lo, hi]
     elif lo is not None:
@@ -118,23 +120,21 @@ def cmd_scans(con: sqlite3.Connection, args: argparse.Namespace) -> None:
         "samp_rate AS samp_rate_Hz, fft AS fft, avg AS avg, driver, device "
         "FROM scans ORDER BY id DESC LIMIT ?"
     )
-    rows = con.execute(q, (args.limit,)).fetchall()
-    print(fmt_table(rows))
+    con.execute(q, (args.limit,)).fetchall()
 
 
-def _latest_scan_id(con: sqlite3.Connection) -> Optional[int]:
+def _latest_scan_id(con: sqlite3.Connection) -> int | None:
     row = con.execute("SELECT id FROM scans ORDER BY id DESC LIMIT 1").fetchone()
     return int(row[0]) if row else None
 
 
 def cmd_detections(con: sqlite3.Connection, args: argparse.Namespace) -> None:
-    params: List[Any] = []
-    where: List[str] = []
+    params: list[Any] = []
+    where: list[str] = []
 
     if args.scan_id is None and not args.all_scans:
         sid = _latest_scan_id(con)
         if sid is None:
-            print("(no scans)")
             return
         where.append("scan_id = ?")
         params.append(sid)
@@ -184,17 +184,17 @@ def cmd_detections(con: sqlite3.Connection, args: argparse.Namespace) -> None:
         writer = csv.writer(sys.stdout)
         writer.writerow(rows[0].keys() if rows else [])
         for r in rows:
-            writer.writerow([r[k] for k in r.keys()])
+            writer.writerow([r[k] for k in r])
     else:
-        print(fmt_table(rows))
+        pass
 
 
 def cmd_baseline(con: sqlite3.Connection, args: argparse.Namespace) -> None:
-    params: List[Any] = []
-    where: List[str] = []
+    params: list[Any] = []
+    where: list[str] = []
 
-    lo_hz: Optional[int] = None
-    hi_hz: Optional[int] = None
+    lo_hz: int | None = None
+    hi_hz: int | None = None
 
     if args.center is not None:
         span_hz = int((args.span_khz or 100) * 1e3)
@@ -222,8 +222,7 @@ def cmd_baseline(con: sqlite3.Connection, args: argparse.Namespace) -> None:
         f"FROM baseline{where_sql} ORDER BY bin_hz LIMIT ?"
     )
     params.append(args.limit)
-    rows = con.execute(q, params).fetchall()
-    print(fmt_table(rows))
+    con.execute(q, params).fetchall()
 
 
 def cmd_top(con: sqlite3.Connection, args: argparse.Namespace) -> None:
@@ -232,44 +231,33 @@ def cmd_top(con: sqlite3.Connection, args: argparse.Namespace) -> None:
         "COALESCE(NULLIF(service,''),'—') AS service, COALESCE(NULLIF(region,''),'') AS region "
         "FROM detections ORDER BY snr_db DESC LIMIT ?"
     )
-    rows = con.execute(q, (args.limit,)).fetchall()
-    print(fmt_table(rows))
+    con.execute(q, (args.limit,)).fetchall()
 
 
 def cmd_summary(con: sqlite3.Connection, args: argparse.Namespace) -> None:
-    total_scans = con.execute("SELECT COUNT(*) FROM scans").fetchone()[0]
-    total_det = con.execute("SELECT COUNT(*) FROM detections").fetchone()[0]
-    total_bins = con.execute("SELECT COUNT(*) FROM baseline").fetchone()[0]
+    con.execute("SELECT COUNT(*) FROM scans").fetchone()[0]
+    con.execute("SELECT COUNT(*) FROM detections").fetchone()[0]
+    con.execute("SELECT COUNT(*) FROM baseline").fetchone()[0]
 
     latest = con.execute(
         "SELECT id, t_start_utc, t_end_utc, ROUND(f_start_hz/1e6,3), ROUND(f_stop_hz/1e6,3), fft, avg, samp_rate "
         "FROM scans ORDER BY id DESC LIMIT 1"
     ).fetchone()
 
-    by_service = con.execute(
+    con.execute(
         "SELECT COALESCE(NULLIF(service,''),'(unknown)') AS service, COUNT(*) AS count "
         "FROM detections GROUP BY COALESCE(NULLIF(service,''),'(unknown)') "
         "ORDER BY count DESC LIMIT 10"
     ).fetchall()
 
-    print("== Overview ==")
-    print(f"scans: {total_scans}  detections: {total_det}  baseline bins: {total_bins}")
     if latest:
-        print(
-            f"latest scan id={latest[0]}  {latest[1]} → {latest[2]}  range={latest[3]}–{latest[4]} MHz  "
-            f"fft={latest[5]} avg={latest[6]} samp_rate={latest[7]} Hz"
-        )
-    print()
-    print("== Top services ==")
-    print(fmt_table(by_service, headers=["service", "count"]))
+        pass
 
     snr_hist = con.execute(
         "SELECT CAST((snr_db/3) AS INT)*3 AS snr_dB_bucket, COUNT(*) AS count FROM detections GROUP BY snr_dB_bucket ORDER BY snr_dB_bucket"
     ).fetchall()
     if snr_hist:
-        print()
-        print("== SNR histogram (3 dB buckets) ==")
-        print(fmt_table(snr_hist, headers=["snr_dB_bucket", "count"]))
+        pass
 
 
 def cmd_export(con: sqlite3.Connection, args: argparse.Namespace) -> None:
@@ -293,7 +281,6 @@ def cmd_export(con: sqlite3.Connection, args: argparse.Namespace) -> None:
             cmd_detections(con, ns)
         finally:
             sys.stdout = old
-    print(f"wrote {args.outfile}")
 
 # ----------------------------
 # Main
@@ -354,7 +341,7 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     p = build_parser()
     args = p.parse_args(argv)
     con = open_db(args.db)

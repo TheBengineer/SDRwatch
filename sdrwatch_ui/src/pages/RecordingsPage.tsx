@@ -455,6 +455,76 @@ export default function RecordingsPage() {
   // Render
   // -----------------------------------------------------------------------
 
+  const colHelper = createColumnHelper<Recording>()
+
+  const columns = [
+    colHelper.display({
+      id: 'select',
+      header: () => (
+        <input
+          type="checkbox"
+          title="Select all"
+          className="w-4 h-4"
+          checked={selected.size === recordings.length && recordings.length > 0}
+          onChange={e => toggleSelectAll(e.target.checked)}
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          className="w-4 h-4"
+          checked={selected.has(row.original.id)}
+          onChange={() => toggleSelect(row.original.id)}
+          onClick={e => e.stopPropagation()}
+        />
+      ),
+    }),
+    colHelper.accessor('id', { header: 'ID', cell: info => <span className="font-mono text-xs">{info.getValue()}</span> }),
+    colHelper.accessor('f_mhz', {
+      header: 'Freq (MHz)',
+      cell: info => <span className="font-mono">{info.getValue()?.toFixed(4) ?? '—'}</span>,
+    }),
+    colHelper.accessor('modulation', {
+      header: 'Modulation',
+      cell: info => info.getValue()
+        ? <span className="chip text-xs">{info.getValue()!.toUpperCase()}</span>
+        : <span className="chip text-xs text-slate-500">—</span>,
+    }),
+    colHelper.accessor('duration_ms', {
+      header: 'Duration',
+      cell: info => <span className="text-xs">{info.getValue() ? `${(info.getValue()! / 1000).toFixed(1)}s` : '—'}</span>,
+    }),
+    colHelper.accessor('raw_size_display', { header: 'Raw', cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
+    colHelper.accessor('ogg_size_display', { header: 'OGG', cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
+    colHelper.accessor('status', {
+      header: 'Status',
+      cell: info => <span className={`text-xs ${statusColor(info.getValue())}`}>{info.getValue() || '—'}</span>,
+    }),
+    colHelper.accessor('created_utc', {
+      header: 'Created',
+      cell: info => <span className="text-xs text-slate-400">{info.getValue() ? info.getValue()!.slice(0, 19).replace('T', ' ') : '—'}</span>,
+    }),
+    colHelper.display({
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-1 items-center" onClick={e => e.stopPropagation()}>
+          <button className="chip text-xs hover:bg-sky-600/40 cursor-pointer" onClick={() => downloadRaw(row.original.id)}>⬇ Raw</button>
+          <button className="chip text-xs hover:bg-red-600/40 cursor-pointer" onClick={() => deleteRec(row.original.id)}>✕</button>
+        </div>
+      ),
+    }),
+  ]
+
+  const table = useReactTable({
+    data: recordings,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  })
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -567,76 +637,6 @@ export default function RecordingsPage() {
 
       {/* Recordings table with sorting */}
       {(() => {
-        const colHelper = createColumnHelper<Recording>()
-
-        const columns = [
-          colHelper.display({
-            id: 'select',
-            header: () => (
-              <input
-                type="checkbox"
-                title="Select all"
-                className="w-4 h-4"
-                checked={selected.size === recordings.length && recordings.length > 0}
-                onChange={e => toggleSelectAll(e.target.checked)}
-              />
-            ),
-            cell: ({ row }) => (
-              <input
-                type="checkbox"
-                className="w-4 h-4"
-                checked={selected.has(row.original.id)}
-                onChange={() => toggleSelect(row.original.id)}
-                onClick={e => e.stopPropagation()}
-              />
-            ),
-          }),
-          colHelper.accessor('id', { header: 'ID', cell: info => <span className="font-mono text-xs">{info.getValue()}</span> }),
-          colHelper.accessor('f_mhz', {
-            header: 'Freq (MHz)',
-            cell: info => <span className="font-mono">{info.getValue()?.toFixed(4) ?? '—'}</span>,
-          }),
-          colHelper.accessor('modulation', {
-            header: 'Modulation',
-            cell: info => info.getValue()
-              ? <span className="chip text-xs">{info.getValue()!.toUpperCase()}</span>
-              : <span className="chip text-xs text-slate-500">—</span>,
-          }),
-          colHelper.accessor('duration_ms', {
-            header: 'Duration',
-            cell: info => <span className="text-xs">{info.getValue() ? `${(info.getValue()! / 1000).toFixed(1)}s` : '—'}</span>,
-          }),
-          colHelper.accessor('raw_size_display', { header: 'Raw', cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
-          colHelper.accessor('ogg_size_display', { header: 'OGG', cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
-          colHelper.accessor('status', {
-            header: 'Status',
-            cell: info => <span className={`text-xs ${statusColor(info.getValue())}`}>{info.getValue() || '—'}</span>,
-          }),
-          colHelper.accessor('created_utc', {
-            header: 'Created',
-            cell: info => <span className="text-xs text-slate-400">{info.getValue() ? info.getValue()!.slice(0, 19).replace('T', ' ') : '—'}</span>,
-          }),
-          colHelper.display({
-            id: 'actions',
-            header: 'Actions',
-            cell: ({ row }) => (
-              <div className="flex flex-wrap gap-1 items-center" onClick={e => e.stopPropagation()}>
-                <button className="chip text-xs hover:bg-sky-600/40 cursor-pointer" onClick={() => downloadRaw(row.original.id)}>⬇ Raw</button>
-                <button className="chip text-xs hover:bg-red-600/40 cursor-pointer" onClick={() => deleteRec(row.original.id)}>✕</button>
-              </div>
-            ),
-          }),
-        ]
-
-        const table = useReactTable({
-          data: recordings,
-          columns,
-          state: { sorting },
-          onSortingChange: setSorting,
-          getCoreRowModel: getCoreRowModel(),
-          getSortedRowModel: getSortedRowModel(),
-        })
-
         return (
           <div className="card overflow-x-auto">
             <table className="table">

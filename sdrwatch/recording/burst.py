@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import os
 import time
-import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -63,11 +61,11 @@ class BurstCapture:
 
         # State
         self._signal_active = False
-        self._noise_floor_ema: Optional[float] = None  # in power (linear), not dB
+        self._noise_floor_ema: float | None = None  # in power (linear), not dB
         self._onset_count = 0
         self._offset_count = 0
         self._capture_bufs: list[np.ndarray] = []
-        self._capture_start: Optional[float] = None
+        self._capture_start: float | None = None
         self._warmup_bufs: list[float] = []
         self._warmup_needed: int = max(1, int(warmup_s * samp_rate / self.buf_size))
         self._event_id = 0
@@ -78,7 +76,7 @@ class BurstCapture:
         # Tune to frequency
         self.src.tune(self.f_center_hz)
 
-    def read(self) -> Optional[dict]:
+    def read(self) -> dict | None:
         """Read one buffer and update detection state.
 
         Returns:
@@ -90,7 +88,7 @@ class BurstCapture:
 
         # Time-domain energy (no FFT needed — Parseval's theorem)
         mag2 = float(np.mean(np.abs(buf) ** 2))
-        power_db = 10.0 * np.log10(max(mag2, 1e-20))
+        10.0 * np.log10(max(mag2, 1e-20))
 
         # Warmup phase
         if self._warmup_needed > 0:
@@ -178,7 +176,7 @@ class BurstCapture:
 
         samples = np.concatenate(self._capture_bufs)
         duration_s = len(samples) / self.samp_rate
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
         filename = (
             f"burst_{self.f_center_hz}_{ts}_{int(duration_s * 1000)}ms.cf32"
         )
@@ -199,7 +197,7 @@ class BurstCapture:
         # Insert DB row if store was provided
         rec_id = None
         if self.store:
-            started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+            started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
             try:
                 rec_id = self.store.add_recording(
                     baseline_id=0,
@@ -219,7 +217,7 @@ class BurstCapture:
             "detection_id": rec_id or self._event_id,
             "f_center_hz": self.f_center_hz,
             "duration_s": round(duration_s, 2),
-            "started_utc": datetime.now(timezone.utc).strftime(
+            "started_utc": datetime.now(UTC).strftime(
                 "%Y-%m-%dT%H:%M:%S"
             ),
             "raw_path": filepath,

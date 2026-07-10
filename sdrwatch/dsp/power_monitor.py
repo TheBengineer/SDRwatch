@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import numpy as np
 
 
@@ -14,10 +12,10 @@ class WindowPowerMonitor:
         self.spike_db = float(spike_db)
         self.ema_alpha = float(np.clip(ema_alpha, 1e-3, 1.0))
         self.warmup_windows = max(0, int(warmup_windows))
-        self.ema: Optional[float] = None
+        self.ema: float | None = None
         self.count = 0
 
-    def update(self, mean_db: float) -> Tuple[bool, float, float]:
+    def update(self, mean_db: float) -> tuple[bool, float, float]:
         self.count += 1
         if self.ema is None:
             self.ema = mean_db

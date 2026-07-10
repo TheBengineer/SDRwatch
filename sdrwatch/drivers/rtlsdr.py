@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
-import numpy as np # type: ignore
+import numpy as np  # type: ignore
 
 from sdrwatch.util.logging import get_logger
 
@@ -22,7 +20,7 @@ except Exception:  # pragma: no cover - optional dependency
 class RTLSDRSource:
     """Convenience wrapper around pyrtlsdr.RtlSdr."""
 
-    def __init__(self, samp_rate: float, gain: str | float, *, device_index: Optional[int] = None, serial_number: Optional[str] = None):
+    def __init__(self, samp_rate: float, gain: str | float, *, device_index: int | None = None, serial_number: str | None = None):
         if not HAVE_RTLSDR:
             raise RuntimeError("pyrtlsdr not available")
         if serial_number:

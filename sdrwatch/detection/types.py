@@ -1,7 +1,6 @@
 """Dataclasses shared across detection, baseline, and sweeper layers."""
 
 from dataclasses import dataclass, field
-from typing import Optional, Set
 
 
 @dataclass
@@ -24,7 +23,7 @@ class DetectionCluster:
     first_window: int
     last_window: int
     hits: int = 0
-    windows: Set[int] = field(default_factory=set)
+    windows: set[int] = field(default_factory=set)
     best_seg: Segment = field(default_factory=lambda: Segment(0, 0, 0, -999.0, -999.0, -999.0, 0.0))
     emitted: bool = False
     center_weight_sum: float = 0.0
@@ -43,19 +42,19 @@ class PersistentDetection:
     total_hits: int
     total_windows: int
     confidence: float
-    missing_since_utc: Optional[str] = None
-    peak_db: Optional[float] = None
-    noise_db: Optional[float] = None
-    snr_db: Optional[float] = None
-    service: Optional[str] = None
-    region: Optional[str] = None
-    bandplan_notes: Optional[str] = None
+    missing_since_utc: str | None = None
+    peak_db: float | None = None
+    noise_db: float | None = None
+    snr_db: float | None = None
+    service: str | None = None
+    region: str | None = None
+    bandplan_notes: str | None = None
 
 
 @dataclass
 class RevisitTag:
     tag_id: str
-    detection_id: Optional[int]
+    detection_id: int | None
     f_center_hz: int
     f_low_hz: int
     f_high_hz: int

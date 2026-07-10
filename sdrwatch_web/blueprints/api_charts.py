@@ -6,7 +6,8 @@ stripping Jinja2 template-only fields from the underlying charts.py responses.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Set
+import contextlib
+from typing import Any
 
 from flask import Blueprint, abort, jsonify, request
 
@@ -23,7 +24,6 @@ from sdrwatch_web.charts import (
 from sdrwatch_web.db import get_con_optional
 from sdrwatch_web.filters import parse_detection_filters
 
-
 bp = Blueprint("api_charts", __name__)
 
 
@@ -31,7 +31,7 @@ bp = Blueprint("api_charts", __name__)
 # Template field stripping
 # ---------------------------------------------------------------------------
 
-_TEMPLATE_FIELDS: Set[str] = {
+_TEMPLATE_FIELDS: set[str] = {
     "style_attr",
     "height_px",
     "chart_style_attr",
@@ -64,15 +64,13 @@ def _strip_template_fields(obj: Any) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _build_filters() -> Dict[str, Any]:
+def _build_filters() -> dict[str, Any]:
     """Build filters dict from request query parameters."""
     filters, _ = parse_detection_filters(request.args)
     baseline_id_raw = request.args.get("baseline_id", "").strip()
     if baseline_id_raw:
-        try:
+        with contextlib.suppress(ValueError):
             filters["baseline_id"] = int(baseline_id_raw)
-        except ValueError:
-            pass
     return filters
 
 

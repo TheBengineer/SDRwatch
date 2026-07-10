@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 from sdrwatch.baseline.store import Store
 from sdrwatch.detection.types import Segment
 
@@ -12,7 +10,7 @@ class SpurCalibrationTracker:
     """Accumulate spur candidates during calibration sweeps."""
 
     def __init__(self) -> None:
-        self._tracker: Dict[int, Dict[str, float]] = {}
+        self._tracker: dict[int, dict[str, float]] = {}
 
     def observe(self, segments: list[Segment]) -> None:
         for seg in segments:
@@ -63,9 +61,7 @@ class SpurEvaluator:
             return False
         if seg.peak_db >= mean_power_db + self.margin_db:
             return False
-        if seg.snr_db >= self.override_snr:
-            return False
-        return True
+        return not seg.snr_db >= self.override_snr
 
     def confidence_penalty(self, seg: Segment, *, calibration_mode: bool = False) -> float:
         if calibration_mode:
@@ -83,5 +79,5 @@ class SpurEvaluator:
             return min(0.15, self.penalty_max)
         return self.penalty_max
 
-    def _lookup(self, center_hz: int) -> Optional[tuple[int, float, int]]:
+    def _lookup(self, center_hz: int) -> tuple[int, float, int] | None:
         return self.store.lookup_spur(center_hz, self.tolerance_hz)

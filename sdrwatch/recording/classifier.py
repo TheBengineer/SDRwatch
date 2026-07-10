@@ -70,10 +70,7 @@ def _extract_features(freqs: np.ndarray, psd_db: np.ndarray) -> dict[str, float 
 
     # ── Spectral symmetry (across the 20 dB bandwidth, excluding DC) ─
     bw_20db = _bandwidth_at_level(psd_db, freqs, 20.0)
-    if bw_20db > 0:
-        above_db = psd_db >= -20.0
-    else:
-        above_db = psd_db >= -6.0  # fallback to 6 dB
+    above_db = psd_db >= -20.0 if bw_20db > 0 else psd_db >= -6.0  # fallback to 6 dB
     # Exclude the DC bin so the carrier does not bias symmetry
     lower_mask = above_db & (freqs < 0)
     upper_mask = above_db & (freqs > 0)

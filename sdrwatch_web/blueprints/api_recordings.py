@@ -6,9 +6,11 @@ modulation classification, demodulation, and ignore-rule management.
 """
 from __future__ import annotations
 
+import contextlib
 import os
 import sqlite3
-from typing import Any, Dict, List
+from datetime import UTC
+from typing import Any
 
 from flask import Blueprint, Response, abort, current_app, jsonify, request, send_file
 
@@ -51,7 +53,7 @@ _RECORDING_COLS = """
 """
 
 
-def _enrich_recording(rec: Dict[str, Any]) -> Dict[str, Any]:
+def _enrich_recording(rec: dict[str, Any]) -> dict[str, Any]:
     """Add computed fields to a recording dict."""
     if rec.get("raw_path") and os.path.exists(rec["raw_path"]):
         rec["raw_exists"] = True
@@ -91,8 +93,8 @@ def api_recordings_list():
     f_max_mhz = request.args.get("f_max_mhz", type=float)
 
     con = get_con()
-    conditions: List[str] = []
-    params: List[Any] = []
+    conditions: list[str] = []
+    params: list[Any] = []
 
     if baseline_id is not None:
         conditions.append("baseline_id = ?")
@@ -159,10 +161,8 @@ def _delete_one(con, recording_id: int) -> bool:
         return False
     for path in (row["raw_path"], row["ogg_path"]):
         if path and os.path.exists(path):
-            try:
+            with contextlib.suppress(OSError):
                 os.remove(path)
-            except OSError:
-                pass
     con.execute("DELETE FROM recordings WHERE id = ?", (recording_id,))
     return True
 
@@ -323,8 +323,8 @@ def api_recordings_queue(detection_id: int):
         abort(400, description="baseline_id and f_center_hz required")
     wcon = _open_write_con()
     try:
-        from datetime import datetime, timezone
-        now = datetime.now(timezone.utc)
+        from datetime import datetime
+        now = datetime.now(UTC)
         cur = wcon.execute(
             "INSERT INTO recordings (baseline_id, detection_id, f_center_hz, bandwidth_hz, "
             "started_utc, duration_ms, sample_rate_hz, status) VALUES (?, ?, ?, ?, ?, 0, 0, 'queued')",
@@ -360,6 +360,7 @@ def api_recordings_classify(recording_id: int):
 
     try:
         import numpy as np
+
         from sdrwatch.recording.classifier import classify_modulation
 
         samp_rate = float(row["sample_rate_hz"] or 2.4e6)
@@ -387,7 +388,7 @@ def api_recordings_classify(recording_id: int):
 # Trigger demodulation
 # ---------------------------------------------------------------------------
 
-_DEMOD_FN_MAP: Dict[str, str] = {
+_DEMOD_FN_MAP: dict[str, str] = {
     "wbfm": "demodulate_wbfm",
     "fm": "demodulate_fm",
     "am": "demodulate_am",
@@ -420,6 +421,8 @@ def api_recordings_demod(recording_id: int):
 
     try:
         import numpy as np
+
+        from sdrwatch.recording.compressor import compress_to_ogg
         from sdrwatch.recording.demod import (
             demodulate_am,
             demodulate_cw,
@@ -428,7 +431,6 @@ def api_recordings_demod(recording_id: int):
             demodulate_usb,
             demodulate_wbfm,
         )
-        from sdrwatch.recording.compressor import compress_to_ogg
 
         samp_rate = float(row["sample_rate_hz"] or 2.4e6)
         cf32 = np.fromfile(row["raw_path"], dtype=np.complex64)

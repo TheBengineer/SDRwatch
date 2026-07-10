@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sdrwatch.util.logging import get_logger
 
@@ -27,7 +27,7 @@ def enforce_retention(
     result = {"deleted_count": 0, "freed_bytes": 0, "kept_count": 0}
 
     # TTL: delete recordings older than ttl_days
-    cutoff = datetime.now(timezone.utc) - timedelta(days=ttl_days)
+    cutoff = datetime.now(UTC) - timedelta(days=ttl_days)
     cutoff_str = cutoff.strftime("%Y-%m-%dT%H:%M:%S")
     old_recordings = store.get_recordings_older_than(cutoff_str)
 

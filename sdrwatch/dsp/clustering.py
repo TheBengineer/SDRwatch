@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Tuple
-
 import numpy as np  # type: ignore
 
 
@@ -19,7 +17,7 @@ def estimate_bandwidth(
     min_width_bins: int = 2,
     min_prominence_db: float = 1.0,
     polyfit_window_bins: int = 10,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """Estimate the low/high frequency edges of a single PSD peak.
 
     The resolver walks left/right until the PSD drops below the target threshold or
@@ -114,7 +112,7 @@ def _resolve_drop_db(mode: str, drop_db: float | None) -> float:
     return mapping.get(normalized, 6.0)
 
 
-def _enforce_min_width(idx_low: int, idx_high: int, peak_idx: int, min_width_bins: int, total_bins: int) -> Tuple[int, int]:
+def _enforce_min_width(idx_low: int, idx_high: int, peak_idx: int, min_width_bins: int, total_bins: int) -> tuple[int, int]:
     span = idx_high - idx_low
     if span >= min_width_bins:
         return idx_low, idx_high
@@ -138,7 +136,7 @@ def _refine_with_polyfit(
     drop_db: float,
     min_prominence_db: float,
     window_bins: int,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     half = max(2, int(window_bins))
     start = max(0, peak_idx - half)
     stop = min(psd.size, peak_idx + half + 1)
@@ -184,7 +182,7 @@ def expand_peak_bandwidth(
     floor_margin_db: float,
     peak_drop_db: float,
     max_gap_bins: int,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Walk away from a peak until energy drops near the noise floor.
 
     This helper encapsulates the bandwidth shaping heuristics used when turning per-bin

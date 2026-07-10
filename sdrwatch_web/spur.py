@@ -7,12 +7,12 @@ detections that fall near known spur frequencies.
 from __future__ import annotations
 
 from bisect import bisect_left
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from sdrwatch_web.db import get_con_optional, qa
 
 
-def load_spur_bins() -> List[int]:
+def load_spur_bins() -> list[int]:
     """
     Load known spur frequencies from the spur_map table.
 
@@ -28,7 +28,7 @@ def load_spur_bins() -> List[int]:
     except Exception:
         return []
 
-    bins: List[int] = []
+    bins: list[int] = []
     for row in rows:
         try:
             val = row.get("bin_hz") if isinstance(row, dict) else row[0]
@@ -42,8 +42,8 @@ def load_spur_bins() -> List[int]:
 
 
 def annotate_near_spur(
-    records: List[Dict[str, Any]],
-    bins: List[int],
+    records: list[dict[str, Any]],
+    bins: list[int],
     *,
     tolerance_hz: int = 5_000,
 ) -> None:
@@ -81,7 +81,7 @@ def annotate_near_spur(
 def load_baseline_bins(
     f_min: int | None,
     f_max: int | None,
-) -> List[Tuple[int, float]]:
+) -> list[tuple[int, float]]:
     """
     Load baseline occupancy data for annotation (legacy baseline table).
 
@@ -97,8 +97,8 @@ def load_baseline_bins(
         return []
 
     query = "SELECT bin_hz, ema_occ FROM baseline"
-    params: List[Any] = []
-    clauses: List[str] = []
+    params: list[Any] = []
+    clauses: list[str] = []
 
     if f_min is not None:
         clauses.append("bin_hz >= ?")
@@ -115,7 +115,7 @@ def load_baseline_bins(
     except Exception:
         return []
 
-    bins: List[Tuple[int, float]] = []
+    bins: list[tuple[int, float]] = []
     for row in rows:
         try:
             bin_hz = row.get("bin_hz") if isinstance(row, dict) else row[0]
@@ -130,8 +130,8 @@ def load_baseline_bins(
 
 
 def annotate_baseline_status(
-    records: List[Dict[str, Any]],
-    bins: List[Tuple[int, float]],
+    records: list[dict[str, Any]],
+    bins: list[tuple[int, float]],
     threshold: float,
 ) -> None:
     """

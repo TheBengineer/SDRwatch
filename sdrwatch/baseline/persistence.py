@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
 
 from sdrwatch.baseline.store import BaselineContext, Store
 from sdrwatch.detection.types import DetectionCluster, PersistentDetection, RevisitTag, Segment
@@ -15,7 +16,7 @@ from sdrwatch.util.time import utc_now_str
 @dataclass
 class PersistResult:
     is_new: bool
-    occ_ratio: Optional[float]
+    occ_ratio: float | None
 
 
 @dataclass
@@ -70,11 +71,11 @@ class BaselinePersistence:
         self.revisit_span_limit_hz = float(revisit_span_limit_hz)
         self.extent_expand_hysteresis = max(1, int(getattr(args, "extent_expand_hysteresis", 2) or 2))
         self.extent_shrink_hysteresis = max(1, int(getattr(args, "extent_shrink_hysteresis", 3) or 3))
-        self._persisted: List[PersistentDetection] = store.load_baseline_detections(baseline_ctx.id)
+        self._persisted: list[PersistentDetection] = store.load_baseline_detections(baseline_ctx.id)
         self._seen_persistent: set[int] = set()
-        self._revisit_tags: List[RevisitTag] = []
+        self._revisit_tags: list[RevisitTag] = []
         self._tag_counter = 0
-        self._extent_state: Dict[int, ExtentHysteresisState] = {det.id: ExtentHysteresisState() for det in self._persisted}
+        self._extent_state: dict[int, ExtentHysteresisState] = {det.id: ExtentHysteresisState() for det in self._persisted}
 
     # -----------------
     # Public interface
@@ -85,14 +86,14 @@ class BaselinePersistence:
         *,
         cluster: DetectionCluster,
         combined_seg: Segment,
-        emit_seg: Optional[Segment] = None,
+        emit_seg: Segment | None = None,
         confidence: float,
         window_ratio: float,
         duration_seconds: float,
         persistence_mode: str,
-        service: Optional[str],
-        region: Optional[str],
-        notes: Optional[str],
+        service: str | None,
+        region: str | None,
+        notes: str | None,
     ) -> PersistResult:
         is_new_detection = self._upsert_detection(
             cluster, combined_seg, confidence,
@@ -132,9 +133,9 @@ class BaselinePersistence:
             self._maybe_notify("SDRWatch: New signal", body)
         return PersistResult(is_new=is_new_flag, occ_ratio=occ_ratio)
 
-    def finalize_coarse_pass(self) -> List[RevisitTag]:
+    def finalize_coarse_pass(self) -> list[RevisitTag]:
         missing_ts = utc_now_str()
-        to_mark: List[PersistentDetection] = []
+        to_mark: list[PersistentDetection] = []
         for det in self._persisted:
             if det.id in self._seen_persistent:
                 continue
@@ -272,8 +273,8 @@ class BaselinePersistence:
     # -----------------
 
     def _upsert_detection(self, cluster: DetectionCluster, seg: Segment, confidence: float,
-                          service: Optional[str] = None, region: Optional[str] = None,
-                          bandplan_notes: Optional[str] = None) -> bool:
+                          service: str | None = None, region: str | None = None,
+                          bandplan_notes: str | None = None) -> bool:
         timestamp = utc_now_str()
         self.store.begin()
         try:
@@ -370,7 +371,7 @@ class BaselinePersistence:
             self.store.rollback()
             raise
 
-    def _match_persistent(self, seg: Segment) -> Optional[PersistentDetection]:
+    def _match_persistent(self, seg: Segment) -> PersistentDetection | None:
         for det in self._persisted:
             # Use an effective span for overlap checks. If a stored persistent
             # detection has become too wide (e.g., from historical settings),
@@ -430,9 +431,9 @@ class BaselinePersistence:
         )
         return None
 
-    def _lookup_occ_ratio(self, freq_hz: int) -> Optional[float]:
+    def _lookup_occ_ratio(self, freq_hz: int) -> float | None:
         """Return the duty cycle / occupancy ratio for a frequency.
-        
+
         Uses time-based duty cycle (occupied_ms / observed_ms) when available,
         falling back to window-based occ_ratio for backward compatibility.
         This provides more accurate detection of intermittent/bursty signals.
@@ -442,13 +443,13 @@ class BaselinePersistence:
             return None
         return self.store.baseline_duty_cycle(self.baseline_ctx.id, bin_index)
 
-    def _bin_index_for_freq(self, freq_hz: int) -> Optional[int]:
+    def _bin_index_for_freq(self, freq_hz: int) -> int | None:
         if freq_hz < self.baseline_ctx.freq_start_hz or freq_hz > self.baseline_ctx.freq_stop_hz:
             return None
         offset = (freq_hz - self.baseline_ctx.freq_start_hz) / max(self.baseline_ctx.bin_hz, 1.0)
         return int(round(offset))
 
-    def _schedule_revisit(self, *, detection_id: Optional[int], seg: Segment, reason: str) -> None:
+    def _schedule_revisit(self, *, detection_id: int | None, seg: Segment, reason: str) -> None:
         if not self.two_pass_enabled:
             return
         margin = max(self.revisit_margin_hz, float(seg.bandwidth_hz or self.bin_hz))
@@ -498,7 +499,7 @@ class BaselinePersistence:
                 return True
         return False
 
-    def _find_persistent_by_id(self, detection_id: Optional[int]) -> Optional[PersistentDetection]:
+    def _find_persistent_by_id(self, detection_id: int | None) -> PersistentDetection | None:
         if detection_id is None:
             return None
         for det in self._persisted:
@@ -541,9 +542,9 @@ class BaselinePersistence:
         )
         return seg
 
-    def _filter_tags(self, tags: Sequence[RevisitTag]) -> List[RevisitTag]:
+    def _filter_tags(self, tags: Sequence[RevisitTag]) -> list[RevisitTag]:
         seen: set[str] = set()
-        filtered: List[RevisitTag] = []
+        filtered: list[RevisitTag] = []
         dup_dropped = 0
         overlap_dropped = 0
         for tag in tags:
@@ -573,7 +574,7 @@ class BaselinePersistence:
     def _extent_state_for(self, det_id: int) -> ExtentHysteresisState:
         return self._extent_state.setdefault(det_id, ExtentHysteresisState())
 
-    def _apply_extent_hysteresis(self, det: PersistentDetection, proposed_low: int, proposed_high: int) -> Tuple[int, int]:
+    def _apply_extent_hysteresis(self, det: PersistentDetection, proposed_low: int, proposed_high: int) -> tuple[int, int]:
         state = self._extent_state_for(det.id)
         epsilon = max(1, int(round(self.bin_hz)))
         low = self._update_edge_with_hysteresis(
@@ -670,10 +671,8 @@ class BaselinePersistence:
     def _maybe_notify(self, title: str, body: str) -> None:
         if not self.notify_enabled:
             return
-        try:
+        with contextlib.suppress(Exception):
             subprocess.Popen(["notify-send", title, body])
-        except Exception:
-            pass
 
     def _log(self, event: str, **fields) -> None:
         if not self.logger:

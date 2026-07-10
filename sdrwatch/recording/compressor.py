@@ -1,6 +1,7 @@
 """OGG compression via ffmpeg subprocess."""
 from __future__ import annotations
 
+import contextlib
 import os
 import subprocess
 import tempfile
@@ -77,7 +78,5 @@ def compress_to_ogg(
     finally:
         # Clean up temp file
         if tmp_path is not None:
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(tmp_path)
-            except OSError:
-                pass

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -18,45 +18,45 @@ class ScanProfile:
     threshold_db: float
     min_width_bins: int
     guard_bins: int
-    abs_power_floor_db: Optional[float] = None
-    step_hz: Optional[float] = None
-    cfar_train: Optional[int] = None
-    cfar_guard: Optional[int] = None
-    cfar_quantile: Optional[float] = None
-    persistence_hit_ratio: Optional[float] = None
-    persistence_min_seconds: Optional[float] = None
-    persistence_min_hits: Optional[int] = None
-    persistence_min_windows: Optional[int] = None
-    revisit_fft: Optional[int] = None
-    revisit_avg: Optional[int] = None
-    revisit_margin_hz: Optional[float] = None
-    revisit_max_bands: Optional[int] = None
-    revisit_floor_threshold_db: Optional[float] = None
-    two_pass: Optional[bool] = None
-    bandwidth_pad_hz: Optional[float] = None
-    min_emit_bandwidth_hz: Optional[float] = None
+    abs_power_floor_db: float | None = None
+    step_hz: float | None = None
+    cfar_train: int | None = None
+    cfar_guard: int | None = None
+    cfar_quantile: float | None = None
+    persistence_hit_ratio: float | None = None
+    persistence_min_seconds: float | None = None
+    persistence_min_hits: int | None = None
+    persistence_min_windows: int | None = None
+    revisit_fft: int | None = None
+    revisit_avg: int | None = None
+    revisit_margin_hz: float | None = None
+    revisit_max_bands: int | None = None
+    revisit_floor_threshold_db: float | None = None
+    two_pass: bool | None = None
+    bandwidth_pad_hz: float | None = None
+    min_emit_bandwidth_hz: float | None = None
     # Matching vs display span shaping:
     # - match_* controls what gets persisted/matched in baseline_detections
     # - display_* controls what gets emitted/logged for humans/UI
-    match_bandwidth_pad_hz: Optional[float] = None
-    min_match_bandwidth_hz: Optional[float] = None
-    display_bandwidth_pad_hz: Optional[float] = None
-    min_display_bandwidth_hz: Optional[float] = None
-    center_match_hz: Optional[float] = None
-    confidence_hit_normalizer: Optional[float] = None
-    confidence_duration_norm: Optional[float] = None
-    confidence_bias: Optional[float] = None
-    revisit_span_limit_hz: Optional[float] = None
-    cluster_merge_hz: Optional[float] = None
-    max_detection_width_ratio: Optional[float] = None
-    max_detection_width_hz: Optional[float] = None
-    segment_center_mode: Optional[str] = None
-    segment_centroid_span_hz: Optional[float] = None
-    segment_centroid_drop_db: Optional[float] = None
-    segment_centroid_floor_margin_db: Optional[float] = None
+    match_bandwidth_pad_hz: float | None = None
+    min_match_bandwidth_hz: float | None = None
+    display_bandwidth_pad_hz: float | None = None
+    min_display_bandwidth_hz: float | None = None
+    center_match_hz: float | None = None
+    confidence_hit_normalizer: float | None = None
+    confidence_duration_norm: float | None = None
+    confidence_bias: float | None = None
+    revisit_span_limit_hz: float | None = None
+    cluster_merge_hz: float | None = None
+    max_detection_width_ratio: float | None = None
+    max_detection_width_hz: float | None = None
+    segment_center_mode: str | None = None
+    segment_centroid_span_hz: float | None = None
+    segment_centroid_drop_db: float | None = None
+    segment_centroid_floor_margin_db: float | None = None
 
 
-def default_scan_profiles() -> Dict[str, ScanProfile]:
+def default_scan_profiles() -> dict[str, ScanProfile]:
     profiles = [
         ScanProfile(
             name="vhf_uhf_general",
@@ -145,7 +145,7 @@ def default_scan_profiles() -> Dict[str, ScanProfile]:
     return {p.name.lower(): p for p in profiles}
 
 
-def serialize_profiles() -> Dict[str, Any]:
+def serialize_profiles() -> dict[str, Any]:
     """Return ordered JSON-serializable description of built-in profiles."""
 
     profiles = default_scan_profiles()
