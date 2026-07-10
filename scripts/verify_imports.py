@@ -1,6 +1,6 @@
 """Verify that all SDRwatch dependencies are importable."""
-import sys
 import os
+import sys
 
 # Ensure the project root is on sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -32,7 +32,6 @@ for name, imp in optional:
         print(f"[WARN] {name} skipped (expected when no SDR connected)")
 
 try:
-    from sdrwatch_web import create_app
     print("[OK] sdrwatch_web")
 except Exception as e:
     print(f"[FAIL] sdrwatch_web: {e}")

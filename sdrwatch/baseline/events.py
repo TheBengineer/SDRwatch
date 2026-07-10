@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sdrwatch.baseline.model import BaselineContext
 from sdrwatch.baseline.store import Store
 from sdrwatch.util.scan_logger import ScanLogger
@@ -13,7 +11,7 @@ from sdrwatch.util.time import utc_now_str
 class BaselineEventWriter:
     """Persist scan update counters and emit structured logs."""
 
-    def __init__(self, store: Store, baseline_ctx: BaselineContext, logger: Optional[ScanLogger] = None) -> None:
+    def __init__(self, store: Store, baseline_ctx: BaselineContext, logger: ScanLogger | None = None) -> None:
         self.store = store
         self.baseline_ctx = baseline_ctx
         self.logger = logger
@@ -28,7 +26,7 @@ class BaselineEventWriter:
         revisits_total: int,
         revisits_confirmed: int,
         revisits_false_positive: int,
-        duration_ms: Optional[float] = None,
+        duration_ms: float | None = None,
     ) -> None:
         timestamp = utc_now_str()
         self.store.begin()

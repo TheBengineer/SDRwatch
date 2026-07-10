@@ -22,20 +22,20 @@ completed scan.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib
 import json
 import os
-import shlex
 import signal
 import sqlite3
 import subprocess
 import sys
+import threading
 import time
 import uuid
-import threading
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any
 
 # ---------- Configuration ----------
 BASE_DIR = Path(os.environ.get("SDRWATCH_CONTROL_BASE", "/tmp/sdrwatch-control"))
@@ -48,13 +48,13 @@ SCANNER_MODULE = "sdrwatch.cli"
 PYTHON_EXE = sys.executable or "python3"
 
 
-_SCRIPT_CACHE: Optional[Tuple[Path, Optional[Path]]] = None  # (project_dir, script_path)
-_PROFILE_CACHE: Optional[Dict[str, Any]] = None
+_SCRIPT_CACHE: tuple[Path, Path | None] | None = None  # (project_dir, script_path)
+_PROFILE_CACHE: dict[str, Any] | None = None
 _PROFILE_CACHE_TS: float = 0.0
 _PROFILE_CACHE_TTL = 30.0
 
 
-def _scanner_invocation(script_path: Optional[Path]) -> List[str]:
+def _scanner_invocation(script_path: Path | None) -> list[str]:
     """Return the preferred python command for launching the scanner."""
     exec_mode = (os.environ.get("SDRWATCH_SCAN_EXEC") or "module").lower()
     if exec_mode == "script":
@@ -79,7 +79,7 @@ def _scanner_invocation(script_path: Optional[Path]) -> List[str]:
     return [PYTHON_EXE, str(script_path)]
 
 
-def resolve_scanner_paths(force_refresh: bool = False) -> Tuple[Path, Optional[Path]]:
+def resolve_scanner_paths(force_refresh: bool = False) -> tuple[Path, Path | None]:
     """Return (project_dir, optional sdrwatch.py path) with automatic fallback discovery."""
     global _SCRIPT_CACHE
     if not force_refresh and _SCRIPT_CACHE:
@@ -87,9 +87,9 @@ def resolve_scanner_paths(force_refresh: bool = False) -> Tuple[Path, Optional[P
         if script_path is None or script_path.exists():
             return project_dir, script_path
 
-    candidates: List[Path] = []
+    candidates: list[Path] = []
 
-    def _add_candidate(path_like: Optional[Path] | str | None) -> None:
+    def _add_candidate(path_like: Path | None | str | None) -> None:
         if not path_like:
             return
         p = Path(path_like).expanduser()
@@ -141,7 +141,7 @@ def resolve_scanner_paths(force_refresh: bool = False) -> Tuple[Path, Optional[P
     )
 
 
-def _fetch_profiles_payload(force_refresh: bool = False) -> Dict[str, Any]:
+def _fetch_profiles_payload(force_refresh: bool = False) -> dict[str, Any]:
     global _PROFILE_CACHE, _PROFILE_CACHE_TS
     now = time.time()
     if not force_refresh and _PROFILE_CACHE and (now - _PROFILE_CACHE_TS) < _PROFILE_CACHE_TTL:
@@ -149,7 +149,7 @@ def _fetch_profiles_payload(force_refresh: bool = False) -> Dict[str, Any]:
 
     project_dir, script_path = resolve_scanner_paths()
     cmd = _scanner_invocation(script_path) + ["--list-profiles"]
-    popen_kwargs: Dict[str, Any] = {
+    popen_kwargs: dict[str, Any] = {
         "capture_output": True,
         "text": True,
     }
@@ -165,7 +165,7 @@ def _fetch_profiles_payload(force_refresh: bool = False) -> Dict[str, Any]:
     try:
         payload = json.loads(result.stdout)
     except Exception as exc:
-        raise RuntimeError(f"invalid JSON from scanner CLI: {exc}")
+        raise RuntimeError(f"invalid JSON from scanner CLI: {exc}") from exc
 
     _PROFILE_CACHE = payload
     _PROFILE_CACHE_TS = now
@@ -198,7 +198,7 @@ def now_ts() -> float:
     return time.time()
 
 
-def read_state() -> Dict[str, Any]:
+def read_state() -> dict[str, Any]:
     if STATE_PATH.exists():
         try:
             with STATE_PATH.open("r", encoding="utf-8") as f:
@@ -206,15 +206,13 @@ def read_state() -> Dict[str, Any]:
         except Exception:
             # Corrupted state; archive and start fresh
             bak = STATE_PATH.with_suffix(".corrupt.json")
-            try:
+            with contextlib.suppress(Exception):
                 STATE_PATH.replace(bak)
-            except Exception:
-                pass
             return {"jobs": {}}
     return {"jobs": {}}
 
 
-def write_state(state: Dict[str, Any]) -> None:
+def write_state(state: dict[str, Any]) -> None:
     tmp = STATE_PATH.with_suffix(".tmp")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, sort_keys=True)
@@ -235,11 +233,11 @@ class Device:
     key: str                 # e.g., "rtl:0" or "hackrf:serial"
     kind: str                # e.g., "rtlsdr", "hackrf", "unknown"
     label: str               # human-friendly
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
-def discover_rtlsdr() -> List[Device]:
-    devices: List[Device] = []
+def discover_rtlsdr() -> list[Device]:
+    devices: list[Device] = []
     # Try Soapy first for robust enumeration (if available)
     try:
         import SoapySDR  # type: ignore
@@ -272,8 +270,8 @@ def discover_rtlsdr() -> List[Device]:
     return devices
 
 
-def discover_hackrf() -> List[Device]:
-    devices: List[Device] = []
+def discover_hackrf() -> list[Device]:
+    devices: list[Device] = []
     # Try Soapy first
     try:
         import SoapySDR  # type: ignore
@@ -310,13 +308,13 @@ def discover_hackrf() -> List[Device]:
     return devices
 
 
-def discover_devices() -> List[Device]:
+def discover_devices() -> list[Device]:
     devs = []
     devs.extend(discover_rtlsdr())
     devs.extend(discover_hackrf())
     # TODO: add KrakenSDR/SoapySDR/etc. as needed
     # Deduplicate by key
-    uniq: Dict[str, Device] = {d.key: d for d in devs}
+    uniq: dict[str, Device] = {d.key: d for d in devs}
     return list(uniq.values())
 
 
@@ -327,14 +325,14 @@ class Job:
     created_ts: float
     label: str
     device_key: str
-    baseline_id: Optional[int]
+    baseline_id: int | None
     status: str              # "running", "stopped", "finished", "error"
-    pid: Optional[int]
-    cmd: List[str]
+    pid: int | None
+    cmd: list[str]
     log_path: str
-    params: Dict[str, Any]
-    exit_code: Optional[int] = None
-    finished_ts: Optional[float] = None
+    params: dict[str, Any]
+    exit_code: int | None = None
+    finished_ts: float | None = None
 
 
 class JobManager:
@@ -342,7 +340,7 @@ class JobManager:
         ensure_dirs()
         self.state = read_state()
         self.default_db_path = _default_db_path()
-        self.jobs: Dict[str, Job] = {}
+        self.jobs: dict[str, Job] = {}
         for jid, j in self.state.get("jobs", {}).items():
             if "baseline_id" not in j:
                 j["baseline_id"] = None
@@ -380,10 +378,8 @@ class JobManager:
             if existing_owner and existing_owner in self.jobs:
                 job = self.jobs[existing_owner]
                 if not self._is_job_running(job):
-                    try:
+                    with contextlib.suppress(Exception):
                         lp.unlink()
-                    except Exception:
-                        pass
             # If still present and clearly stale (no job knows about it), clear
             if lp.exists():
                 # Optional: if file is older than N minutes treat as stale
@@ -401,13 +397,11 @@ class JobManager:
     def _release_device(self, device_key: str) -> None:
         lp = self._lock_path(device_key)
         if lp.exists():
-            try:
+            with contextlib.suppress(Exception):
                 lp.unlink()
-            except Exception:
-                pass
 
     # ---- job lifecycle ----
-    def list_jobs(self) -> List[Job]:
+    def list_jobs(self) -> list[Job]:
         return sorted(self.jobs.values(), key=lambda j: j.created_ts, reverse=True)
 
     def get_job(self, job_id: str) -> Job:
@@ -440,11 +434,11 @@ class JobManager:
         t = threading.Thread(target=_watch, name=f"reaper-{job_id}", daemon=True)
         t.start()
 
-    def start_job(self, *, device_key: str, label: str, baseline_id: int, sdrwatch_args: Dict[str, Any]) -> Job:
+    def start_job(self, *, device_key: str, label: str, baseline_id: int, sdrwatch_args: dict[str, Any]) -> Job:
         try:
             baseline_id_int = int(baseline_id)
-        except (TypeError, ValueError):
-            raise ValueError("baseline_id must be an integer")
+        except (TypeError, ValueError) as exc:
+            raise ValueError("baseline_id must be an integer") from exc
         project_dir, script_path = resolve_scanner_paths()
         # Refuse to start if the device is already locked (but clear stale locks first)
         self._acquire_device(device_key, owner="pending")
@@ -474,7 +468,7 @@ class JobManager:
                 f.write(jid)
 
             with open(log_path, "w", encoding="utf-8") as logf:
-                popen_kwargs: Dict[str, Any] = {
+                popen_kwargs: dict[str, Any] = {
                     "stdout": logf,
                     "stderr": subprocess.STDOUT,
                     "text": True,
@@ -528,10 +522,8 @@ class JobManager:
                 return job
             time.sleep(0.2)
         # force kill
-        try:
+        with contextlib.suppress(ProcessLookupError):
             os.kill(job.pid, getattr(signal, "SIGKILL", signal.SIGTERM))
-        except ProcessLookupError:
-            pass
         job.status = "finished"
         job.finished_ts = now_ts()
         self._release_device(job.device_key)
@@ -542,16 +534,16 @@ class JobManager:
     def _build_cmd(
         self,
         *,
-        script_path: Optional[Path],
+        script_path: Path | None,
         device_key: str,
-        baseline_id: Optional[int],
-        args: Dict[str, Any],
-    ) -> List[str]:
+        baseline_id: int | None,
+        args: dict[str, Any],
+    ) -> list[str]:
         """Translate a stable API dict into the concrete scanner CLI."""
         if baseline_id is None:
             raise ValueError("baseline_id is required for scanner command")
         cmd = _scanner_invocation(script_path) + ["--baseline-id", str(int(baseline_id))]
-        soapy_args_kv: Dict[str, Any] = {}
+        soapy_args_kv: dict[str, Any] = {}
         # Respect explicit driver override from caller (e.g., 'rtlsdr_native')
         explicit_driver = str(args.get("driver", "")).strip() if args.get("driver") is not None else ""
 
@@ -682,17 +674,17 @@ class JobManager:
             cmd += ["--soapy-args", kv]
 
         # Passthrough for any additional raw args
-        extra: List[str] = args.get("extra_args", [])
+        extra: list[str] = args.get("extra_args", [])
         if extra:
             cmd += [str(x) for x in extra]
 
         return cmd
 
     # ---- logs ----
-    def read_logs(self, job_id: str, tail: Optional[int] = None) -> str:
+    def read_logs(self, job_id: str, tail: int | None = None) -> str:
         job = self.get_job(job_id)
         try:
-            with open(job.log_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(job.log_path, encoding="utf-8", errors="replace") as f:
                 data = f.read()
         except FileNotFoundError:
             return "<no logs yet>"
@@ -702,22 +694,22 @@ class JobManager:
         return data
 
     # ---- baseline helpers ----
-    def list_baselines(self) -> List[Dict[str, Any]]:
+    def list_baselines(self) -> list[dict[str, Any]]:
         return self._query_baselines()
 
-    def get_baseline(self, baseline_id: int) -> Dict[str, Any]:
+    def get_baseline(self, baseline_id: int) -> dict[str, Any]:
         rows = self._query_baselines(baseline_id=baseline_id)
         if not rows:
             raise KeyError(f"Baseline {baseline_id} not found")
         return rows[0]
 
-    def _query_baselines(self, baseline_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def _query_baselines(self, baseline_id: int | None = None) -> list[dict[str, Any]]:
         db_path = self.default_db_path
         if not db_path.exists():
             return []
         columns = "id, name, created_at, freq_start_hz, freq_stop_hz, notes"
         sql = f"SELECT {columns} FROM baselines"
-        params: Tuple[Any, ...] = ()
+        params: tuple[Any, ...] = ()
         if baseline_id is not None:
             sql += " WHERE id = ?"
             params = (baseline_id,)
@@ -727,24 +719,24 @@ class JobManager:
             conn = sqlite3.connect(str(db_path))
             conn.row_factory = sqlite3.Row
         except sqlite3.Error as exc:
-            raise RuntimeError(f"failed to open database {db_path}: {exc}")
+            raise RuntimeError(f"failed to open database {db_path}: {exc}") from exc
         try:
             cur = conn.execute(sql, params)
             rows = [dict(row) for row in cur.fetchall()]
             return rows
         except sqlite3.Error as exc:
-            raise RuntimeError(f"failed to query baselines: {exc}")
+            raise RuntimeError(f"failed to query baselines: {exc}") from exc
         finally:
             conn.close()
 
 
 # ---------- HTTP server (optional) ----------
 
-def make_app(manager: JobManager, token: Optional[str] = None):
+def make_app(manager: JobManager, token: str | None = None):
     try:
-        from flask import Flask, request, jsonify # type: ignore
-    except Exception as e:
-        raise SystemExit("Flask is required for --serve mode. pip install flask")
+        from flask import Flask, jsonify, request  # type: ignore
+    except Exception as exc:
+        raise SystemExit("Flask is required for --serve mode. pip install flask") from exc
 
     app = Flask(__name__)
 
@@ -872,8 +864,8 @@ def cmd_discover(_args: argparse.Namespace) -> int:
     return 0
 
 
-def parse_kv_pairs(pairs: List[str]) -> Dict[str, Any]:
-    out: Dict[str, Any] = {}
+def parse_kv_pairs(pairs: list[str]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
     for p in pairs:
         if "=" not in p:
             continue
@@ -1065,7 +1057,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     ensure_dirs()
     ap = build_arg_parser()
     args = ap.parse_args(argv)

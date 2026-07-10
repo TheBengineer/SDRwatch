@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import time
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -87,7 +87,7 @@ class PatrolScanner:
 
     def _patrol_cycle(self) -> None:
         """One full cycle through the adaptive scan plan."""
-        for i, f_center in enumerate(self.windows):
+        for _i, f_center in enumerate(self.windows):
             self.src.tune(f_center)
             # Burn settling samples
             _ = self.src.read(int(self.samp_rate * 0.2))
@@ -160,7 +160,7 @@ class PatrolScanner:
         # Save the burst
         duration = time.time() - start
         if len(captured) > BUF_SIZE * ONSET_BUFS and self.store:
-            ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+            ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
             fname = f"patrol_{f_center}_{ts}_{int(duration*1000)}ms.cf32"
             import os
             os.makedirs(os.path.join(self.capture_dir, "raw"), exist_ok=True)

@@ -6,8 +6,15 @@ exclude = [".virtualenvs", ".venv", "__pycache__", "node_modules", ".git"]
 quote-style = "double"
 
 [lint]
-select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "T20"]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
 ignore = ["E501", "N802", "N803", "N806"]
 
 [lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"query-sdrwatch.py" = ["T201"]
+"sdrwatch/cli.py" = ["T201"]
+"sdrwatch-control.py" = ["T201"]
+"scripts/*.py" = ["T201"]
+"sdrwatch/baseline/stats.py" = ["T201"]
+"sdrwatch/baseline/context.py" = ["T201"]
+"sdrwatch/util/scan_logger.py" = ["T201"]

@@ -7,10 +7,11 @@ frequency bins, heatmaps, etc.).
 """
 from __future__ import annotations
 
+import contextlib
 import math
 import sqlite3
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sdrwatch_web.config import CHART_HEIGHT_PX
 from sdrwatch_web.db import qa
@@ -18,7 +19,7 @@ from sdrwatch_web.filters import detection_predicates, scan_predicates
 from sdrwatch_web.formatting import format_ts_label
 
 
-def _percentile(xs: List[float], p: float) -> Optional[float]:
+def _percentile(xs: list[float], p: float) -> float | None:
     """Calculate percentile value from a sorted list."""
     if not xs:
         return None
@@ -32,7 +33,7 @@ def _percentile(xs: List[float], p: float) -> Optional[float]:
 
 
 def _scale_counts_to_px(
-    series: List[Dict[str, Any]],
+    series: list[dict[str, Any]],
     count_key: str = "count",
     max_height: int = CHART_HEIGHT_PX,
 ) -> float:
@@ -49,7 +50,7 @@ def _scale_counts_to_px(
     Returns:
         Maximum count value in the series.
     """
-    values: List[float] = []
+    values: list[float] = []
     for x in series:
         try:
             v = float(x.get(count_key, 0) or 0)
@@ -72,9 +73,9 @@ def _scale_counts_to_px(
 
 def snr_histogram(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     bucket_db: int = 3,
-) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """
     Build SNR histogram data from detections.
 
@@ -92,14 +93,12 @@ def snr_histogram(
 
     rows = qa(con, f"SELECT d.snr_db FROM detections d{where_sql}", tuple(params))
 
-    vals: List[float] = []
+    vals: list[float] = []
     for r in rows:
-        try:
+        with contextlib.suppress(Exception):
             vals.append(float(r['snr_db']))
-        except Exception:
-            pass
 
-    buckets: Dict[int, int] = {}
+    buckets: dict[int, int] = {}
     for s in vals:
         b = int(math.floor(s / bucket_db)) * bucket_db
         buckets[b] = buckets.get(b, 0) + 1
@@ -126,10 +125,10 @@ def snr_histogram(
 
 def timeline_metrics(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     *,
     max_buckets: int = 60,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Build timeline chart data showing detections and scans over time.
 
@@ -209,7 +208,7 @@ def timeline_metrics(
         now = now.replace(hour=0)
     start = now - timedelta(hours=bucket_hours * (bucket_count - 1))
 
-    buckets: List[Dict[str, Any]] = []
+    buckets: list[dict[str, Any]] = []
     det_max = 0
     scan_max = 0
     snr_max = 0.0
@@ -268,9 +267,9 @@ def timeline_metrics(
 
 def frequency_bins_latest_scan(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     num_bins: int = 40,
-) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]], int]:
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None, int]:
     """
     Build frequency bin data for the latest scan.
 
@@ -346,9 +345,9 @@ def frequency_bins_latest_scan(
 
 def frequency_bins_all_scans_avg(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     num_bins: int = 40,
-) -> Tuple[List[Dict[str, Any]], float, float, float]:
+) -> tuple[list[dict[str, Any]], float, float, float]:
     """
     Build averaged frequency bin data across all matching scans.
 
@@ -385,7 +384,7 @@ def frequency_bins_all_scans_avg(
     scans = qa(con, f"SELECT s.f_start_hz, s.f_stop_hz FROM scans s{scan_where}", tuple(scan_params))
 
     width = (f1 - f0) / max(1, num_bins)
-    bins: List[Dict[str, Any]] = [
+    bins: list[dict[str, Any]] = [
         {"count": 0.0, "coverage": 0, "mhz_start": (f0 + i * width) / 1e6, "mhz_end": (f0 + (i + 1) * width) / 1e6}
         for i in range(num_bins)
     ]
@@ -425,11 +424,11 @@ def frequency_bins_all_scans_avg(
 
 def strongest_signals(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     limit: int = 10,
     *,
     include_confidence: bool = False,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Get the strongest signals by SNR.
 
@@ -463,9 +462,9 @@ def strongest_signals(
 
 def top_services(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     limit: int = 10,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Get top services by detection count.
 
@@ -496,11 +495,11 @@ def top_services(
 
 def coverage_heatmap(
     con: sqlite3.Connection,
-    filters: Dict[str, Any],
+    filters: dict[str, Any],
     *,
     max_scans: int = 20,
     num_bins: int = 36,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Build coverage heatmap data showing detection density by scan and frequency.
 
@@ -602,7 +601,7 @@ def coverage_heatmap(
 
     bin_width = (f1 - f0) / max(1, num_bins)
     bin_labels = [f"{(f0 + i * bin_width) / 1e6:.2f}" for i in range(num_bins)]
-    grid: Dict[int, List[int]] = {sid: [0 for _ in range(num_bins)] for sid in scan_ids}
+    grid: dict[int, list[int]] = {sid: [0 for _ in range(num_bins)] for sid in scan_ids}
     max_count = 0
 
     for row in det_rows:
@@ -621,7 +620,7 @@ def coverage_heatmap(
         if grid[sid][idx] > max_count:
             max_count = grid[sid][idx]
 
-    rows: List[Dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
     for row in scan_rows:
         sid = row['id']
         cells_raw = grid.get(sid, [0 for _ in range(num_bins)])

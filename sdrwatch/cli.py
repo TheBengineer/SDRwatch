@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import sys
-from typing import Any, List, Optional, Set
+from typing import Any
 
 from sdrwatch.drivers.rtlsdr import HAVE_RTLSDR
 from sdrwatch.drivers.soapy import HAVE_SOAPY
@@ -66,7 +67,7 @@ def run(args: argparse.Namespace) -> int:
         return ExitCode.GENERAL_ERROR
 
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     if argv is None:
         argv = sys.argv[1:]
 
@@ -310,11 +311,11 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     _set_default(args, args._cli_overrides, "record_ttl_days", 7)
     _set_default(args, args._cli_overrides, "record_quota_gb", 1)
     _set_default(args, args._cli_overrides, "record_max_signals", 10)
-    setattr(args, "abs_power_floor_db", None)
+    args.abs_power_floor_db = None
 
     # --continuous-capture implies --capture-iq
     if getattr(args, "continuous_capture", False):
-        setattr(args, "capture_iq", True)
+        args.capture_iq = True
 
     has_span = hasattr(args, "start") and hasattr(args, "stop")
     is_ignore = getattr(args, "_subcommand", None) == "ignore"
@@ -337,13 +338,13 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         if not baseline_text:
             p.error("--baseline-id is required for scanning runs")
         if baseline_text.lower() == "latest":
-            setattr(args, "baseline_id", "latest")
+            args.baseline_id = "latest"
         else:
             try:
                 baseline_val = int(baseline_text)
             except ValueError:
                 p.error("--baseline-id must be an integer or 'latest'")
-            setattr(args, "baseline_id", baseline_val)
+            args.baseline_id = baseline_val
 
     if hasattr(args, "_cli_overrides"):
         delattr(args, "_cli_overrides")
@@ -364,7 +365,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return args
 
 
-def _set_default(args: argparse.Namespace, overrides: Set[str], attr: str, value: Any) -> None:
+def _set_default(args: argparse.Namespace, overrides: set[str], attr: str, value: Any) -> None:
     if hasattr(args, attr):
         overrides.add(attr)
     else:
@@ -391,7 +392,7 @@ def _apply_scan_profile(args: argparse.Namespace, parser: argparse.ArgumentParse
         )
         return
 
-    overrides: Set[str] = getattr(args, "_cli_overrides", set())
+    overrides: set[str] = getattr(args, "_cli_overrides", set())
 
     def maybe_set(attr: str, value: Any) -> None:
         if value is None:
@@ -437,27 +438,27 @@ def _apply_scan_profile(args: argparse.Namespace, parser: argparse.ArgumentParse
     maybe_set("min_display_bandwidth_hz", getattr(profile, "min_display_bandwidth_hz", None))
 
     if profile.bandwidth_pad_hz is not None:
-        setattr(args, "bandwidth_pad_hz", profile.bandwidth_pad_hz)
+        args.bandwidth_pad_hz = profile.bandwidth_pad_hz
     if profile.min_emit_bandwidth_hz is not None:
-        setattr(args, "min_emit_bandwidth_hz", profile.min_emit_bandwidth_hz)
+        args.min_emit_bandwidth_hz = profile.min_emit_bandwidth_hz
     if profile.confidence_hit_normalizer is not None:
-        setattr(args, "confidence_hit_normalizer", profile.confidence_hit_normalizer)
+        args.confidence_hit_normalizer = profile.confidence_hit_normalizer
     if profile.confidence_duration_norm is not None:
-        setattr(args, "confidence_duration_norm", profile.confidence_duration_norm)
+        args.confidence_duration_norm = profile.confidence_duration_norm
     if profile.confidence_bias is not None:
-        setattr(args, "confidence_bias", profile.confidence_bias)
+        args.confidence_bias = profile.confidence_bias
     if profile.abs_power_floor_db is not None:
-        setattr(args, "abs_power_floor_db", profile.abs_power_floor_db)
+        args.abs_power_floor_db = profile.abs_power_floor_db
 
-    gain_override = "gain" in overrides and not (isinstance(getattr(args, "gain"), str) and getattr(args, "gain").lower() == "auto")
+    gain_override = "gain" in overrides and not (isinstance(args.gain, str) and args.gain.lower() == "auto")
     if not gain_override:
-        if isinstance(getattr(args, "gain"), str) and getattr(args, "gain").lower() == "auto":
+        if isinstance(args.gain, str) and args.gain.lower() == "auto":
             _log.info(
                 "overriding auto gain with fixed %.1fdB from profile '%s'",
                 profile.gain_db,
                 profile.name,
             )
-        setattr(args, "gain", float(profile.gain_db))
+        args.gain = float(profile.gain_db)
 
     _log.info("applied profile '%s'", profile.name)
 
@@ -609,9 +610,9 @@ def cmd_record(args: argparse.Namespace) -> int:
 def cmd_monitor(args: argparse.Namespace) -> int:
     """Continuous burst capture mode on a single frequency."""
     from sdrwatch.baseline.store import Store
+    from sdrwatch.drivers.rtlsdr import HAVE_RTLSDR, RTLSDRSource
+    from sdrwatch.drivers.soapy import HAVE_SOAPY, SDRSource
     from sdrwatch.recording.burst import BurstCapture
-    from sdrwatch.drivers.soapy import SDRSource, HAVE_SOAPY
-    from sdrwatch.drivers.rtlsdr import RTLSDRSource, HAVE_RTLSDR
     from sdrwatch.util.exit_codes import ExitCode
 
     store = Store(_resolve_db_path(args))
@@ -633,10 +634,8 @@ def cmd_monitor(args: argparse.Namespace) -> int:
         src = SDRSource(driver=driver, samp_rate=samp_rate, gain=gain, soapy_args=soapy_args)
 
     if hasattr(src, "set_fixed_gain_mode"):
-        try:
+        with contextlib.suppress(Exception):
             src.set_fixed_gain_mode(gain_db=20.0)
-        except Exception:
-            pass
 
     burster = BurstCapture(
         src=src,
@@ -664,10 +663,8 @@ def cmd_monitor(args: argparse.Namespace) -> int:
     except Exception as e:
         _log.error("monitor error: %s", e)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             src.close()
-        except Exception:
-            pass
 
     return ExitCode.SUCCESS
 
@@ -675,8 +672,8 @@ def cmd_monitor(args: argparse.Namespace) -> int:
 def cmd_patrol(args: argparse.Namespace) -> int:
     """Patrol mode — continuously scan a band, detect bursts, record, learn."""
     from sdrwatch.baseline.store import Store
-    from sdrwatch.drivers.soapy import SDRSource, HAVE_SOAPY
-    from sdrwatch.drivers.rtlsdr import RTLSDRSource, HAVE_RTLSDR
+    from sdrwatch.drivers.rtlsdr import HAVE_RTLSDR, RTLSDRSource
+    from sdrwatch.drivers.soapy import HAVE_SOAPY, SDRSource
     from sdrwatch.recording.patrol import PatrolScanner
     from sdrwatch.util.exit_codes import ExitCode
 
@@ -710,10 +707,8 @@ def cmd_patrol(args: argparse.Namespace) -> int:
     except KeyboardInterrupt:
         _log.info("patrol interrupted")
     finally:
-        try:
+        with contextlib.suppress(Exception):
             src.close()
-        except Exception:
-            pass
 
     return ExitCode.SUCCESS
 

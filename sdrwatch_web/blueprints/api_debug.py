@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from datetime import datetime, timezone
-from typing import Any, Dict, List
+from datetime import UTC, datetime
+from typing import Any
 
 from flask import Blueprint, current_app, jsonify, request
 
@@ -17,6 +17,8 @@ from sdrwatch_web.auth import require_auth
 from sdrwatch_web.config import (
     ACTIVE_SIGNAL_WINDOW_MINUTES,
     API_TOKEN,
+    BAND_SUMMARY_MAX_BANDS,
+    BAND_SUMMARY_TARGET_WIDTH_HZ,
     CHANGE_EVENT_LIMIT,
     CHANGE_WINDOW_MINUTES,
     CONTROL_TOKEN,
@@ -27,8 +29,6 @@ from sdrwatch_web.config import (
     QUIETED_MIN_WINDOWS,
     QUIETED_TIMEOUT_MINUTES,
     TACTICAL_RECENT_MINUTES,
-    BAND_SUMMARY_MAX_BANDS,
-    BAND_SUMMARY_TARGET_WIDTH_HZ,
 )
 from sdrwatch_web.controller import get_controller
 from sdrwatch_web.db import get_con_optional, q1, qa
@@ -40,7 +40,7 @@ bp = Blueprint("api_debug", __name__)
 # In-memory error ring buffer
 # ---------------------------------------------------------------------------
 
-_error_ring: List[Dict[str, Any]] = []
+_error_ring: list[dict[str, Any]] = []
 _error_ring_max = 100
 
 
@@ -56,7 +56,7 @@ def capture_error(exc: Exception, path: str, method: str) -> None:
     import traceback as tb
 
     entry = {
-        "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        "ts": datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
         "path": path,
         "method": method,
         "error": str(exc),
@@ -68,7 +68,7 @@ def capture_error(exc: Exception, path: str, method: str) -> None:
         _error_ring.pop(0)
 
 
-def get_error_ring() -> List[Dict[str, Any]]:
+def get_error_ring() -> list[dict[str, Any]]:
     """Get a copy of the error ring buffer."""
     return list(_error_ring)
 
@@ -89,7 +89,7 @@ def api_debug_health():
     require_auth()
     app = current_app
 
-    health: Dict[str, Any] = {
+    health: dict[str, Any] = {
         "status": "ok",
         "db": "unknown",
         "controller": "unknown",
@@ -143,7 +143,7 @@ def api_debug_db_stats():
     """Database statistics: table row counts, recent scan_updates timing."""
     require_auth()
 
-    stats: Dict[str, Any] = {
+    stats: dict[str, Any] = {
         "tables": {},
         "recent_scans": [],
     }
@@ -218,7 +218,7 @@ def api_debug_config():
     require_auth()
     app = current_app
 
-    config: Dict[str, Any] = {
+    config: dict[str, Any] = {
         "env": {
             "SDRWATCH_CONTROL_URL": CONTROL_URL,
             "SDRWATCH_CONTROL_TOKEN": "***" if CONTROL_TOKEN else "(not set)",

@@ -21,9 +21,8 @@ import logging
 import os
 import sys
 import traceback
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
-
+from datetime import UTC, datetime
+from typing import Any
 
 # Module-level state
 _configured = False
@@ -34,8 +33,8 @@ class JSONFormatter(logging.Formatter):
     """Emit log records as single-line JSON for machine parsing."""
 
     def format(self, record: logging.LogRecord) -> str:
-        output: Dict[str, Any] = {
-            "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        output: dict[str, Any] = {
+            "ts": datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -67,7 +66,7 @@ class ConsoleFormatter(logging.Formatter):
         self.use_color = use_color and sys.stderr.isatty()
 
     def format(self, record: logging.LogRecord) -> str:
-        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         level = record.levelname
         if self.use_color:
             color = self.LEVEL_COLORS.get(level, "")
@@ -84,8 +83,8 @@ class ConsoleFormatter(logging.Formatter):
 
 def configure_logging(
     *,
-    level: Optional[str] = None,
-    json_file: Optional[str] = None,
+    level: str | None = None,
+    json_file: str | None = None,
     use_color: bool = True,
 ) -> None:
     """Configure the sdrwatch logging subsystem.
@@ -157,10 +156,7 @@ def get_logger(name: str) -> logging.Logger:
 
     # Ensure the name is under the sdrwatch namespace
     if not name.startswith(_root_logger_name):
-        if name == "__main__":
-            name = f"{_root_logger_name}.main"
-        else:
-            name = f"{_root_logger_name}.{name}"
+        name = f"{_root_logger_name}.main" if name == "__main__" else f"{_root_logger_name}.{name}"
 
     return logging.getLogger(name)
 
@@ -169,7 +165,7 @@ def log_exception(
     logger: logging.Logger,
     message: str,
     *,
-    error_type: Optional[str] = None,
+    error_type: str | None = None,
     **extra: Any,
 ) -> None:
     """Log an exception with structured context.

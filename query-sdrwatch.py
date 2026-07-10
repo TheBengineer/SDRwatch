@@ -34,12 +34,14 @@ Usage examples:
 """
 
 from __future__ import annotations
+
 import argparse
 import csv
 import os
 import sqlite3
 import sys
-from typing import Any, Optional, Sequence, Tuple, List
+from collections.abc import Sequence
+from typing import Any
 
 # ----------------------------
 # Helpers
@@ -91,11 +93,11 @@ def fmt_table(rows, headers=None, max_width=28):
     return "\n".join(out)
 
 
-def to_hz(mhz: Optional[float]) -> Optional[int]:
+def to_hz(mhz: float | None) -> int | None:
     return int(mhz * 1e6) if mhz is not None else None
 
 
-def between_clause(col: str, lo: Optional[int], hi: Optional[int]) -> Tuple[str, list]:
+def between_clause(col: str, lo: int | None, hi: int | None) -> tuple[str, list]:
     if lo is not None and hi is not None:
         return f"{col} BETWEEN ? AND ?", [lo, hi]
     elif lo is not None:
@@ -122,14 +124,14 @@ def cmd_scans(con: sqlite3.Connection, args: argparse.Namespace) -> None:
     print(fmt_table(rows))
 
 
-def _latest_scan_id(con: sqlite3.Connection) -> Optional[int]:
+def _latest_scan_id(con: sqlite3.Connection) -> int | None:
     row = con.execute("SELECT id FROM scans ORDER BY id DESC LIMIT 1").fetchone()
     return int(row[0]) if row else None
 
 
 def cmd_detections(con: sqlite3.Connection, args: argparse.Namespace) -> None:
-    params: List[Any] = []
-    where: List[str] = []
+    params: list[Any] = []
+    where: list[str] = []
 
     if args.scan_id is None and not args.all_scans:
         sid = _latest_scan_id(con)
@@ -184,17 +186,17 @@ def cmd_detections(con: sqlite3.Connection, args: argparse.Namespace) -> None:
         writer = csv.writer(sys.stdout)
         writer.writerow(rows[0].keys() if rows else [])
         for r in rows:
-            writer.writerow([r[k] for k in r.keys()])
+            writer.writerow([r[k] for k in r])
     else:
         print(fmt_table(rows))
 
 
 def cmd_baseline(con: sqlite3.Connection, args: argparse.Namespace) -> None:
-    params: List[Any] = []
-    where: List[str] = []
+    params: list[Any] = []
+    where: list[str] = []
 
-    lo_hz: Optional[int] = None
-    hi_hz: Optional[int] = None
+    lo_hz: int | None = None
+    hi_hz: int | None = None
 
     if args.center is not None:
         span_hz = int((args.span_khz or 100) * 1e3)
@@ -354,7 +356,7 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     p = build_parser()
     args = p.parse_args(argv)
     con = open_db(args.db)

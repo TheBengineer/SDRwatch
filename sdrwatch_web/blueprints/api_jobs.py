@@ -6,7 +6,7 @@ Also includes the /api/scans aliases and /api/now, /api/logs endpoints.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from flask import Blueprint, Response, abort, jsonify, request
 
@@ -21,12 +21,12 @@ bp = Blueprint("api_jobs", __name__)
 # ---------------------------------------------------------------------------
 
 
-def parse_window_log_line(line: str) -> Optional[Dict[str, Any]]:
+def parse_window_log_line(line: str) -> dict[str, Any] | None:
     """Parse a scanner window log line into a structured dict.
-    
+
     The scanner logs lines like:
     [2025-01-21 12:34:56] INFO     [sweep.sweeper] [scan] window center_hz=... det_count=...
-    
+
     We look for the marker '[scan] window' anywhere in the line.
     """
     marker = "[scan] window"
@@ -40,9 +40,9 @@ def parse_window_log_line(line: str) -> Optional[Dict[str, Any]]:
     if not payload:
         return None
 
-    result: Dict[str, Any] = {"raw": line.rstrip("\n")}
+    result: dict[str, Any] = {"raw": line.rstrip("\n")}
     required_keys = {"center_hz", "det_count", "mean_db", "p90_db", "anomalous"}
-    seen: Dict[str, Any] = {}
+    seen: dict[str, Any] = {}
 
     for chunk in payload.split():
         if "=" not in chunk:
@@ -82,7 +82,7 @@ def parse_window_log_line(line: str) -> Optional[Dict[str, Any]]:
     return result
 
 
-def active_state_payload() -> Dict[str, Any]:
+def active_state_payload() -> dict[str, Any]:
     """Build the active state payload (running job or idle)."""
     job = controller_active_job()
     if not job:
@@ -90,7 +90,7 @@ def active_state_payload() -> Dict[str, Any]:
     return {"state": "running", "job": job}
 
 
-def start_job_from_payload(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def start_job_from_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
     """Validate and start a job from request payload."""
     device_key = payload.get("device_key")
     if not device_key:
@@ -125,7 +125,7 @@ def start_job_from_payload(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         abort(400, description=str(exc))
 
 
-def stop_job_by_id(job_id: str) -> Dict[str, Any]:
+def stop_job_by_id(job_id: str) -> dict[str, Any]:
     """Stop a job by ID."""
     ctl = get_controller()
     try:
@@ -135,7 +135,7 @@ def stop_job_by_id(job_id: str) -> Dict[str, Any]:
         return {"error": str(exc)}  # Unreachable but satisfies type checker
 
 
-def job_logs_response(job_id: str, tail: Optional[int] = None) -> Response:
+def job_logs_response(job_id: str, tail: int | None = None) -> Response:
     """Build a Response with job logs."""
     ctl = get_controller()
     try:
@@ -313,7 +313,7 @@ def api_live_windows():
     except Exception as exc:
         abort(502, description=str(exc))
 
-    windows: List[Dict[str, Any]] = []
+    windows: list[dict[str, Any]] = []
     for line in log_text.splitlines():
         parsed = parse_window_log_line(line)
         if not parsed:

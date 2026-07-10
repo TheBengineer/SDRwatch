@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from sdrwatch.baseline.store import BaselineContext, Store
 
 
 def resolve_baseline_context(
     store: Store,
-    baseline_id_raw: Optional[Any],
+    baseline_id_raw: Any | None,
     *,
-    span_hint: Optional[Tuple[float, float]] = None,
-    bin_hz_hint: Optional[float] = None,
+    span_hint: tuple[float, float] | None = None,
+    bin_hz_hint: float | None = None,
 ) -> BaselineContext:
     """Return an existing baseline or create a new one using the provided hints."""
 
@@ -30,8 +30,8 @@ def resolve_baseline_context(
 
     try:
         baseline_id = int(baseline_id_raw)
-    except (TypeError, ValueError):  # pragma: no cover - defensive CLI parsing
-        raise SystemExit("--baseline-id must be an integer or 'latest'")
+    except (TypeError, ValueError) as exc:  # pragma: no cover - defensive CLI parsing
+        raise SystemExit("--baseline-id must be an integer or 'latest'") from exc
 
     ctx = store.get_baseline(baseline_id)
     if ctx is None:
@@ -42,8 +42,8 @@ def resolve_baseline_context(
 def _create_from_hints(
     store: Store,
     *,
-    span_hint: Optional[Tuple[float, float]] = None,
-    bin_hz_hint: Optional[float] = None,
+    span_hint: tuple[float, float] | None = None,
+    bin_hz_hint: float | None = None,
 ) -> BaselineContext:
     freq_start = int(span_hint[0]) if span_hint else 0
     freq_stop = int(span_hint[1]) if span_hint else 0

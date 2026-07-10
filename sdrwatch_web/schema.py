@@ -6,14 +6,14 @@ new baseline entries.
 """
 from __future__ import annotations
 
+import contextlib
 import sqlite3
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from flask import current_app
 
 from sdrwatch_web.db import reset_ro_connection
-
 
 # ---------------------------------------------------------------------------
 # Classification columns migration
@@ -62,11 +62,8 @@ def migrate_detection_classification(conn: sqlite3.Connection) -> None:
 
     for col_name, alter_stmt in migrations:
         if col_name not in existing:
-            try:
+            with contextlib.suppress(sqlite3.OperationalError):
                 conn.execute(alter_stmt)
-            except sqlite3.OperationalError:
-                # Column may already exist from a partial migration
-                pass
 
 
 def migrate_baselines_bandplan(conn: sqlite3.Connection) -> None:
@@ -80,10 +77,8 @@ def migrate_baselines_bandplan(conn: sqlite3.Connection) -> None:
     existing = {row[1] for row in cursor.fetchall()}
 
     if "bandplan_path" not in existing:
-        try:
+        with contextlib.suppress(sqlite3.OperationalError):
             conn.execute("ALTER TABLE baselines ADD COLUMN bandplan_path TEXT")
-        except sqlite3.OperationalError:
-            pass
 
 
 def ensure_baseline_schema(conn: sqlite3.Connection) -> None:
@@ -248,7 +243,7 @@ def ensure_baseline_schema(conn: sqlite3.Connection) -> None:
     migrate_baselines_bandplan(conn)
 
 
-def create_baseline_entry(data: Dict[str, Any]) -> Dict[str, Any]:
+def create_baseline_entry(data: dict[str, Any]) -> dict[str, Any]:
     """
     Create a new baseline entry in the database.
 
@@ -266,7 +261,7 @@ def create_baseline_entry(data: Dict[str, Any]) -> Dict[str, Any]:
     if not name:
         raise ValueError("name is required")
 
-    def _coerce_float(value: Any) -> Optional[float]:
+    def _coerce_float(value: Any) -> float | None:
         if value in (None, ""):
             return None
         try:
@@ -282,7 +277,7 @@ def create_baseline_entry(data: Dict[str, Any]) -> Dict[str, Any]:
 
     payload = {
         "name": name,
-        "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat() + "Z",
+        "created_at": datetime.now(UTC).replace(microsecond=0).isoformat() + "Z",
         "location_lat": _coerce_float(data.get("location_lat")),
         "location_lon": _coerce_float(data.get("location_lon")),
         "sdr_serial": (str(data.get("sdr_serial") or "").strip() or None),
@@ -303,7 +298,7 @@ def create_baseline_entry(data: Dict[str, Any]) -> Dict[str, Any]:
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
     except sqlite3.Error as exc:
-        raise RuntimeError(f"failed to open database for baseline creation: {exc}")
+        raise RuntimeError(f"failed to open database for baseline creation: {exc}") from exc
 
     try:
         ensure_baseline_schema(conn)

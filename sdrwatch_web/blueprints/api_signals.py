@@ -6,19 +6,17 @@ labels, notes, and user-corrected bandwidth.
 """
 from __future__ import annotations
 
+import contextlib
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from flask import Blueprint, current_app, jsonify, request
 
-from sdrwatch_web.db import get_con, get_con_optional, q1, qa, table_exists
+from sdrwatch_web.baseline_helpers import fetch_baseline_record
+from sdrwatch_web.db import get_con_optional, q1, qa
 from sdrwatch_web.formatting import (
     compute_display_bandwidth_hz,
-    format_bandwidth_khz,
-    format_freq_label,
 )
-from sdrwatch_web.baseline_helpers import fetch_baseline_record
-
 
 bp = Blueprint("api_signals", __name__, url_prefix="/api/signals")
 
@@ -41,7 +39,7 @@ def format_signal_id(detection_id: int) -> str:
     return f"SIG-{detection_id:04d}"
 
 
-def parse_signal_id(signal_id: str) -> Optional[int]:
+def parse_signal_id(signal_id: str) -> int | None:
     """
     Parse a human-friendly signal ID back to integer.
 
@@ -107,7 +105,7 @@ def list_signals():
         return jsonify({"error": "baseline not found"}), 404
 
     conditions = ["baseline_id = ?"]
-    params: List[Any] = [baseline_id]
+    params: list[Any] = [baseline_id]
 
     selected_param = request.args.get("selected", "").strip().lower()
     if selected_param in ("1", "true"):
@@ -121,10 +119,8 @@ def list_signals():
     limit = 100
     limit_raw = request.args.get("limit", "").strip()
     if limit_raw:
-        try:
+        with contextlib.suppress(ValueError):
             limit = max(1, min(500, int(limit_raw)))
-        except ValueError:
-            pass
 
     where_clause = " AND ".join(conditions)
     try:
@@ -317,7 +313,7 @@ def update_signal(signal_id: str):
     data = request.get_json(silent=True) or {}
 
     updates = []
-    params: List[Any] = []
+    params: list[Any] = []
 
     # Label
     if "label" in data:

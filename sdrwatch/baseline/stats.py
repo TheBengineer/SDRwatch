@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from typing import Tuple
 
 import numpy as np  # type: ignore
 
@@ -34,7 +33,7 @@ class BaselineStatsUpdater:
         dwell_ms: float = 0.0,
     ) -> bool:
         """Update per-bin EMA stats for a single sweep window.
-        
+
         Args:
             rf_freqs: RF frequencies for each bin (Hz).
             psd_db: Power spectral density in dB for each bin.
@@ -79,7 +78,7 @@ class BaselineStatsUpdater:
         self.baseline_ctx.total_windows = total_windows
         return True
 
-    def update_span(self, planned: Tuple[int, int]) -> None:
+    def update_span(self, planned: tuple[int, int]) -> None:
         """Expand the baseline span to cover the planned sweep if needed."""
 
         start, stop = (int(planned[0]), int(planned[1]))
