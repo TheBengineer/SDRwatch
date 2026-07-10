@@ -604,6 +604,7 @@ export default function RecordingsPage() {
         const columns = [
           colHelper.display({
             id: 'select',
+            size: 40,
             header: () => (
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
@@ -628,33 +629,39 @@ export default function RecordingsPage() {
               />
             ),
           }),
-          colHelper.accessor('id', { header: 'ID', cell: info => <span className="font-mono text-xs">{info.getValue()}</span> }),
+          colHelper.accessor('id', { header: 'ID', size: 60, cell: info => <span className="font-mono text-xs">{info.getValue()}</span> }),
           colHelper.accessor('f_mhz', {
             header: 'Freq (MHz)',
+            size: 110,
             cell: info => <span className="font-mono">{info.getValue()?.toFixed(4) ?? '—'}</span>,
           }),
           colHelper.accessor('modulation', {
             header: 'Modulation',
+            size: 100,
             cell: info => info.getValue()
               ? <span className="chip text-xs">{info.getValue()!.toUpperCase()}</span>
               : <span className="chip text-xs text-slate-400">—</span>,
           }),
           colHelper.accessor('duration_ms', {
             header: 'Duration',
+            size: 90,
             cell: info => <span className="text-xs">{info.getValue() ? `${(info.getValue()! / 1000).toFixed(1)}s` : '—'}</span>,
           }),
-          colHelper.accessor('raw_size_display', { header: 'Raw', cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
-          colHelper.accessor('ogg_size_display', { header: 'OGG', cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
+          colHelper.accessor('raw_size_display', { header: 'Raw', size: 80, cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
+          colHelper.accessor('ogg_size_display', { header: 'OGG', size: 80, cell: info => <span className="text-xs">{info.getValue() || '—'}</span> }),
           colHelper.accessor('status', {
             header: 'Status',
+            size: 90,
             cell: info => <span className={`text-xs ${statusColor(info.getValue())}`}>{info.getValue() || '—'}</span>,
           }),
           colHelper.accessor('created_utc', {
             header: 'Created',
+            size: 160,
             cell: info => <span className="text-xs text-slate-400">{info.getValue() ? info.getValue()!.slice(0, 19).replace('T', ' ') : '—'}</span>,
           }),
           colHelper.display({
             id: 'actions',
+            size: 100,
             header: 'Actions',
             cell: ({ row }) => (
               <div className="flex flex-wrap gap-1 items-center" onClick={e => e.stopPropagation()}>
@@ -736,7 +743,7 @@ export default function RecordingsPage() {
                         onClick={() => toggleExpand(rec.id)}
                       >
                           {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="td text-sm" style={{ width: cell.column.getSize() }}>
+                          <td key={cell.id} className="td text-sm">
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}

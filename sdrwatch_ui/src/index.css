@@ -101,7 +101,6 @@
   .table {
     @apply w-full text-sm;
     table-layout: fixed;
-    min-width: fit-content;
   }
   .th, .td {
     @apply px-3 py-2 text-left;

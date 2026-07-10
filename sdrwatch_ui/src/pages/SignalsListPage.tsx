@@ -264,7 +264,7 @@ export default function SignalsListPage() {
                       key={header.id}
                       className={`th${isSelect ? '' : ' cursor-pointer hover:text-sky-400 select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400'}`}
                       onClick={isSelect ? undefined : header.column.getToggleSortingHandler()}
-                      style={isSelect ? undefined : { width: header.getSize(), position: 'relative' }}
+                      style={isSelect ? undefined : { position: 'relative' }}
                       tabIndex={isSelect ? undefined : 0}
                       aria-sort={isSelect ? undefined : (
                         header.column.getIsSorted() === 'asc' ? 'ascending' as const
@@ -303,7 +303,7 @@ export default function SignalsListPage() {
               ) : table.getRowModel().rows.map(row => (
                 <tr key={row.id} className={`border-b border-white/10 hover:bg-slate-800/40 cursor-pointer ${row.original.selected ? 'bg-sky-900/20' : ''}`} onClick={() => window.location.href = `/signal/${row.original.id}${baselineId ? `?baseline_id=${baselineId}` : ''}`}>
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="td text-sm" style={{ width: cell.column.getSize() }}>
+                    <td key={cell.id} className="td text-sm">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
