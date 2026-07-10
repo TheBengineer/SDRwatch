@@ -1,9 +1,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { Outlet, useSearchParams } from 'react-router-dom'
+import { Outlet, useSearchParams, useNavigate } from 'react-router-dom'
 import NavBar from './NavBar'
 import NoBaselineCTA from './NoBaselineCTA'
 import { BaselineContext } from '../context/BaselineContext'
 import StartHereCTA from './StartHereCTA'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
+import CheatSheet from './CheatSheet'
+import { Button } from './primitives'
 
 interface Baseline {
   id: number
@@ -23,6 +26,39 @@ export default function AppLayout() {
   const [usbDismissed, setUsbDismissed] = useState(false)
   const [fetched, setFetched] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showCheatSheet, setShowCheatSheet] = useState(false)
+  const navigate = useNavigate()
+
+  const focusFirstInput = useCallback(() => {
+    const input = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      'input:not([type="hidden"]):not([disabled]), textarea:not([disabled])',
+    )
+    input?.focus()
+  }, [])
+
+  const triggerRefresh = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('app:refresh'))
+  }, [])
+
+  const closeAllOverlays = useCallback(() => {
+    setShowCheatSheet(false)
+    setShowOnboarding(false)
+    setShowTokenInput(false)
+    window.dispatchEvent(new CustomEvent('app:close-overlay'))
+  }, [])
+
+  const shortcuts = useMemo(() => ({
+    '?': () => setShowCheatSheet(v => !v),
+    's': focusFirstInput,
+    'r': triggerRefresh,
+    'Escape': closeAllOverlays,
+    '1': () => navigate('/'),
+    '2': () => navigate('/control'),
+    '3': () => navigate('/signals'),
+    '4': () => navigate('/recordings'),
+  }), [focusFirstInput, triggerRefresh, closeAllOverlays, navigate])
+
+  useKeyboardShortcuts(shortcuts)
 
   // Poll USB device availability
   useEffect(() => {
@@ -128,12 +164,13 @@ export default function AppLayout() {
             <div className="text-xl font-semibold">📡 SDRwatch</div>
             <NavBar />
             <div className="ml-auto flex items-center gap-3">
-              {/* Help / Onboarding */}
+              {/* Keyboard shortcuts cheat sheet */}
               <button
-                onClick={() => setShowOnboarding(v => !v)}
+                onClick={() => setShowCheatSheet(v => !v)}
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
                 style={{ background: 'var(--chip-bg)', color: 'var(--text-secondary)' }}
-                aria-label="Show getting started guide"
+                aria-label="Show keyboard shortcuts"
+                title="Keyboard shortcuts (?)"
               >
                 ?
               </button>
@@ -181,26 +218,30 @@ export default function AppLayout() {
                       autoFocus
                     />
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         onClick={handleSaveToken}
-                        className="px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs focus-visible:ring-2 focus-visible:ring-sky-400"
+                        variant="primary"
+                        size="sm"
                       >
                         Save
-                      </button>
+                      </Button>
                       {existingToken && (
-                        <button
+                        <Button
                           onClick={handleClearToken}
-                          className="px-3 py-1 rounded-lg bg-red-600/60 hover:bg-red-500 text-white text-xs focus-visible:ring-2 focus-visible:ring-sky-400"
+                          variant="danger"
+                          size="sm"
                         >
                           Clear
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
                         onClick={() => setShowTokenInput(false)}
-                        className="px-3 py-1 rounded-lg text-xs ml-auto focus-visible:ring-2 focus-visible:ring-sky-400" style={{background:'var(--chip-bg)', color:'var(--text-secondary)'}}
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -229,6 +270,7 @@ export default function AppLayout() {
         </main>
 
         <StartHereCTA isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
+        <CheatSheet isOpen={showCheatSheet} onClose={() => setShowCheatSheet(false)} />
       </div>
     </BaselineContext.Provider>
   )

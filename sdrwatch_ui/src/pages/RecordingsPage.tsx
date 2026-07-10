@@ -11,7 +11,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { EmptyState, ConfirmDialog } from '../components/primitives'
+import { Button, EmptyState, ConfirmDialog } from '../components/primitives'
 import type { Recording, Baseline } from '../types'
 import UnifiedFilterBar, { type FilterField } from '../components/primitives/UnifiedFilterBar'
 
@@ -579,13 +579,12 @@ export default function RecordingsPage() {
               ↻ Refresh
             </button>
             {selected.size > 0 && (
-              <button
-                type="button"
-                className="px-3 py-2 rounded-xl bg-red-600/60 hover:bg-red-500 text-white text-sm transition-colors"
+              <Button
+                variant="danger"
                 onClick={bulkDelete}
               >
                 ✕ Delete {selected.size}
-              </button>
+              </Button>
             )}
           </div>
         </div>

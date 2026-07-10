@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useBaseline } from '../context/BaselineContext'
 import { apiGet, apiPatch, apiPost } from '../api/client'
+import { Button } from '../components/primitives'
 import type { SignalDetail, CollectionContext, Recording, LiveWindow } from '../types'
 
 // ── Formatting helpers ────────────────────────────────────────────
@@ -287,12 +288,14 @@ export default function SignalDetailPage() {
           <p className="text-sm text-slate-400 mt-2">
             {error || 'The requested signal does not exist or has been removed.'}
           </p>
-          <Link
+          <Button
+            as={Link}
             to="/signals"
-            className="inline-block mt-4 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm"
+            variant="primary"
+            className="mt-4"
           >
             Browse all signals
-          </Link>
+          </Button>
         </div>
       </div>
     )
@@ -464,22 +467,20 @@ export default function SignalDetailPage() {
           <section className="bg-slate-900/50 border border-white/10 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-3">Recording</h2>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
+              <Button
                 onClick={handleRecordIQ}
-                className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium transition-colors"
+                variant="primary"
                 title="Queue this signal for IQ capture"
               >
                 &#x1F399; Record IQ
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={handleMute}
-                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-amber-600/40 text-slate-300 text-sm transition-colors"
+                variant="secondary"
                 title="Never record this frequency"
               >
                 &#x1F507; Mute
-              </button>
+              </Button>
             </div>
             {recStatus && (
               <p
@@ -956,20 +957,19 @@ export default function SignalDetailPage() {
               </div>
 
               <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={saveStatus === 'saving'}
-                  className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
-                >
-                  {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 text-white text-sm transition-colors"
-                >
-                  Reset
-                </button>
+              <Button
+                type="submit"
+                disabled={saveStatus === 'saving'}
+                variant="primary"
+              >
+                {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button
+                onClick={handleReset}
+                variant="secondary"
+              >
+                Reset
+              </Button>
               </div>
 
               {saveStatus === 'saved' && (
@@ -985,27 +985,27 @@ export default function SignalDetailPage() {
           <section className="bg-slate-900/50 border border-white/10 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="space-y-2">
-              <button
-                type="button"
+              <Button
                 onClick={() => quickClassify('friendly')}
-                className="w-full px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-medium transition-colors"
+                variant="primary"
+                className="w-full"
               >
                 &#x2713; Mark as Friendly
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={() => quickClassify('ambient')}
-                className="w-full px-4 py-2 rounded-lg bg-slate-500 hover:bg-slate-400 text-white text-sm font-medium transition-colors"
+                variant="secondary"
+                className="w-full"
               >
                 &#x25CB; Mark as Ambient
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={() => quickClassify('hostile')}
-                className="w-full px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors"
+                variant="danger"
+                className="w-full"
               >
                 &#x26A0; Mark as Hostile
-              </button>
+              </Button>
             </div>
           </section>
 

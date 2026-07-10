@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import CollapsibleSection from '../components/primitives/CollapsibleSection'
+import { CollapsibleSection, Button, Card } from '../components/primitives'
 import { useBaseline } from '../context/BaselineContext'
 import type { Device, Profile, Job } from '../types'
 
@@ -608,7 +608,7 @@ export default function ControlPage() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Main form column */}
       <div className="lg:col-span-2">
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-4">
+        <Card variant="bordered">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">SDRwatch Control</h2>
@@ -967,35 +967,35 @@ export default function ControlPage() {
 
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={isRunning || !baselineId}
-                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium transition-colors"
+                variant="primary"
               >
                 ▶ Start
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleStopJob}
                 disabled={!isRunning}
-                className="px-4 py-2 rounded-xl bg-red-600/60 hover:bg-red-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium transition-colors"
+                variant="danger"
               >
                 ■ Stop
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => { setF(defaultForm()); setJobError('') }}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-sm font-medium transition-colors"
+                variant="secondary"
               >
                 ↺ Reset
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={fetchDevices}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-sm font-medium transition-colors"
+                variant="secondary"
               >
                 ⟳ Refresh devices
-              </button>
+              </Button>
             </div>
 
             {jobError && (
@@ -1016,13 +1016,13 @@ export default function ControlPage() {
               {logText || 'No logs yet. Start a scan to see output.'}
             </pre>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Right sidebar */}
       <div className="space-y-4">
         {/* Create baseline */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-4">
+        <Card variant="bordered">
           <h3 className="text-lg font-semibold mb-2">Create baseline</h3>
           <p className="text-sm text-slate-400 mb-3">
             Define the antenna/location pair. The frequency span grows automatically.
@@ -1056,18 +1056,18 @@ export default function ControlPage() {
                 className="input w-full text-sm resize-none"
               />
             </FieldRow>
-            <button
+            <Button
               type="submit"
               disabled={creatingBaseline || !blName.trim()}
-              className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium transition-colors"
+              variant="primary"
             >
               ＋ Create baseline
-            </button>
+            </Button>
             {baselineFormStatus && (
               <div className="text-xs text-slate-400 mt-1">{baselineFormStatus}</div>
             )}
           </form>
-        </div>
+        </Card>
 
       </div>
     </div>

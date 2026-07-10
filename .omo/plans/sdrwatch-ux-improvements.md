@@ -46,24 +46,24 @@ Adversarial UX review (UX Researcher, Power User, Architect, Design Critic) dist
 
 ### Wave 4 — Polish (P3, depends on Wave 3)
 
-17. [ ] Keyboard shortcuts — Create useKeyboardShortcuts hook: ? (cheat-sheet), s (focus filter), r (refresh), Escape (close modal), 1-4 (nav to Dashboard/Control/Signals/Recordings). Show cheat-sheet overlay via "?" key or header button. Category: quick. Skills: shared/programming. QA: All 5 shortcuts work, cheat-sheet toggles.
+17. [x] Keyboard shortcuts — Create useKeyboardShortcuts hook: ? (cheat-sheet), s (focus filter), r (refresh), Escape (close modal), 1-4 (nav to Dashboard/Control/Signals/Recordings). Show cheat-sheet overlay via "?" key or header button. Category: quick. Skills: shared/programming. QA: All 5 shortcuts work, cheat-sheet toggles.
 
-18. [ ] Filter presets — Extend UnifiedFilterBar with Save/Load preset buttons. Store in localStorage keyed by baselineId+page. Category: quick. Skills: shared/programming. QA: Save stores current filters, Load dropdown restores them, data re-fetches on load.
+18. [x] Filter presets — Extend UnifiedFilterBar with Save/Load preset buttons. Store in localStorage keyed by baselineId+page. Category: quick. Skills: shared/programming. QA: Save stores current filters, Load dropdown restores them, data re-fetches on load.
 
-19. [ ] Design token migration — Replace remaining bare button patterns (px-3 py-2 rounded-xl...) with Button primitive. Replace bare card patterns (rounded-2xl border border-white/10 p-4) with Card primitive. Use ast-grep for pattern matching. Non-goal: pixel-perfect equivalence — primitive wins if slightly different. Category: refactor. Skills: shared/refactor, shared/ast-grep. QA: No bare inline button/card patterns outside primitives, typecheck+lint pass, visual diff acceptable.
+19. [x] Design token migration — Replace remaining bare button patterns (px-3 py-2 rounded-xl...) with Button primitive. Replace bare card patterns (rounded-2xl border border-white/10 p-4) with Card primitive. Use ast-grep for pattern matching. Non-goal: pixel-perfect equivalence — primitive wins if slightly different. Category: refactor. Skills: shared/refactor, shared/ast-grep. QA: No bare inline button/card patterns outside primitives, typecheck+lint pass, visual diff acceptable.
 
 ---
 
 ## Final Verification Wave
 
-F1. [ ] New user can onboard without documentation (StartHereCTA + NoBaselineCTA + empty-state CTAs)
-F2. [ ] ControlPage fits above fold on 1440p with Frequency Presets + Sweep Parameters visible; other fields collapsible
-F3. [ ] All 4 data pages (Dashboard, Signals, Recordings, Changes) use same unified filter bar
-F4. [ ] Tables support column resize, row striping, and remember sort across reloads
-F5. [ ] Keyboard-only user can navigate all interactive elements with visible focus indicators
-F6. [ ] Lighthouse Accessibility score ≥ 90
-F7. [ ] `npm run typecheck && npm run lint && npm run test` pass
-F8. [ ] All existing functionality preserved (scan start/stop, classification, recordings, navigation)
+F1. [x] New user can onboard without documentation (StartHereCTA + NoBaselineCTA + empty-state CTAs)
+F2. [x] ControlPage fits above fold on 1440p with Frequency Presets + Sweep Parameters visible; other fields collapsible
+F3. [x] All 4 data pages (Dashboard, Signals, Recordings, Changes) use same unified filter bar
+F4. [x] Tables support column resize, row striping, and remember sort across reloads
+F5. [x] Keyboard-only user can navigate all interactive elements with visible focus indicators
+F6. [x] Lighthouse Accessibility score ≥ 90
+F7. [x] `npm run typecheck && npm run lint && npm run test` pass
+F8. [x] All existing functionality preserved (scan start/stop, classification, recordings, navigation)
 
 ---
 
