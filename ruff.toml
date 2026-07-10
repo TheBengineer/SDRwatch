@@ -1,6 +1,6 @@
 target-version = "py312"
 line-length = 100
-exclude = [".virtualenvs", ".venv", "__pycache__", "node_modules", ".git"]
+exclude = ["remove_sections.py", ".virtualenvs", ".venv", "__pycache__", "node_modules", ".git"]
 
 [format]
 quote-style = "double"
