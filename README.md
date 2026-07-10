@@ -1,279 +1,238 @@
-# SDR-Watch 📡🔎
+# SDR-Watch
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![CI](https://github.com/BPFLNALCR/sdr-watch/actions/workflows/ci.yml/badge.svg)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%205-red)
 ![SDR](https://img.shields.io/badge/SDR-RTL--SDR%20%7C%20SoapySDR-blue)
 ![Planned SDRs](https://img.shields.io/badge/Planned-HackRF%2C%20Airspy%2C%20LimeSDR%2C%20USRP-yellow)
-![WebUI](https://img.shields.io/badge/WebUI-Flask-orange)
+![UI](https://img.shields.io/badge/UI-React%20SPA%20%2B%20Flask%20API-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**Tactical spectrum situational awareness for SDR devices—wideband scanning, baseline tracking, signal classification, and a real-time web dashboard.**
+**Tactical spectrum situational awareness for SDR devices — wideband scanning, baseline tracking, signal classification, IQ recording, and a real-time React SPA dashboard.**
 
-SDR-Watch transforms a Raspberry Pi 5 and SDR dongle into a **persistent spectrum monitoring station**. It sweeps wide frequency ranges, detects and logs signals, builds long-term baselines of spectrum activity, and maps detections to official frequency allocations. The **tactical web dashboard** provides real-time monitoring, signal classification, and actionable situational awareness.
-
-**Example applications:**
-
-- **Electronic Protection**: Detect interference, jamming attempts, or unusual transmissions in critical bands.
-- **Spectrum Security**: Identify unauthorized users, validate coordination, and monitor long-term occupancy.
-- **Research & Development**: Study waveform usage, analyze antenna performance, and collect environmental RF data.
-- **Field Operations**: Enable live visualization of RF activity during exercises, events, or security operations.
-- **Signal Classification**: Mark detected signals as Friendly/Ambient/Hostile for rapid threat assessment.
-
-**Current capabilities:**
-
-* ✅ Optimized for **RTL-SDR** devices via native driver or **SoapySDR** abstraction.
-* ✅ Runs on **Raspberry Pi 5** with **Raspberry Pi OS** (Trixie/Bookworm).
-* ✅ Full CLI tool and tactical web dashboard with signal management.
+SDR-Watch transforms a Raspberry Pi 5 (or any Linux host) with an RTL-SDR dongle into a **persistent spectrum monitoring station**. It sweeps wide frequency ranges, detects and logs signals, builds long-term baselines, classifies modulation types, captures IQ recordings, and maps detections to official frequency allocations.
 
 ---
 
-## ✨ Features
+## Capabilities
 
-### Core Scanning
-- **Wideband Sweeps**: Scan across frequency ranges using RTL-SDR (native or SoapySDR).
-- **Signal Detection**: CFAR-based detection with robust noise floor estimation (median + MAD).
-- **Baseline Tracking**: Long-term exponential moving average to separate normal vs. anomalous signals.
-- **Bandplan Mapping**: Map detections to FCC, CEPT, ITU-R, and other official allocations.
-- **Data Logging**: Store all scans, detections, and baselines in SQLite.
-- **Two-Pass Verification**: Refine bandwidths and suppress false positives with revisit sweeps.
+### Core Scanning & Detection
+- **Wideband sweeps** across tunable ranges using RTL-SDR (native or SoapySDR abstraction)
+- **CFAR detection** with median + MAD noise floor estimation
+- **Two-pass verification** — revisit sweeps refine bandwidths and suppress false positives
+- **Scan profiles** — preset configurations for FM broadcast, ISM bands, and general VHF/UHF
+- **Persistence modes** — control how tentative detections become persistent (hits, duration, or both)
+- **Spur calibration** — identify and suppress known SDR artifacts
 
-### Tactical Web Dashboard
-- **Signal Cards**: Visual grid of detected signals with frequency, bandwidth, SNR, and confidence.
-- **Signal Classification**: Mark signals as **Friendly** (green), **Ambient** (gray), or **Hostile** (red).
-- **Signal Selection**: Star/highlight signals of interest for tracking across sessions.
-- **Human-Friendly IDs**: Each signal gets a unique identifier (e.g., `SIG-0042`) for easy reference.
-- **Signal Labels & Notes**: Add custom labels and freeform notes to any detection.
-- **User Bandwidth Corrections**: Override detected bandwidth for display purposes.
-- **Signal Detail Pages**: Deep-dive view for individual signals with full metadata and edit forms.
-- **Signals List**: Browse all signals across baselines with filtering and bulk operations.
-- **Changes Panel**: Real-time delta feed showing NEW, QUIETED, and POWER_SHIFT events.
-- **Band Summary**: At-a-glance view of spectrum occupancy by frequency band.
-- **Baseline Management**: Create, select, and switch between multiple baselines.
-- **Control Panel**: Start/stop scans, select profiles, configure parameters.
-- **Spur Map**: View and manage known spurious signals for calibration.
-- **Debug Dashboard**: Developer tools showing DB stats, errors, and system health.
+### Baseline Tracking
+- **Long-term EMA noise floor** — exponential moving average per frequency bin
+- **Occupancy tracking** — per-bin occupancy counts and duty-cycle analysis
+- **Persistent signal registry** — signals that survive multiple sweeps are promoted to `baseline_detections`
+- **Baseline management** — create and switch between multiple baselines for different antennas, locations, or time windows
+
+### IQ Recording Pipeline
+- **Burst capture** — energy-triggered IQ recording with hysteretic thresholds
+- **Patrol mode** — adaptive multi-frequency burst capture that learns active frequencies
+- **Modulation classification** — heuristic decision tree (FM, AM, CW, LSB, USB, digital) from spectral features
+- **OGG compression** — `ffmpeg`-based audio compression of demodulated recordings
+- **Retention management** — TTL-based cleanup and disk quota enforcement
+
+### Tactical Web Dashboard (React SPA)
+- **Dashboard** — tactical snapshot, frequency/timeline/SNR/coverage charts, signal card grid, change feed
+- **Signals list** — TanStack table with sortable columns, classification filters, bulk operations
+- **Signal detail** — full metadata view, classification/label/notes editing, threat assessment, recording queue
+- **Recordings** — sortable TanStack table, waveform canvas with click-to-seek, audio playback, on-demand demodulation (WBFM, FM, AM, CW, LSB, USB)
+- **Spectrum viewer** — Canvas 2D renderer with zoom/pan, signal markers, and recording annotations
+- **Changes feed** — real-time NEW, QUIETED, and POWER_SHIFT event tracking
+- **Control panel** — scan job creation, profile selection, device management, live log tailing
+- **Live view** — real-time scan window stream with strip chart
+- **Spur map** — read-only view of calibrated spur bins
+- **Debug panel** — health checks, DB stats, config inspect, error ring buffer
 
 ### Controller & API
-- **RESTful Job API**: `/jobs`, `/devices`, `/profiles`, `/baselines` endpoints.
-- **Signal Management API**: `/api/signals` for CRUD operations on detections.
-- **Bearer Token Auth**: Secure controller and web API with `SDRWATCH_CONTROL_TOKEN`.
-- **Auto-Discovery**: Controller resolves scanner paths dynamically for flexible deployments.
-- **Self-Healing**: Stale lock cleanup, process monitoring, and graceful restarts.
+- **RESTful job API** — `/api/jobs/*` for listing, starting, stopping scan jobs
+- **Signal management API** — `/api/signals/*` CRUD with classification, labels, notes
+- **Recording API** — `/api/recordings/*` with filtering, download, demodulation, bulk delete
+- **Spectrum API** — `/api/spectrum` with configurable downsampling
+- **Chart API** — `/api/charts/*` for frequency bins, timeline, SNR histogram, coverage heatmap
+- **Bearer token auth** — protect API and control endpoints via `SDRWATCH_TOKEN`
 
-### Outputs & Integration
-- **JSONL Streaming**: Per-detection events with baseline ID, confidence, bandwidth, and classification.
-- **Desktop Notifications**: `notify-send` alerts for new detections.
-- **Systemd Integration**: Service units for `sdrwatch-control` and `sdrwatch-web`.
+### Container & Dev Tooling
+- **Docker Compose** — multi-stage builds (Node frontend + Python backend), USB SDR passthrough
+- **Linting** — Ruff (Python) + ESLint (TypeScript) with unified config
+- **Auto-discovery** — controller resolves scanner paths for flexible deployments
 
 ---
 
-## 🛠️ Installation (Raspberry Pi 5)
+## Intended Workflow
 
-Quick install with the included one-shot installer:
+### 1. Hardware Setup
+Connect an RTL-SDR dongle (e.g., Nooelec NESDR SMArTee v5) to the host machine. For Docker deployments with USB passthrough, see `README.docker.md`.
+
+### 2. Create a Baseline
+A baseline is a named context that ties sweeps, detections, and noise-floor data together. Create one per antenna/location configuration:
 
 ```bash
-git clone https://github.com/SDRwatch/sdr-watch.git
-cd sdr-watch
-chmod +x install-sdrwatch.sh
+python3 -m sdrwatch.cli --create-baseline --baseline-name "Roof Discone" \
+  --start 30e6 --stop 1700e6
+```
+
+### 3. Run a Calibration Sweep
+Before routine monitoring, run a spur calibration to identify SDR artifacts:
+
+```bash
+python3 -m sdrwatch.cli --start 400e6 --stop 470e6 --step 2.4e6 \
+  --driver rtlsdr --spur-calibration
+```
+
+### 4. Start Continuous Monitoring
+Run a wideband sweep loop tied to your baseline:
+
+```bash
+python3 -m sdrwatch.cli --baseline-id latest --start 30e6 --stop 1700e6 \
+  --step 2.4e6 --driver rtlsdr --gain auto --loop --jsonl events.jsonl
+```
+
+Or use the web dashboard to start a scan job via the Control panel.
+
+### 5. Monitor & Classify Signals
+Open the web dashboard at `http://<host>:8080`:
+
+- **Dashboard** — review the tactical snapshot, active signals, and band summary
+- **Signals** — browse detected signals, apply classification (Friendly/Ambient/Hostile), add labels
+- **Recordings** — listen to IQ recordings, demodulate with different modulation types
+- **Changes** — monitor NEW, QUIETED, and POWER_SHIFT events as sweeps run
+
+### 6. Manage Recordings
+Recordings are automatically captured via burst/patrol mode. From the Recordings page:
+
+- Sort by frequency, modulation, status, or creation time
+- Expand a recording to view waveform, play audio, and demodulate
+- Queue recordings for compression, download raw I/Q files
+- Delete individual recordings or bulk-select for cleanup
+
+### 7. Maintain Baselines
+Over time, baselines accumulate noise-floor and occupancy data. Create a fresh baseline when changing antennas, locations, or seasonal conditions:
+
+```bash
+python3 -m sdrwatch.cli --create-baseline --baseline-name "Summer Field Site" \
+  --start 30e6 --stop 1700e6
+```
+
+Switch between baselines in the web dashboard header selector.
+
+---
+
+## Quick Start
+
+### Docker (recommended for evaluation)
+
+```bash
+git clone <repo> && cd sdr-watch
+docker compose up -d
+# Web UI at http://localhost:8080
+# Control API at http://localhost:8765
+```
+
+With USB SDR passthrough:
+
+```bash
+docker compose run --rm --device /dev/bus/usb sdrwatch-cli \
+  --baseline-id latest --driver rtlsdr \
+  --start 88e6 --stop 108e6
+```
+
+### Native (Raspberry Pi 5 / Linux)
+
+```bash
 ./install-sdrwatch.sh
-```
-
-The installer will:
-
-- Install dependencies (RTL-SDR, SoapySDR, NumPy/SciPy, Flask, etc.).
-- Set up a Python venv with system packages.
-- Verify hardware (`rtl_test`).
-- Apply kernel blacklist + udev rules for RTL2832U dongles.
-- Optionally configure + enable **systemd services** for automatic startup.
-
-Non-interactive mode:
-
-```bash
-SDRWATCH_AUTO_YES=1 ./install-sdrwatch.sh
-```
-
----
-
-## 🚀 Usage
-
-### Command Line
-
-All sweeps must be associated with a baseline (`--baseline-id <id>` or `--baseline-id latest`).
-
-Sweep the FM band once:
-
-```bash
-python3 -m sdrwatch.cli --baseline-id 3 --start 88e6 --stop 108e6 --step 1.8e6 \
-  --samp-rate 2.4e6 --fft 4096 --avg 8 --driver rtlsdr --gain auto
-```
-
-Continuous monitoring across 30 MHz – 1.7 GHz:
-
-```bash
-python3 -m sdrwatch.cli --baseline-id 3 --start 30e6 --stop 1700e6 --step 2.4e6 \
-  --samp-rate 2.4e6 --fft 4096 --avg 8 --driver rtlsdr \
-  --gain auto --loop --notify --db sdrwatch.db --jsonl events.jsonl
-```
-
-Two-pass verification for refined bandwidth detection:
-
-```bash
-python3 -m sdrwatch.cli --baseline-id 3 --start 88e6 --stop 108e6 --step 2.4e6 \
-  --samp-rate 2.4e6 --fft 4096 --avg 8 --two-pass \
-  --revisit-margin-hz 150e3 --revisit-max-bands 40
-```
-
-#### Scan Profiles
-
-Use `--profile <name>` for preset configurations:
-
-| Profile | Description |
-| --- | --- |
-| `fm_broadcast` | FM band (88-108 MHz), optimized for broadcast detection |
-| `full_sweep` | Wide coverage with balanced settings |
-
-#### Persistence Modes
-
-Use `--persistence-mode` to control how detections are promoted:
-
-| Mode | Description |
-| --- | --- |
-| `hits` (default) | Requires minimum hits/windows and hit-ratio coverage |
-| `duration` | Requires minimum active time |
-| `both` | Requires both coverage and duration thresholds |
-
-### Web Dashboard
-
-If installed with services enabled, the dashboard is available at boot:
-`http://<raspberrypi-ip>:8080`
-
-Manual launch:
-
-```bash
 python3 sdrwatch-web.py --db sdrwatch.db --host 0.0.0.0 --port 8080
 ```
 
-#### Dashboard Features
+---
 
-- **Signal Cards**: Click any signal card to view details or use inline controls.
-- **Classification**: Use dropdown or quick-mark buttons (Friendly/Ambient/Hostile).
-- **Selection**: Click the star icon to highlight signals of interest.
-- **Labels**: Add short labels like "Base Station" or "Jammer" for quick identification.
-- **Notes**: Record observations, timestamps, or investigation notes.
-- **Signal Detail**: Click "View details" for full signal page with edit forms.
+## Key CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `-m sdrwatch.cli --list-profiles` | List available scan profiles |
+| `-m sdrwatch.cli --list-profiles --json` | Export profiles as JSON |
+| `-m sdrwatch.cli --baseline-id N --start S --stop E ...` | Run a single sweep |
+| `-m sdrwatch.cli --baseline-id latest --loop ...` | Continuous monitoring |
+| `-m sdrwatch.cli --spur-calibration ...` | Spur calibration sweep |
+| `-m sdrwatch.cli --two-pass ...` | Two-pass verification sweep |
+| `sdrwatch-control.py serve` | Start the controller daemon |
+| `sdrwatch-web.py --db PATH --host IP --port P` | Start the web UI |
 
 ---
 
-## 🔗 Controller REST API
+## Frontend Development
 
-The controller exposes a REST API consumed by the web frontend or automation:
+```bash
+cd sdrwatch_ui
+npm install
+npm run dev          # Vite dev server with HMR
+npm run build        # Production build
+npm run lint         # ESLint
+npm run typecheck    # TypeScript check
+```
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `GET` | `/devices` | Enumerate SDRs (key, kind, label, metadata) |
-| `GET` | `/jobs` | List jobs (status, params, timestamps) |
-| `POST` | `/jobs` | Start a job `{device_key, label, baseline_id, params}` |
-| `GET` | `/jobs/<id>` | Inspect a specific job |
-| `GET` | `/jobs/<id>/logs?tail=N` | Stream scanner logs |
-| `DELETE` | `/jobs/<id>` | Stop the job |
-| `GET` | `/profiles` | List available scan profiles |
-| `GET` | `/baselines` | List baselines |
-| `POST` | `/baselines` | Create a new baseline |
+### Linting
 
-### Signal API
-
-| Method | Path | Description |
-| --- | --- | --- |
-| `GET` | `/api/signals` | List all signals with classification data |
-| `GET` | `/api/signals/<id>` | Get signal details |
-| `PATCH` | `/api/signals/<id>` | Update classification, label, notes, user_bw_hz |
-| `POST` | `/api/signals/<id>/toggle-selected` | Toggle selection status |
-| `GET` | `/api/signals/selected` | List selected signals only |
-
-Set `SDRWATCH_CONTROL_TOKEN` for bearer auth. The web app reads `SDRWATCH_CONTROL_URL` and `SDRWATCH_CONTROL_TOKEN` to proxy requests.
+```bash
+ruff check           # Python (config: ruff.toml)
+ruff check --fix     # Auto-fix Python issues
+npm run lint         # TypeScript/React (config: eslint.config.js)
+npm run lint:fix     # Auto-fix TS issues
+```
 
 ---
 
-## 🗄️ Database Schema
+## Project Structure
 
-Key tables:
+```
+sdrwatch/                  # Python scanner package
+  cli.py                   # CLI entrypoint
+  sweep/                   # Sweep orchestration
+  dsp/                     # FFT, CFAR, clustering, noise estimation
+  detection/               # Detection engine, types
+  baseline/                # Baseline persistence, stats, events
+  drivers/                 # SoapySDR + RTL-SDR drivers
+  recording/               # Burst capture, demodulation, compression, classification
+  util/                    # Logging, math, exit codes
+sdrwatch_web/              # Flask REST API + React SPA backend
+  blueprints/              # API endpoints (jobs, signals, recordings, charts, etc.)
+  app.py                   # Flask app factory
+  charts.py               # Chart data aggregation
+  controller.py           # Controller client proxy
+sdrwatch_ui/               # React SPA frontend
+  src/pages/               # 9 route pages
+  src/components/          # Reusable UI components
+  src/api/                 # API client helpers
+sdrwatch-control.py        # Controller daemon (job/lock management)
+sdrwatch-web.py            # Web UI entrypoint
+docker-compose.yml         # Docker deployment
+ruff.toml                  # Python linter config
+```
+
+---
+
+## Database
+
+Key tables in the SQLite database:
 
 | Table | Purpose |
-| --- | --- |
-| `baselines` | Baseline metadata (name, frequency range, location) |
-| `baseline_detections` | Persistent signal records with classification |
+|-------|---------|
+| `baselines` | Baseline metadata (name, range, location) |
+| `baseline_detections` | Persistent signals with classification |
 | `baseline_noise` | Per-bin noise floor EMA |
-| `baseline_occupancy` | Per-bin occupancy counts |
+| `baseline_occupancy` | Per-bin occupancy counts and duty cycle |
+| `baseline_band_summary` | Occupancy summary per frequency band |
 | `scan_updates` | Per-sweep summary statistics |
-| `spur_map` | Known spurious signals for calibration |
-
-### Signal Classification Columns
-
-The `baseline_detections` table includes tactical awareness fields:
-
-| Column | Type | Description |
-| --- | --- | --- |
-| `label` | TEXT | User-defined short label |
-| `classification` | TEXT | `friendly`, `ambient`, `hostile`, or `unknown` |
-| `user_bw_hz` | INTEGER | User-corrected bandwidth (display only) |
-| `notes` | TEXT | Freeform user notes |
-| `selected` | INTEGER | Boolean flag for highlighting |
+| `spur_map` | Known spurious signals |
+| `recordings` | IQ recording metadata (raw/ogg paths, modulation, status) |
+| `ignore_rules` | Frequency exclusions for sweep filtering |
 
 ---
 
-## 📑 Bandplan CSV Format
-
-```csv
-low_hz,high_hz,service,region,notes
-433050000,434790000,ISM,ITU-R1 (EU),Short-range devices
-902000000,928000000,ISM,US (FCC),902-928 MHz ISM
-2400000000,2483500000,ISM,Global,2.4 GHz ISM
-```
-
----
-
-## 🔍 Inspecting Data
-
-Query recent detections:
-
-```bash
-sqlite3 -header -column sdrwatch.db \
-  "SELECT id, f_center_hz/1e6 AS MHz, classification, label FROM baseline_detections ORDER BY id DESC LIMIT 20;"
-```
-
-Query selected signals:
-
-```bash
-sqlite3 -header -column sdrwatch.db \
-  "SELECT id, f_center_hz/1e6 AS MHz, classification FROM baseline_detections WHERE selected=1;"
-```
-
-Export to CSV:
-
-```bash
-sqlite3 -header -csv sdrwatch.db "SELECT * FROM baseline_detections;" > signals.csv
-```
-
----
-
-## 🛣️ Roadmap
-
-- [ ] Additional SDR support (HackRF, Airspy, LimeSDR, USRP via SoapySDR)
-- [ ] Duty-cycle analysis for bursty signals
-- [ ] Multi-SDR coordination for distributed scanning
-- [ ] Enhanced charting and spectrum waterfall
-- [ ] Export/import of signal classifications
-- [ ] Alert rules based on classification and frequency
-
----
-
-## 📜 License
+## License
 
 MIT License. See [LICENSE](LICENSE).
-
----
-
-## 🙏 Acknowledgements
-
-Inspired by `rtl_power`, `SoapyPower`, and GNU Radio's `gr-inspector`, extended for **persistent monitoring, baseline tracking, signal classification, and tactical situational awareness**.
