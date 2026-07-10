@@ -1,3 +1,4 @@
 flask>=3.0.0
 pyrtlsdr>=0.2.0
 rich>=13.0.0
+ruff>=0.15.0
