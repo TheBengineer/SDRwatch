@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import CollapsibleSection from '../components/primitives/CollapsibleSection'
 import { useBaseline } from '../context/BaselineContext'
 import type { Device, Profile, Job } from '../types'
 
@@ -101,36 +102,14 @@ interface FormValues {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function CollapsibleSection({
-  title, defaultOpen, children,
-}: {
-  title: string; defaultOpen?: boolean; children: React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen ?? true)
-
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="section-title flex items-center gap-2 cursor-pointer w-full text-left"
-      >
-        <span className="text-lg font-semibold">{title}</span>
-        <span className="text-xs text-slate-500">{open ? '▼' : '▶'}</span>
-      </button>
-      {open && <div className="subgrid mt-2">{children}</div>}
-    </div>
-  )
-}
-
 function FieldRow({
-  label, hint, children,
+  label, hint, children, labelTitle,
 }: {
-  label: string; hint?: string; children: React.ReactNode
+  label: string; hint?: string; children: React.ReactNode; labelTitle?: string
 }) {
   return (
     <div className="field">
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-slate-300 mb-1" title={labelTitle}>{label}</label>
       {children}
       {hint && <div className="hint mt-1 text-xs text-slate-500">{hint}</div>}
     </div>
@@ -594,11 +573,41 @@ export default function ControlPage() {
 
           <form onSubmit={e => { e.preventDefault(); handleStartJob() }} className="space-y-4">
 
+            {/* Frequency Presets — always visible */}
+            <div>
+              <div className="section-title font-semibold mb-2">Frequency Presets</div>
+              <p className="text-xs text-slate-500 mb-2">Select a frequency band to auto-fill range and recommended detection params.</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(FREQ_PRESETS).map(key => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => applyPreset(key)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-xs font-medium transition-colors"
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {Object.keys(SCAN_PRESETS).map(key => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => applyScanPreset(key)}
+                    className="px-3 py-1.5 rounded-xl bg-amber-900/30 hover:bg-amber-800/40 text-amber-300 text-xs font-medium transition-colors"
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Baseline info */}
             <div>
-              <div className="section-title font-semibold mb-2">Baseline</div>
+              <div className="section-title font-semibold mb-2" title="Your spectrum reference. SDRWatch compares new sweeps against it to detect changes in the RF environment.">Baseline</div>
               <div className="subgrid grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FieldRow label="Active baseline" hint="Select a baseline to tie scans to persistent history.">
+                <FieldRow label="Active baseline" labelTitle="Your spectrum reference. SDRWatch compares new sweeps against it to detect changes in the RF environment." hint="Select a baseline to tie scans to persistent history.">
                   <select
                     value={baselineId ?? ''}
                     disabled
@@ -637,9 +646,6 @@ export default function ControlPage() {
                 <FieldRow label="Gain (dB or auto)">
                   <TextInput value={f.gain} onChange={v => setField('gain', v)} placeholder="auto or number" />
                 </FieldRow>
-                <FieldRow label="Sample rate (Hz)">
-                  <TextInput value={f.samp_rate} onChange={v => setField('samp_rate', v)} inputMode="numeric" />
-                </FieldRow>
                 <FieldRow label="Bandplan CSV (optional)">
                   <TextInput value={f.bandplan} onChange={v => setField('bandplan', v)} placeholder="bandplan.csv" />
                 </FieldRow>
@@ -665,7 +671,7 @@ export default function ControlPage() {
                     placeholder="(manual selection)"
                   />
                 </FieldRow>
-                <FieldRow label="Scan mode" hint="Spur calibration populates the spur map.">
+                <FieldRow label="Scan mode" labelTitle="Known SDR self-interference frequencies to exclude from detection." hint="Spur calibration populates the spur map.">
                   <SelectInput
                     value={f.scan_mode}
                     onChange={v => setField('scan_mode', v)}
@@ -678,48 +684,12 @@ export default function ControlPage() {
               </div>
             </div>
 
-            {/* Continuous Capture (collapsible) */}
-            <CollapsibleSection title="Continuous Capture" defaultOpen={false}>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <FieldRow label="Capture IQ" hint="Capture IQ data after each sweep.">
-                  <SelectInput
-                    value={f.capture_iq}
-                    onChange={v => setField('capture_iq', v)}
-                    options={[
-                      { value: '', label: 'Disabled' },
-                      { value: 'true', label: 'Enabled' },
-                    ]}
-                  />
-                </FieldRow>
-                <FieldRow label="Continuous mode" hint="Loop and capture continuously.">
-                  <SelectInput
-                    value={f.continuous_capture}
-                    onChange={v => setField('continuous_capture', v)}
-                    options={[
-                      { value: '', label: 'Disabled' },
-                      { value: 'true', label: 'Enabled' },
-                    ]}
-                  />
-                </FieldRow>
-                <FieldRow label="Duration per signal (s)">
-                  <TextInput value={f.capture_duration} onChange={v => setField('capture_duration', v)} inputMode="numeric" />
-                </FieldRow>
-                <FieldRow label="Max signals per pass">
-                  <TextInput value={f.record_max_signals} onChange={v => setField('record_max_signals', v)} inputMode="numeric" />
-                </FieldRow>
-                <FieldRow label="Retention (days)">
-                  <TextInput value={f.record_ttl_days} onChange={v => setField('record_ttl_days', v)} inputMode="numeric" />
-                </FieldRow>
-                <FieldRow label="Disk quota (GB)">
-                  <TextInput value={f.record_quota_gb} onChange={v => setField('record_quota_gb', v)} inputMode="decimal" step="0.1" />
-                </FieldRow>
-              </div>
-            </CollapsibleSection>
-
-            {/* Sweep */}
-            <div>
-              <div className="section-title font-semibold mb-2">Sweep</div>
+            {/* Sweep Parameters */}
+            <CollapsibleSection title="Sweep Parameters" defaultOpen={true}>
               <div className="grid grid-cols-2 gap-4">
+                <FieldRow label="Sample rate (Hz)">
+                  <TextInput value={f.samp_rate} onChange={v => setField('samp_rate', v)} inputMode="numeric" />
+                </FieldRow>
                 <FieldRow label="Start frequency (Hz)">
                   <TextInput value={f.start} onChange={v => setField('start', v)} inputMode="numeric" />
                 </FieldRow>
@@ -739,11 +709,10 @@ export default function ControlPage() {
                   <TextInput value={f.sleep_between_sweeps} onChange={v => setField('sleep_between_sweeps', v)} inputMode="numeric" />
                 </FieldRow>
               </div>
-            </div>
+            </CollapsibleSection>
 
-            {/* Detection */}
-            <div>
-              <div className="section-title font-semibold mb-2">Detection</div>
+            {/* Detection Settings */}
+            <CollapsibleSection title="Detection Settings" defaultOpen={true}>
               <div className="grid grid-cols-2 gap-4">
                 <FieldRow label="Threshold (dB above noise)">
                   <TextInput value={f.threshold_db} onChange={v => setField('threshold_db', v)} inputMode="numeric" />
@@ -754,7 +723,7 @@ export default function ControlPage() {
                 <FieldRow label="Min width (bins)">
                   <TextInput value={f.min_width_bins} onChange={v => setField('min_width_bins', v)} inputMode="numeric" />
                 </FieldRow>
-                <FieldRow label="New EMA occ (0–1)">
+                <FieldRow label="New EMA occ (0–1)" labelTitle="Exponential Moving Average of frequency occupancy, on a 0–1 scale.">
                   <TextInput value={f.new_ema_occ} onChange={v => setField('new_ema_occ', v)} inputMode="decimal" step="0.01" />
                 </FieldRow>
                 <FieldRow label="Cluster merge span (Hz)" hint="Overrides merge distance; blank keeps scanner default.">
@@ -766,12 +735,63 @@ export default function ControlPage() {
                 <FieldRow label="Max detection width (Hz)" hint="Optional hard cap for persistent bandwidth.">
                   <TextInput value={f.max_detection_width_hz} onChange={v => setField('max_detection_width_hz', v)} inputMode="numeric" placeholder="(unbounded)" />
                 </FieldRow>
+                <FieldRow label="Persistence mode" hint="How clusters become persistent.">
+                  <SelectInput
+                    value={f.persistence_mode}
+                    onChange={v => setField('persistence_mode', v)}
+                    options={[
+                      { value: 'hits', label: 'Hits / window ratio' },
+                      { value: 'duration', label: 'Wall-clock duration' },
+                      { value: 'both', label: 'Both' },
+                    ]}
+                  />
+                </FieldRow>
+                <FieldRow label="Hit ratio (0–1)" hint="Min coverage of occupied windows.">
+                  <TextInput value={f.persistence_hit_ratio} onChange={v => setField('persistence_hit_ratio', v)} inputMode="decimal" step="0.05" />
+                </FieldRow>
+                <FieldRow label="Min duration (s)" hint="For duration-based modes.">
+                  <TextInput value={f.persistence_min_seconds} onChange={v => setField('persistence_min_seconds', v)} inputMode="decimal" />
+                </FieldRow>
+                <FieldRow label="Min hits">
+                  <TextInput value={f.persistence_min_hits} onChange={v => setField('persistence_min_hits', v)} inputMode="numeric" />
+                </FieldRow>
+                <FieldRow label="Min windows">
+                  <TextInput value={f.persistence_min_windows} onChange={v => setField('persistence_min_windows', v)} inputMode="numeric" />
+                </FieldRow>
               </div>
-            </div>
+            </CollapsibleSection>
+
+            {/* CFAR Configuration */}
+            <CollapsibleSection title="CFAR Configuration" defaultOpen={false}>
+              <div className="grid grid-cols-2 gap-4">
+                <FieldRow label="CFAR mode" labelTitle="Constant False Alarm Rate — adaptively detects signals above the noise floor while controlling false positives." hint="If off, fixed threshold is used.">
+                  <SelectInput
+                    value={f.cfar}
+                    onChange={v => setField('cfar', v)}
+                    options={[
+                      { value: 'os', label: 'OS (ordered-statistics)' },
+                      { value: 'off', label: 'Off' },
+                    ]}
+                  />
+                </FieldRow>
+                <FieldRow label="Train cells">
+                  <TextInput value={f.cfar_train} onChange={v => setField('cfar_train', v)} inputMode="numeric" />
+                </FieldRow>
+                <FieldRow label="Guard cells">
+                  <TextInput value={f.cfar_guard} onChange={v => setField('cfar_guard', v)} inputMode="numeric" />
+                </FieldRow>
+                <FieldRow label="Quantile (0–1)">
+                  <TextInput value={f.cfar_quantile} onChange={v => setField('cfar_quantile', v)} inputMode="decimal" />
+                </FieldRow>
+                <FieldRow label="Alpha (dB, optional)">
+                  <TextInput value={f.cfar_alpha_db} onChange={v => setField('cfar_alpha_db', v)} inputMode="decimal" placeholder="e.g. 2.5" />
+                </FieldRow>
+              </div>
+            </CollapsibleSection>
 
             {/* Verification / Two-pass */}
             <CollapsibleSection title="Verification (Two-pass)" defaultOpen={false}>
-              <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <CheckboxInput
                     checked={f.two_pass}
@@ -800,68 +820,53 @@ export default function ControlPage() {
               </div>
             </CollapsibleSection>
 
-            {/* Persistence */}
-            <div>
-              <div className="section-title font-semibold mb-2">Persistence</div>
+            {/* Continuous Capture (collapsible) */}
+            <CollapsibleSection title="Continuous Capture" defaultOpen={false}>
               <div className="grid grid-cols-2 gap-4">
-                <FieldRow label="Persistence mode" hint="How clusters become persistent.">
+                <FieldRow label="Capture IQ" hint="Capture IQ data after each sweep.">
                   <SelectInput
-                    value={f.persistence_mode}
-                    onChange={v => setField('persistence_mode', v)}
+                    value={f.capture_iq}
+                    onChange={v => setField('capture_iq', v)}
                     options={[
-                      { value: 'hits', label: 'Hits / window ratio' },
-                      { value: 'duration', label: 'Wall-clock duration' },
-                      { value: 'both', label: 'Both' },
+                      { value: '', label: 'Disabled' },
+                      { value: 'true', label: 'Enabled' },
                     ]}
                   />
                 </FieldRow>
-                <FieldRow label="Hit ratio (0–1)" hint="Min coverage of occupied windows.">
-                  <TextInput value={f.persistence_hit_ratio} onChange={v => setField('persistence_hit_ratio', v)} inputMode="decimal" step="0.05" />
-                </FieldRow>
-                <FieldRow label="Min duration (s)" hint="For duration-based modes.">
-                  <TextInput value={f.persistence_min_seconds} onChange={v => setField('persistence_min_seconds', v)} inputMode="decimal" />
-                </FieldRow>
-                <FieldRow label="Min hits">
-                  <TextInput value={f.persistence_min_hits} onChange={v => setField('persistence_min_hits', v)} inputMode="numeric" />
-                </FieldRow>
-                <FieldRow label="Min windows">
-                  <TextInput value={f.persistence_min_windows} onChange={v => setField('persistence_min_windows', v)} inputMode="numeric" />
-                </FieldRow>
-              </div>
-            </div>
-
-            {/* CFAR */}
-            <div>
-              <div className="section-title font-semibold mb-2">CFAR</div>
-              <div className="grid grid-cols-2 gap-4">
-                <FieldRow label="CFAR mode" hint="If off, fixed threshold is used.">
+                <FieldRow label="Continuous mode" hint="Loop and capture continuously.">
                   <SelectInput
-                    value={f.cfar}
-                    onChange={v => setField('cfar', v)}
+                    value={f.continuous_capture}
+                    onChange={v => setField('continuous_capture', v)}
                     options={[
-                      { value: 'os', label: 'OS (ordered-statistics)' },
-                      { value: 'off', label: 'Off' },
+                      { value: '', label: 'Disabled' },
+                      { value: 'true', label: 'Enabled' },
                     ]}
                   />
                 </FieldRow>
-                <FieldRow label="Train cells">
-                  <TextInput value={f.cfar_train} onChange={v => setField('cfar_train', v)} inputMode="numeric" />
+                <FieldRow label="Duration per signal (s)">
+                  <TextInput value={f.capture_duration} onChange={v => setField('capture_duration', v)} inputMode="numeric" />
                 </FieldRow>
-                <FieldRow label="Guard cells">
-                  <TextInput value={f.cfar_guard} onChange={v => setField('cfar_guard', v)} inputMode="numeric" />
-                </FieldRow>
-                <FieldRow label="Quantile (0–1)">
-                  <TextInput value={f.cfar_quantile} onChange={v => setField('cfar_quantile', v)} inputMode="decimal" />
-                </FieldRow>
-                <FieldRow label="Alpha (dB, optional)">
-                  <TextInput value={f.cfar_alpha_db} onChange={v => setField('cfar_alpha_db', v)} inputMode="decimal" placeholder="e.g. 2.5" />
+                <FieldRow label="Max signals per pass">
+                  <TextInput value={f.record_max_signals} onChange={v => setField('record_max_signals', v)} inputMode="numeric" />
                 </FieldRow>
               </div>
-            </div>
+            </CollapsibleSection>
 
-            {/* Output & Logs */}
-            <CollapsibleSection title="Output &amp; Logs" defaultOpen={false}>
-              <div className="grid grid-cols-2 gap-4 mt-2">
+            {/* Recording Limits (collapsible) */}
+            <CollapsibleSection title="Recording Limits" defaultOpen={false}>
+              <div className="grid grid-cols-2 gap-4">
+                <FieldRow label="Retention (days)">
+                  <TextInput value={f.record_ttl_days} onChange={v => setField('record_ttl_days', v)} inputMode="numeric" />
+                </FieldRow>
+                <FieldRow label="Disk quota (GB)">
+                  <TextInput value={f.record_quota_gb} onChange={v => setField('record_quota_gb', v)} inputMode="decimal" step="0.1" />
+                </FieldRow>
+              </div>
+            </CollapsibleSection>
+
+            {/* Notifications &amp; Output (collapsible) */}
+            <CollapsibleSection title="Notifications &amp; Output" defaultOpen={false}>
+              <div className="grid grid-cols-2 gap-4">
                 <FieldRow label="Database path">
                   <TextInput value={f.db} onChange={v => setField('db', v)} placeholder="sdrwatch.db" />
                 </FieldRow>
@@ -1011,36 +1016,6 @@ export default function ControlPage() {
           </form>
         </div>
 
-        {/* Quick presets */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-4">
-          <h3 className="text-lg font-semibold mb-2">Quick presets</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {Object.keys(FREQ_PRESETS).map(key => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => applyPreset(key)}
-                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-xs font-medium transition-colors"
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-
-          <h3 className="text-lg font-semibold mt-4 mb-2">Scan parameter presets</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {Object.keys(SCAN_PRESETS).map(key => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => applyScanPreset(key)}
-                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-xs font-medium transition-colors"
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )

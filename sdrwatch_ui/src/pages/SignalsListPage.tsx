@@ -11,6 +11,8 @@ import {
 import { apiGet } from '../api/client'
 import { useBaseline } from '../context/BaselineContext'
 import type { Signal } from '../types'
+import { EmptyState } from '../components/primitives'
+import UnifiedFilterBar from '../components/primitives/UnifiedFilterBar'
 
 const columnHelper = createColumnHelper<Signal>()
 
@@ -64,7 +66,7 @@ export default function SignalsListPage() {
       header: 'Label',
       cell: info => info.getValue()
         ? <span className="chip bg-amber-600/60 text-amber-100">{info.getValue()}</span>
-        : <span className="text-slate-500">—</span>,
+        : <span className="text-slate-400">—</span>,
     }),
     columnHelper.accessor('classification', {
       header: 'Classification',
@@ -104,16 +106,19 @@ export default function SignalsListPage() {
 
           {/* Filter toolbar */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="field">
-              <label>Classification</label>
-              <select className="input" value={classification} onChange={e => setClassification(e.target.value)}>
-                <option value="">All classifications</option>
-                <option value="friendly">Friendly</option>
-                <option value="ambient">Ambient</option>
-                <option value="hostile">Hostile</option>
-                <option value="unknown">Unknown</option>
-              </select>
-            </div>
+            <UnifiedFilterBar
+              fields={[
+                { key: 'classification', label: 'Classification', type: 'select', options: [
+                  { value: '', label: 'All classifications' },
+                  { value: 'friendly', label: 'Friendly' },
+                  { value: 'ambient', label: 'Ambient' },
+                  { value: 'hostile', label: 'Hostile' },
+                  { value: 'unknown', label: 'Unknown' },
+                ]}
+              ]}
+              values={{ classification }}
+              onChange={(_, value) => setClassification(value)}
+            />
             <div className="flex items-center gap-2 pt-5">
               <input type="checkbox" id="selected-only" className="w-4 h-4" checked={selectedOnly} onChange={e => setSelectedOnly(e.target.checked)} />
               <label htmlFor="selected-only" className="text-xs uppercase tracking-wide text-slate-400 cursor-pointer">Selected only</label>
@@ -122,44 +127,77 @@ export default function SignalsListPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-x-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">{loading ? '…' : `${signals.length} signals`}</h2>
-        </div>
+      {/* Table or empty state */}
+      {!loading && signals.length === 0 ? (
+        <EmptyState
+          title={classification || selectedOnly ? 'No signals match the current filters' : 'No signals yet'}
+          description={
+            classification || selectedOnly
+              ? 'Try adjusting or clearing the filters above to broaden your search.'
+              : 'Start a scan to begin discovering signals in your selected baseline.'
+          }
+          action={
+            classification || selectedOnly
+              ? undefined
+              : { label: 'Start a scan', to: '/control' }
+          }
+          secondaryAction={
+            classification || selectedOnly
+              ? { label: 'Clear filters', onClick: () => { setClassification(''); setSelectedOnly(false) } }
+              : undefined
+          }
+        />
+      ) : (
+        <div className="card overflow-x-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">{loading ? '…' : `${signals.length} signals`}</h2>
+          </div>
 
-        <table className="table">
+        <table className="table" role="table" aria-label="Signals">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id} className="text-xs uppercase tracking-wide text-slate-400">
                 {headerGroup.headers.map(header => (
-                  <th key={header.id} className="th cursor-pointer hover:text-sky-400 select-none" onClick={header.column.getToggleSortingHandler()}>
+                  <th
+                    key={header.id}
+                    className="th cursor-pointer hover:text-sky-400 select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400"
+                    onClick={header.column.getToggleSortingHandler()}
+                    tabIndex={0}
+                    aria-sort={
+                      header.column.getIsSorted() === 'asc' ? 'ascending' as const
+                      : header.column.getIsSorted() === 'desc' ? 'descending' as const
+                      : undefined
+                    }
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        header.column.getToggleSortingHandler()?.(e)
+                      }
+                    }}
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
-                    {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? <span className="ml-1 text-slate-600">↕</span>}
+                    {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? <span className="ml-1 text-slate-400">↕</span>}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={8} className="td text-center text-slate-500">Loading…</td></tr>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <tr><td colSpan={8} className="td text-center text-slate-500">
-                <div className="text-sm text-slate-400 border border-dashed border-white/20 rounded-xl p-4">No signals match the current filters.</div>
-              </td></tr>
-            ) : table.getRowModel().rows.map(row => (
-              <tr key={row.id} className={`border-b border-white/10 hover:bg-slate-800/40 cursor-pointer ${row.original.selected ? 'bg-sky-900/20' : ''}`} onClick={() => window.location.href = `/signal/${row.original.id}${baselineId ? `?baseline_id=${baselineId}` : ''}`}>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="td text-sm">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={8} className="td text-center text-slate-400">Loading…</td></tr>
+              ) : table.getRowModel().rows.map(row => (
+                <tr key={row.id} className={`border-b border-white/10 hover:bg-slate-800/40 cursor-pointer ${row.original.selected ? 'bg-sky-900/20' : ''}`} onClick={() => window.location.href = `/signal/${row.original.id}${baselineId ? `?baseline_id=${baselineId}` : ''}`}>
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="td text-sm">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 // allow: SIZE_OK — Page component with filter toolbar, recordings table, expandable waveform/canvas,
 // audio player, demodulation, bulk delete, and polling — all in one unified UI surface.
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useBaseline } from '../context/BaselineContext'
 import {
@@ -11,7 +11,9 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
+import { EmptyState } from '../components/primitives'
 import type { Recording, Baseline } from '../types'
+import UnifiedFilterBar, { type FilterField } from '../components/primitives/UnifiedFilterBar'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -226,6 +228,40 @@ export default function RecordingsPage() {
     }
     setLoading(false)
   }, [buildParams])
+
+  // -----------------------------------------------------------------------
+  // Dynamic filter field descriptors
+  // -----------------------------------------------------------------------
+
+  const baselineOptions = useMemo(() => {
+    return [
+      { value: '', label: 'All baselines' },
+      ...baselines.map(b => ({ value: String(b.id), label: `#${b.id} · ${b.name}` })),
+    ]
+  }, [baselines])
+
+  const recordingFilterFields = useMemo<FilterField[]>(() => [
+    { key: 'baselineId', label: 'Baseline', type: 'select', options: baselineOptions },
+    { key: 'modulation', label: 'Modulation', type: 'select', options: [
+      { value: '', label: 'All modulations' },
+      { value: 'fm', label: 'FM' },
+      { value: 'am', label: 'AM' },
+      { value: 'cw', label: 'CW' },
+      { value: 'usb', label: 'USB' },
+      { value: 'lsb', label: 'LSB' },
+      { value: 'digital', label: 'Digital' },
+      { value: 'unknown', label: 'Unknown' },
+    ]},
+    { key: 'status', label: 'Status', type: 'select', options: [
+      { value: '', label: 'All statuses' },
+      { value: 'queued', label: 'Queued' },
+      { value: 'raw', label: 'Raw' },
+      { value: 'compressed', label: 'Compressed' },
+      { value: 'compression_failed', label: 'Failed' },
+    ]},
+    { key: 'fMinMhz', label: 'Min MHz', type: 'number', placeholder: 'e.g. 88' },
+    { key: 'fMaxMhz', label: 'Max MHz', type: 'number', placeholder: 'e.g. 108' },
+  ], [baselineOptions])
 
   // -----------------------------------------------------------------------
   // Initial fetch + poll every 5s
@@ -472,7 +508,7 @@ export default function RecordingsPage() {
           {detectionId && (
             <span className="chip text-xs bg-sky-600/60 text-sky-100">
               Signal #{detectionId}
-              <a href={`/signal/${detectionId}`} className="text-sky-200 hover:text-white ml-1">
+              <a href={`/signal/${detectionId}`} className="text-sky-200 hover:text-white ml-1 focus-visible:ring-2 focus-visible:ring-sky-400">
                 →
               </a>
             </span>
@@ -485,73 +521,12 @@ export default function RecordingsPage() {
 
       {/* Filter toolbar */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="field">
-            <label>Baseline</label>
-            <select
-              className="input"
-              value={filters.baselineId}
-              onChange={e => setFilters(f => ({ ...f, baselineId: e.target.value }))}
-            >
-              <option value="">All baselines</option>
-              {baselines.map(b => (
-                <option key={b.id} value={b.id}>#{b.id} · {b.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Modulation</label>
-            <select
-              className="input"
-              value={filters.modulation}
-              onChange={e => setFilters(f => ({ ...f, modulation: e.target.value }))}
-            >
-              <option value="">All modulations</option>
-              <option value="fm">FM</option>
-              <option value="am">AM</option>
-              <option value="cw">CW</option>
-              <option value="usb">USB</option>
-              <option value="lsb">LSB</option>
-              <option value="digital">Digital</option>
-              <option value="unknown">Unknown</option>
-            </select>
-          </div>
-          <div className="field">
-            <label>Status</label>
-            <select
-              className="input"
-              value={filters.status}
-              onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-            >
-              <option value="">All statuses</option>
-              <option value="queued">Queued</option>
-              <option value="raw">Raw</option>
-              <option value="compressed">Compressed</option>
-              <option value="compression_failed">Failed</option>
-            </select>
-          </div>
-          <div className="field">
-            <label>Min MHz</label>
-            <input
-              className="input"
-              type="number"
-              step="0.1"
-              placeholder="e.g. 88"
-              value={filters.fMinMhz}
-              onChange={e => setFilters(f => ({ ...f, fMinMhz: e.target.value }))}
-            />
-          </div>
-          <div className="field">
-            <label>Max MHz</label>
-            <input
-              className="input"
-              type="number"
-              step="0.1"
-              placeholder="e.g. 108"
-              value={filters.fMaxMhz}
-              onChange={e => setFilters(f => ({ ...f, fMaxMhz: e.target.value }))}
-            />
-          </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <UnifiedFilterBar
+            fields={recordingFilterFields}
+            values={filters}
+            onChange={(key, value) => setFilters(f => ({ ...f, [key]: value }))}
+          />
           <div className="flex items-end gap-2">
             <button
               type="button"
@@ -573,8 +548,15 @@ export default function RecordingsPage() {
         </div>
       </div>
 
-      {/* Recordings table with sorting */}
-      {(() => {
+      {/* Empty state or recordings table with sorting */}
+      {!loading && recordings.length === 0 ? (
+        <EmptyState
+          title="No recordings yet"
+          description="Signals with burst capture automatically create recordings. Start a sweep with burst capture enabled to see them here."
+          action={{ label: 'Browse signals', to: '/signals' }}
+          secondaryAction={{ label: 'Learn about recordings →', to: '/control' }}
+        />
+      ) : (() => {
         const colHelper = createColumnHelper<Recording>()
 
         const columns = [
@@ -596,6 +578,7 @@ export default function RecordingsPage() {
                 checked={selected.has(row.original.id)}
                 onChange={() => toggleSelect(row.original.id)}
                 onClick={e => e.stopPropagation()}
+                aria-label={`Select recording ${row.original.id}`}
               />
             ),
           }),
@@ -608,7 +591,7 @@ export default function RecordingsPage() {
             header: 'Modulation',
             cell: info => info.getValue()
               ? <span className="chip text-xs">{info.getValue()!.toUpperCase()}</span>
-              : <span className="chip text-xs text-slate-500">—</span>,
+              : <span className="chip text-xs text-slate-400">—</span>,
           }),
           colHelper.accessor('duration_ms', {
             header: 'Duration',
@@ -629,8 +612,8 @@ export default function RecordingsPage() {
             header: 'Actions',
             cell: ({ row }) => (
               <div className="flex flex-wrap gap-1 items-center" onClick={e => e.stopPropagation()}>
-                <button className="chip text-xs hover:bg-sky-600/40 cursor-pointer" onClick={() => downloadRaw(row.original.id)}>⬇ Raw</button>
-                <button className="chip text-xs hover:bg-red-600/40 cursor-pointer" onClick={() => deleteRec(row.original.id)}>✕</button>
+                <button className="chip text-xs hover:bg-sky-600/40 cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => downloadRaw(row.original.id)}>⬇ Raw</button>
+                <button className="chip text-xs hover:bg-red-600/40 cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => deleteRec(row.original.id)} aria-label="Delete recording">✕</button>
               </div>
             ),
           }),
@@ -647,28 +630,46 @@ export default function RecordingsPage() {
 
         return (
           <div className="card overflow-x-auto">
-            <table className="table">
+            <table className="table" role="table" aria-label="Recordings">
               <thead>
                 {table.getHeaderGroups().map(hg => (
                   <tr key={hg.id} className="text-xs uppercase text-slate-400">
-                    {hg.headers.map(header => (
-                      <th key={header.id} className="th cursor-pointer hover:text-sky-400 select-none" onClick={header.column.getToggleSortingHandler()} style={header.id === 'select' ? { width: 32, cursor: 'default' } : undefined}>
-                        {header.id === 'select' ? flexRender(header.column.columnDef.header, header.getContext()) : (
-                          <>
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? <span className="ml-1 text-slate-600">↕</span>}
-                          </>
-                        )}
-                      </th>
-                    ))}
+                    {hg.headers.map(header => {
+                      const isSelect = header.id === 'select'
+                      return (
+                        <th
+                          key={header.id}
+                          className={`th${isSelect ? '' : ' cursor-pointer hover:text-sky-400 select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400'}`}
+                          onClick={isSelect ? undefined : header.column.getToggleSortingHandler()}
+                          style={isSelect ? { width: 32 } : undefined}
+                          tabIndex={isSelect ? undefined : 0}
+                          aria-sort={isSelect ? undefined : (
+                            header.column.getIsSorted() === 'asc' ? 'ascending' as const
+                            : header.column.getIsSorted() === 'desc' ? 'descending' as const
+                            : undefined
+                          )}
+                          onKeyDown={isSelect ? undefined : (e: React.KeyboardEvent) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              header.column.getToggleSortingHandler()?.(e)
+                            }
+                          }}
+                        >
+                          {isSelect ? flexRender(header.column.columnDef.header, header.getContext()) : (
+                            <>
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? <span className="ml-1 text-slate-400">↕</span>}
+                            </>
+                          )}
+                        </th>
+                      )
+                    })}
                   </tr>
                 ))}
               </thead>
               <tbody>
                 {loading && recordings.length === 0 ? (
-                  <tr><td colSpan={10} className="td text-center text-slate-500 py-8">Loading recordings...</td></tr>
-                ) : table.getRowModel().rows.length === 0 ? (
-                  <tr><td colSpan={10} className="td text-center text-slate-500 py-8">No recordings yet. Run a scan with --capture-iq to create recordings.</td></tr>
+                  <tr><td colSpan={10} className="td text-center text-slate-400 py-8">Loading recordings...</td></tr>
                 ) : table.getRowModel().rows.map(row => {
                   const rec = row.original
                   const isExpanded = expandedId === rec.id
@@ -692,7 +693,7 @@ export default function RecordingsPage() {
                               <div>
                                 <div className="text-xs text-slate-400 mb-1 flex items-center gap-2">
                                   <span id={`playlabel-${rec.id}`} className="cursor-pointer hover:text-sky-400" onClick={() => togglePlay(rec.id)}>▶ Click waveform to play</span>
-                                  <span id={`time-${rec.id}`} className="text-slate-500">{rec.duration_ms ? `${fmtTime(rec.duration_ms / 1000)} / ${fmtTime(rec.duration_ms / 1000)}` : '--:-- / --:--'}</span>
+                                  <span id={`time-${rec.id}`} className="text-slate-400">{rec.duration_ms ? `${fmtTime(rec.duration_ms / 1000)} / ${fmtTime(rec.duration_ms / 1000)}` : '--:-- / --:--'}</span>
                                   <span id={`modlabel-${rec.id}`} className="chip text-xs bg-sky-600/60 text-sky-100" style={{ display: 'none' }}>FM</span>
                                 </div>
                                 <canvas id={`plot-${rec.id}`} height={100} style={{ width: '100%', height: '100px', background: '#0b1220', borderRadius: '0.5rem', cursor: 'pointer' }} onClick={e => handleCanvasClick(e, rec.id)} />
@@ -705,11 +706,11 @@ export default function RecordingsPage() {
                               />
                               <div className="flex flex-wrap items-center gap-2 text-xs">
                                 <span className="text-slate-400 mr-1">Demod:</span>
-                                {['wbfm', 'fm', 'am', 'cw', 'lsb', 'usb'].map(mod => (
-                                  <button key={mod} className="chip cursor-pointer hover:bg-sky-600/40" onClick={e => { e.stopPropagation(); playModulation(rec.id, mod) }}>{mod.toUpperCase()}</button>
-                                ))}
-                                <span className="text-slate-500 ml-2">{rec.duration_ms ? `${(rec.duration_ms / 1000).toFixed(1)}s` : ''}{rec.sample_rate_hz ? ` @ ${(rec.sample_rate_hz / 1e6).toFixed(1)} MS/s` : ''}</span>
-                                <button className="chip text-xs hover:bg-sky-600/40 cursor-pointer ml-auto" onClick={() => downloadRaw(rec.id)}>⬇ Raw</button>
+                                  {['wbfm', 'fm', 'am', 'cw', 'lsb', 'usb'].map(mod => (
+                                    <button key={mod} className="chip cursor-pointer hover:bg-sky-600/40 focus-visible:ring-2 focus-visible:ring-sky-400" onClick={e => { e.stopPropagation(); playModulation(rec.id, mod) }}>{mod.toUpperCase()}</button>
+                                  ))}
+                                <span className="text-slate-400 ml-2">{rec.duration_ms ? `${(rec.duration_ms / 1000).toFixed(1)}s` : ''}{rec.sample_rate_hz ? ` @ ${(rec.sample_rate_hz / 1e6).toFixed(1)} MS/s` : ''}</span>
+                                <button className="chip text-xs hover:bg-sky-600/40 cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-400 ml-auto" onClick={() => downloadRaw(rec.id)}>⬇ Raw</button>
                               </div>
                             </div>
                           </td>

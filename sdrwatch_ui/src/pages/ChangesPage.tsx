@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useBaseline } from '../context/BaselineContext'
 import { apiGet } from '../api/client'
+import { EmptyState } from '../components/primitives'
 import type { ChangeEvent, ChangePayload } from '../types'
+import UnifiedFilterBar from '../components/primitives/UnifiedFilterBar'
 
 // ── Event type visual config ──────────────────────────────────────────────
 
@@ -58,20 +60,6 @@ function defaultSummary(event: ChangeEvent): string {
       return event.details ?? 'Change event'
   }
 }
-
-// ── Filters ───────────────────────────────────────────────────────────────
-
-interface FilterDef {
-  key: string
-  label: string
-}
-
-const FILTERS: FilterDef[] = [
-  { key: 'ALL', label: 'All' },
-  { key: 'NEW_SIGNAL', label: 'New' },
-  { key: 'POWER_SHIFT', label: 'Power Shifts' },
-  { key: 'QUIETED', label: 'Quieted' },
-]
 
 // ── Component ─────────────────────────────────────────────────────────────
 
@@ -138,24 +126,18 @@ export default function ChangesPage() {
   const filterBar = (
     <div className="border border-white/10 rounded-xl p-4 bg-white/5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map(f => {
-            const isActive = activeFilter === f.key
-            return (
-              <button
-                key={f.key}
-                onClick={() => setActiveFilter(f.key)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  isActive
-                    ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-                    : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20 hover:text-slate-300'
-                }`}
-              >
-                {f.label}
-              </button>
-            )
-          })}
-        </div>
+        <UnifiedFilterBar
+          fields={[
+            { key: 'type', label: 'Event type', type: 'select', options: [
+              { value: 'ALL', label: 'All' },
+              { value: 'NEW_SIGNAL', label: 'New' },
+              { value: 'POWER_SHIFT', label: 'Power Shifts' },
+              { value: 'QUIETED', label: 'Quieted' },
+            ]}
+          ]}
+          values={{ type: activeFilter }}
+          onChange={(_, value) => setActiveFilter(value)}
+        />
         <div className="text-xs text-slate-400">
           {totalEvents} event{totalEvents !== 1 ? 's' : ''}
           {generatedAt ? ` · Refreshed ${generatedAt}` : ''}
@@ -191,9 +173,11 @@ export default function ChangesPage() {
   // ── Event feed ───────────────────────────────────────────────────────
 
   const feed = events.length === 0 ? (
-    <div className="text-sm text-slate-300 border border-dashed border-white/15 rounded-xl p-4">
-      No change events in the selected window.
-    </div>
+    <EmptyState
+      title="No change events"
+      description="Change events appear after sweeps run. Start a scan to begin tracking NEW, QUIETED, and POWER_SHIFT events."
+      action={{ label: 'Start a scan', to: '/control' }}
+    />
   ) : (
     <div className="space-y-3">
       {events.map((event, i) => {

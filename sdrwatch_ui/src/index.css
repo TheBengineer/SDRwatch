@@ -66,7 +66,7 @@
     background: var(--chip-bg);
   }
   .btn {
-    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors;
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-sky-400;
     background: var(--btn-primary-bg);
     color: var(--btn-primary-text);
   }
@@ -74,7 +74,7 @@
     background: var(--btn-primary-hover);
   }
   .input {
-    @apply px-3 py-2 rounded-xl border font-medium outline-none transition-colors;
+    @apply px-3 py-2 rounded-xl border font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sky-400;
     background: var(--input-bg);
     color: var(--input-text);
     border-color: var(--input-border);

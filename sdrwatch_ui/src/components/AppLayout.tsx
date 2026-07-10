@@ -131,9 +131,9 @@ export default function AppLayout() {
               {/* Help / Onboarding */}
               <button
                 onClick={() => setShowOnboarding(v => !v)}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
                 style={{ background: 'var(--chip-bg)', color: 'var(--text-secondary)' }}
-                title="Getting started guide"
+                aria-label="Show getting started guide"
               >
                 ?
               </button>
@@ -158,7 +158,7 @@ export default function AppLayout() {
                     <span className="text-lg" title="Token configured">🔑</span>
                     <button
                       onClick={() => { setShowTokenInput(v => !v); setTokenInput(existingToken) }}
-                      className="text-xs text-slate-400 hover:text-sky-400 underline"
+                      className="text-xs text-slate-400 hover:text-sky-400 underline focus-visible:ring-2 focus-visible:ring-sky-400"
                     >
                       Edit
                     </button>
@@ -166,7 +166,7 @@ export default function AppLayout() {
                 ) : (
                   <button
                     onClick={() => setShowTokenInput(v => !v)}
-                    className="text-xs text-slate-400 hover:text-sky-400 underline"
+                    className="text-xs text-slate-400 hover:text-sky-400 underline focus-visible:ring-2 focus-visible:ring-sky-400"
                   >
                     Set Token
                   </button>
@@ -183,21 +183,21 @@ export default function AppLayout() {
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveToken}
-                        className="px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs"
+                        className="px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs focus-visible:ring-2 focus-visible:ring-sky-400"
                       >
                         Save
                       </button>
                       {existingToken && (
                         <button
                           onClick={handleClearToken}
-                          className="px-3 py-1 rounded-lg bg-red-600/60 hover:bg-red-500 text-white text-xs"
+                          className="px-3 py-1 rounded-lg bg-red-600/60 hover:bg-red-500 text-white text-xs focus-visible:ring-2 focus-visible:ring-sky-400"
                         >
                           Clear
                         </button>
                       )}
                       <button
                         onClick={() => setShowTokenInput(false)}
-                        className="px-3 py-1 rounded-lg text-xs ml-auto" style={{background:'var(--chip-bg)', color:'var(--text-secondary)'}}
+                        className="px-3 py-1 rounded-lg text-xs ml-auto focus-visible:ring-2 focus-visible:ring-sky-400" style={{background:'var(--chip-bg)', color:'var(--text-secondary)'}}
                       >
                         Cancel
                       </button>
@@ -214,7 +214,7 @@ export default function AppLayout() {
             <span>⚠️ No SDR device detected. Connect the USB radio and refresh.</span>
             <button
               onClick={() => setUsbDismissed(true)}
-              className="text-white/70 hover:text-white underline text-xs"
+              className="text-white/70 hover:text-white underline text-xs focus-visible:ring-2 focus-visible:ring-white/50"
             >
               Dismiss
             </button>

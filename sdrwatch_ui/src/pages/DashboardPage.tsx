@@ -8,8 +8,8 @@ import FreqBarChart from '../components/FreqBarChart'
 import TimelineChart from '../components/TimelineChart'
 import CoverageHeatmap from '../components/CoverageHeatmap'
 import SNRHistogram from '../components/SNRHistogram'
-import FilterBar, { type DashboardFilters } from '../components/FilterBar'
-import { Card } from '../components/primitives'
+import type { DashboardFilters } from '../components/primitives/UnifiedFilterBar'
+import { Card, CollapsibleSection, EmptyState, Button, UnifiedFilterBar } from '../components/primitives'
 import ChangeFeedPreview from '../components/ChangeFeedPreview'
 
 // ---------------------------------------------------------------------------
@@ -196,6 +196,7 @@ export default function DashboardPage() {
 
   // Filters
   const [filters, setFilters] = useState<DashboardFilters>(DEFAULT_FILTERS)
+  const [draftFilters, setDraftFilters] = useState<DashboardFilters>(DEFAULT_FILTERS)
 
   // Error tracking
   const [errors, setErrors] = useState<Record<string, string | null>>({})
@@ -331,6 +332,30 @@ export default function DashboardPage() {
     }
   }, [baselineId, fetchAll])
 
+  // Draft filter change — updates local state, does NOT trigger fetch
+  const handleDraftChange = useCallback((key: string, value: string) => {
+    setDraftFilters(prev => ({ ...prev, [key]: value }))
+  }, [])
+
+  // -----------------------------------------------------------------------
+  // Filter field descriptors
+  // -----------------------------------------------------------------------
+
+  const DASHBOARD_FILTER_FIELDS = [
+    { key: 'service' as const, label: 'Service', type: 'text' as const, placeholder: 'FM, ISM...' },
+    { key: 'minSnr' as const, label: 'Min SNR', type: 'number' as const, placeholder: 'dB' },
+    { key: 'lookbackHours' as const, label: 'Lookback', type: 'select' as const, options: [
+      { value: '1', label: '1 hour' },
+      { value: '6', label: '6 hours' },
+      { value: '24', label: '24 hours' },
+      { value: '72', label: '3 days' },
+      { value: '168', label: '7 days' },
+      { value: '720', label: '30 days' },
+    ]},
+    { key: 'freqLow' as const, label: 'Freq low', type: 'number' as const, placeholder: 'MHz' },
+    { key: 'freqHigh' as const, label: 'Freq high', type: 'number' as const, placeholder: 'MHz' },
+  ]
+
   // -----------------------------------------------------------------------
   // Render
   // -----------------------------------------------------------------------
@@ -366,9 +391,42 @@ export default function DashboardPage() {
       {/* Filter bar */}
       <Card variant="bordered" className="space-y-3">
         <h3 className="text-xs uppercase tracking-wide" style={{color:'var(--text-secondary)'}}>Filters</h3>
-        <FilterBar filters={filters} onChange={handleFilterChange} />
+        <div className="flex flex-wrap items-end gap-3">
+          <UnifiedFilterBar
+            fields={DASHBOARD_FILTER_FIELDS}
+            values={draftFilters}
+            onChange={handleDraftChange}
+          />
+          <button
+            onClick={() => handleFilterChange(draftFilters)}
+            className="btn text-xs"
+          >
+            Apply
+          </button>
+          <Button variant="secondary" size="sm" onClick={() => {
+            setDraftFilters(DEFAULT_FILTERS)
+            handleFilterChange(DEFAULT_FILTERS)
+          }}>
+            Reset
+          </Button>
+        </div>
       </Card>
 
+      {/* Empty state — no baseline data yet */}
+      {(() => {
+        const hasNoData = !tacticalLoading && !signalsLoading && tactical !== null && activeSignals.length === 0 && (tactical.snapshot?.persistent_signals ?? 0) === 0
+        if (hasNoData) {
+          return (
+            <EmptyState
+              title="No baseline data yet"
+              description="Collect your first scan sweep to start populating the dashboard with tactical data, signal cards, and charts."
+              action={{ label: 'Run your first scan', to: '/control' }}
+              secondaryAction={{ label: 'Learn about baselines →', to: '/control' }}
+            />
+          )
+        }
+        return (
+          <>
       {/* Tactical snapshot */}
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Tactical snapshot</h2>
@@ -466,29 +524,31 @@ export default function DashboardPage() {
         </section>
 
         {/* SNR histogram */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">SNR distribution</h2>
-          <p className="text-xs text-slate-400">Signal-to-noise ratio histogram across detections</p>
-          {errors.snr && <div className="text-xs text-red-400">{errors.snr}</div>}
-          <SNRHistogram
-            histogram={snrData?.histogram}
-            stats={snrData?.stats}
-            loading={snrLoading}
-          />
-        </section>
+        <CollapsibleSection title="SNR distribution" defaultOpen={false}>
+          <section className="space-y-3">
+            <p className="text-xs text-slate-400">Signal-to-noise ratio histogram across detections</p>
+            {errors.snr && <div className="text-xs text-red-400">{errors.snr}</div>}
+            <SNRHistogram
+              histogram={snrData?.histogram}
+              stats={snrData?.stats}
+              loading={snrLoading}
+            />
+          </section>
+        </CollapsibleSection>
 
         {/* Coverage heatmap */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Coverage heatmap</h2>
-          <p className="text-xs text-slate-400">Detection density by scan and frequency</p>
-          {errors.heatmap && <div className="text-xs text-red-400">{errors.heatmap}</div>}
-          <CoverageHeatmap
-            rows={heatmapData?.rows}
-            binLabels={heatmapData?.bin_labels}
-            maxCount={heatmapData?.max_count}
-            loading={heatmapLoading}
-          />
-        </section>
+        <CollapsibleSection title="Coverage heatmap" defaultOpen={false}>
+          <section className="space-y-3">
+            <p className="text-xs text-slate-400">Detection density by scan and frequency</p>
+            {errors.heatmap && <div className="text-xs text-red-400">{errors.heatmap}</div>}
+            <CoverageHeatmap
+              rows={heatmapData?.rows}
+              binLabels={heatmapData?.bin_labels}
+              maxCount={heatmapData?.max_count}
+              loading={heatmapLoading}
+            />
+          </section>
+        </CollapsibleSection>
       </div>
 
       {/* Change feed */}
@@ -509,6 +569,9 @@ export default function DashboardPage() {
           loading={changesLoading}
         />
       </section>
+          </>
+        )
+      })()}
     </div>
   )
 }

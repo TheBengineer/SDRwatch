@@ -62,7 +62,7 @@ export default function NavBar() {
     >
       {navSections.map(section => (
         <div key={section.section} className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wider text-slate-500 select-none">
+          <span className="text-xs uppercase tracking-wider text-slate-400 select-none">
             {section.section}
           </span>
           {section.links.map(link => (
@@ -71,7 +71,7 @@ export default function NavBar() {
               to={linkTo(link.to)}
               end={link.to === '/'}
               className={({ isActive }) => {
-                const base = 'underline transition-colors'
+                const base = 'underline transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded'
                 if (link.debug) {
                   return isActive
                     ? `${base} text-amber-300`

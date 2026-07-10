@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { EmptyState } from '../components/primitives'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,7 +76,7 @@ export default function SpurMapPage() {
       <section className="card space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">Spur Map</h1>
+            <h1 className="text-xl font-semibold" title="Known SDR self-interference frequencies to exclude from detection.">Spur Map</h1>
             <p className="text-sm text-slate-400">Read-only view of stored spur bins</p>
           </div>
           {!loading && (
@@ -94,9 +95,11 @@ export default function SpurMapPage() {
         {loading ? (
           <div className="text-sm text-slate-400 py-4">Loading spur map data...</div>
         ) : entries.length === 0 ? (
-          <div className="text-sm text-slate-400 py-4">
-            No spur map data yet. Run a spur calibration sweep to populate this table.
-          </div>
+          <EmptyState
+            title="No spur map data"
+            description="Run a spur calibration sweep from the Control panel to identify and suppress SDR artifacts."
+            action={{ label: 'Go to Control', to: '/control' }}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="table text-sm">
