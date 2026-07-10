@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 from flask import Blueprint, Response, abort, jsonify, request
 
 from sdrwatch_web.auth import require_auth
-from sdrwatch_web.controller import controller_active_job, get_controller
+from sdrwatch_web.controller import controller_active_job, controller_profiles, get_controller
 
 bp = Blueprint("api_jobs", __name__)
 
@@ -280,6 +280,14 @@ def api_logs():
         job_id = str(job.get("id"))
 
     return job_logs_response(job_id, tail)
+
+
+@bp.get("/api/jobs/profiles")
+def api_jobs_profiles():
+    """Get available scan profiles from the controller."""
+    require_auth()
+    profiles = controller_profiles()
+    return jsonify({"profiles": profiles})
 
 
 @bp.get("/api/live/windows")

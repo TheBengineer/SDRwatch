@@ -362,8 +362,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-        <h3 className="text-xs uppercase tracking-wide text-slate-400">Filters</h3>
+      <div className="card space-y-3">
+        <h3 className="text-xs uppercase tracking-wide" style={{color:'var(--text-secondary)'}}>Filters</h3>
         <FilterBar filters={filters} onChange={handleFilterChange} />
       </div>
 

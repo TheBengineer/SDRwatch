@@ -102,16 +102,22 @@ export default function SignalDetailPage() {
     try {
       setLoading(true)
       setError(null)
-      const data = await apiGet<{ signal: SignalDetail; collection_context?: CollectionContext }>(
+      // API returns the signal object directly (not wrapped in {signal: ...})
+      const data = await apiGet<SignalDetail>(
         `/api/signals/${signalId}`,
       )
-      setSignal(data.signal)
-      setCollectionCtx(data.collection_context ?? null)
-      setLabel(data.signal.label ?? '')
-      setClassification(data.signal.classification ?? 'unknown')
-      setUserBwHz(data.signal.user_bw_hz ? String(data.signal.user_bw_hz) : '')
-      setNotes(data.signal.notes ?? '')
-      setSelected(data.signal.selected)
+      // Guard: if the API returned a 404-like empty object, treat as missing
+      if (!data || !data.id) {
+        setError('Signal not found')
+        return
+      }
+      setSignal(data)
+      setCollectionCtx(null)
+      setLabel(data.label ?? '')
+      setClassification(data.classification ?? 'unknown')
+      setUserBwHz(data.user_bw_hz ? String(data.user_bw_hz) : '')
+      setNotes(data.notes ?? '')
+      setSelected(data.selected)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load signal')
     } finally {
@@ -874,7 +880,7 @@ export default function SignalDetailPage() {
             <h2 className="text-lg font-semibold mb-4">Classification &amp; Labeling</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label htmlFor="signal-label" className="block text-sm text-slate-300 mb-1">
+                <label htmlFor="signal-label" className="form-label">
                   Label
                 </label>
                 <input
@@ -884,20 +890,20 @@ export default function SignalDetailPage() {
                   onChange={e => setLabel(e.target.value)}
                   placeholder="e.g., Local FM, ATC, etc."
                   maxLength={64}
-                  className="w-full px-3 py-1.5 rounded-lg border border-white/18 bg-slate-900 text-slate-100 text-sm"
+                  className="input w-full text-sm"
                 />
-                <div className="text-xs text-slate-500 mt-1">Short identifier (max 64 chars)</div>
+                <div className="text-xs muted mt-1">Short identifier (max 64 chars)</div>
               </div>
 
               <div>
-                <label htmlFor="signal-classification" className="block text-sm text-slate-300 mb-1">
+                <label htmlFor="signal-classification" className="form-label">
                   Classification
                 </label>
                 <select
                   id="signal-classification"
                   value={classification}
                   onChange={e => setClassification(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-white/18 bg-slate-900 text-slate-100 text-sm"
+                  className="input w-full text-sm"
                 >
                   <option value="unknown">Unknown</option>
                   <option value="friendly">Friendly</option>
@@ -907,7 +913,7 @@ export default function SignalDetailPage() {
               </div>
 
               <div>
-                <label htmlFor="signal-user-bw" className="block text-sm text-slate-300 mb-1">
+                <label htmlFor="signal-user-bw" className="form-label">
                   Corrected Bandwidth (Hz)
                 </label>
                 <input
@@ -918,15 +924,15 @@ export default function SignalDetailPage() {
                   placeholder="e.g., 25000"
                   min={0}
                   step={1000}
-                  className="w-full px-3 py-1.5 rounded-lg border border-white/18 bg-slate-900 text-slate-100 text-sm"
+                  className="input w-full text-sm"
                 />
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-xs muted mt-1">
                   Override display bandwidth (leave empty to use detected)
                 </div>
               </div>
 
               <div>
-                <label htmlFor="signal-notes" className="block text-sm text-slate-300 mb-1">
+                <label htmlFor="signal-notes" className="form-label">
                   Notes
                 </label>
                 <textarea
@@ -936,9 +942,9 @@ export default function SignalDetailPage() {
                   rows={4}
                   placeholder="Add any observations or context..."
                   maxLength={1024}
-                  className="w-full px-3 py-1.5 rounded-lg border border-white/18 bg-slate-900 text-slate-100 text-sm resize-y"
+                  className="input w-full text-sm resize-y"
                 />
-                <div className="text-xs text-slate-500 mt-1">Max 1024 characters</div>
+                <div className="text-xs muted mt-1">Max 1024 characters</div>
               </div>
 
               <div className="flex gap-2">

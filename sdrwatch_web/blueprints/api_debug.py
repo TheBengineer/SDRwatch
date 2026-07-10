@@ -11,7 +11,7 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, request
 
 from sdrwatch_web.auth import require_auth
 from sdrwatch_web.config import (
@@ -262,12 +262,4 @@ def api_debug_errors():
 
 # ---------------------------------------------------------------------------
 # Debug dashboard page
-# ---------------------------------------------------------------------------
-
-
-@bp.get("/debug")
-def debug_page():
-    """Debug dashboard page."""
-    require_auth()
-    app = current_app
-    return render_template("debug.html", db_path=app.config.get("DATABASE_PATH"))
+# (debug page removed — SPA handles /debug via React Router)

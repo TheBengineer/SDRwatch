@@ -20,11 +20,7 @@ from sdrwatch_web.db import init_db
 
 def create_app(db_path: str) -> Flask:
     """Create and configure the Flask application."""
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
-        static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
-    )
+    app = Flask(__name__)
 
     # ------------------------------------------------------------------
     # App-level state

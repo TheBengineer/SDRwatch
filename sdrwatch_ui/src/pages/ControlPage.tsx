@@ -149,7 +149,7 @@ function TextInput({
       placeholder={placeholder}
       inputMode={inputMode as 'numeric' | 'decimal' | undefined}
       step={step}
-      className="w-full px-3 py-1.5 rounded-xl border border-white/18 bg-white/8 text-slate-100 text-sm"
+      className="input w-full text-sm"
     />
   )
 }
@@ -166,11 +166,11 @@ function SelectInput({
       value={value}
       onChange={e => onChange(e.target.value)}
       disabled={disabled}
-      className="w-full px-3 py-1.5 rounded-xl border border-white/18 bg-white/8 text-slate-100 text-sm appearance-none cursor-pointer disabled:opacity-50"
+      className="input w-full text-sm appearance-none cursor-pointer disabled:opacity-50"
     >
       {placeholder && <option value="">{placeholder}</option>}
       {options.map(o => (
-        <option key={o.value} value={o.value} className="bg-slate-800 text-slate-100">{o.label}</option>
+        <option key={o.value} value={o.value} className="bg-[var(--input-option-bg)] text-[var(--input-option-text)]">{o.label}</option>
       ))}
     </select>
   )
@@ -250,18 +250,20 @@ export default function ControlPage() {
     try {
       const r = await fetch('/api/jobs/profiles')
       if (r.ok) {
-        const data = await r.json()
-        if (Array.isArray(data)) {
-          setProfiles(data as Profile[])
+        const body = await r.json()
+        const list = body?.profiles ?? body
+        if (Array.isArray(list)) {
+          setProfiles(list as Profile[])
           return
         }
       }
-      // Fallback: try /profiles
+      // Fallback: try /profiles (legacy controller endpoint)
       const r2 = await fetch('/profiles')
       if (r2.ok) {
-        const data = await r2.json()
-        if (Array.isArray(data)) {
-          setProfiles(data as Profile[])
+        const body = await r2.json()
+        const list = body?.profiles ?? body
+        if (Array.isArray(list)) {
+          setProfiles(list as Profile[])
         }
       }
     } catch {
@@ -600,7 +602,7 @@ export default function ControlPage() {
                   <select
                     value={baselineId ?? ''}
                     disabled
-                    className="w-full px-3 py-1.5 rounded-xl border border-white/18 bg-white/8 text-slate-100 text-sm opacity-60 cursor-not-allowed"
+                    className="input w-full text-sm opacity-60 cursor-not-allowed"
                   >
                     {baselines.map(b => (
                       <option key={b.id} value={b.id}>{b.name} (#{b.id})</option>
@@ -993,7 +995,7 @@ export default function ControlPage() {
                 onChange={e => setBlNotes(e.target.value)}
                 rows={2}
                 placeholder="Roof mount, 50ft LMR-400."
-                className="w-full px-3 py-1.5 rounded-xl border border-white/18 bg-white/8 text-slate-100 text-sm resize-none"
+                className="input w-full text-sm resize-none"
               />
             </FieldRow>
             <button

@@ -34,18 +34,18 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
   return (
     <div className="flex flex-wrap items-end gap-3 text-sm">
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] uppercase tracking-wide text-slate-400">Service</label>
+        <label className="form-label !text-[10px] uppercase tracking-wide">Service</label>
         <input
-          className="px-2 py-1 rounded-lg border border-white/18 bg-white/8 text-slate-100 w-28 text-xs"
+          className="input w-28 text-xs"
           placeholder="FM, ISM..."
           value={local.service}
           onChange={e => update({ service: e.target.value })}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] uppercase tracking-wide text-slate-400">Min SNR</label>
+        <label className="form-label !text-[10px] uppercase tracking-wide">Min SNR</label>
         <input
-          className="px-2 py-1 rounded-lg border border-white/18 bg-white/8 text-slate-100 w-20 text-xs"
+          className="input w-20 text-xs"
           placeholder="dB"
           type="number"
           value={local.minSnr}
@@ -53,9 +53,9 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] uppercase tracking-wide text-slate-400">Lookback</label>
+        <label className="form-label !text-[10px] uppercase tracking-wide">Lookback</label>
         <select
-          className="px-2 py-1 rounded-lg border border-white/18 bg-white/8 text-slate-100 w-24 text-xs"
+          className="input w-24 text-xs"
           value={local.lookbackHours}
           onChange={e => update({ lookbackHours: e.target.value })}
         >
@@ -68,9 +68,9 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
         </select>
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] uppercase tracking-wide text-slate-400">Freq low</label>
+        <label className="form-label !text-[10px] uppercase tracking-wide">Freq low</label>
         <input
-          className="px-2 py-1 rounded-lg border border-white/18 bg-white/8 text-slate-100 w-24 text-xs"
+          className="input w-24 text-xs"
           placeholder="MHz"
           type="number"
           value={local.freqLow}
@@ -78,9 +78,9 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] uppercase tracking-wide text-slate-400">Freq high</label>
+        <label className="form-label !text-[10px] uppercase tracking-wide">Freq high</label>
         <input
-          className="px-2 py-1 rounded-lg border border-white/18 bg-white/8 text-slate-100 w-24 text-xs"
+          className="input w-24 text-xs"
           placeholder="MHz"
           type="number"
           value={local.freqHigh}
@@ -89,13 +89,14 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
       </div>
       <button
         onClick={apply}
-        className="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs"
+        className="btn text-xs"
       >
         Apply
       </button>
       <button
         onClick={reset}
-        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 text-xs"
+        className="px-3 py-1.5 rounded-lg text-xs"
+        style={{background:'var(--chip-bg)', color:'var(--text-secondary)'}}
       >
         Reset
       </button>

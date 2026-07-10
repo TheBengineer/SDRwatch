@@ -2,48 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------ */
+/* Theme tokens — default: dark mode (matches original SDRwatch theme)  */
+/* ------------------------------------------------------------------ */
+:root,
+.dark {
+  --bg-page: #0f172a;
+  --bg-header: #0f172a;
+  --bg-header-border: rgba(255, 255, 255, 0.10);
+  --bg-elevated: #1e293b;
+  --bg-inset: rgba(255, 255, 255, 0.03);
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-text: #f1f5f9;
+  --input-border: rgba(255, 255, 255, 0.20);
+  --input-placeholder: #64748b;
+  --input-option-bg: #1e293b;
+  --input-option-text: #f1f5f9;
+  --chip-bg: rgba(255, 255, 255, 0.10);
+  --btn-primary-bg: #0284c7;
+  --btn-primary-text: #ffffff;
+  --table-border: rgba(255, 255, 255, 0.10);
+  --autofill-bg: #1e293b;
+  --autofill-text: #f1f5f9;
+}
+
+/* ------------------------------------------------------------------ */
+/* Component classes — use theme tokens                                */
+/* ------------------------------------------------------------------ */
 @layer components {
   .card {
-    @apply rounded-2xl p-4 bg-white/5 text-slate-100 border border-white/10;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    @apply rounded-2xl p-4;
   }
   .chip {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-white/10;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs;
+    background: var(--chip-bg);
   }
   .btn {
-    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-600 text-white text-sm hover:bg-sky-500 transition-colors;
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+  }
+  .btn:hover {
+    @apply opacity-90;
   }
   .input {
-    @apply px-3 py-2 rounded-xl border border-white/20 bg-white/5 text-slate-100 font-medium;
+    @apply px-3 py-2 rounded-xl border font-medium outline-none transition-colors;
+    background: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
   }
   .input:focus {
-    @apply outline-2 outline-offset-2 outline-sky-500;
+    @apply outline-2 outline-offset-2;
+    outline-color: #0ea5e9;
   }
   .input::placeholder {
-    color: #64748b;
+    color: var(--input-placeholder);
   }
   select.input option {
-    color: #0f172a;
-    background: #f1f5f9;
+    background: var(--input-option-bg);
+    color: var(--input-option-text);
   }
-  /* Dark mode autofill override */
+  /* Autofill override */
   .input:-webkit-autofill,
   .input:-webkit-autofill:hover,
   .input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #f1f5f9;
-    -webkit-box-shadow: 0 0 0 30px #1e293b inset;
-    caret-color: #f1f5f9;
+    -webkit-text-fill-color: var(--autofill-text);
+    -webkit-box-shadow: 0 0 0 30px var(--autofill-bg) inset;
+    caret-color: var(--autofill-text);
   }
   .table {
     @apply w-full text-sm;
   }
   .th, .td {
-    @apply px-3 py-2 text-left border-b border-white/10;
+    @apply px-3 py-2 text-left;
+    border-bottom: 1px solid var(--table-border);
   }
   .field {
     @apply flex flex-col gap-1;
   }
   .field label {
-    @apply text-xs text-slate-300 font-medium;
+    @apply text-xs font-medium;
+    color: var(--text-secondary);
+  }
+  .form-label {
+    @apply block text-sm mb-1 font-medium;
+    color: var(--text-secondary);
   }
   .subgrid {
     @apply grid grid-cols-2 gap-3;
@@ -54,6 +107,6 @@
     }
   }
   .muted {
-    @apply text-slate-400;
+    color: var(--text-muted);
   }
 }

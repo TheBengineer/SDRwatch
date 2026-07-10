@@ -113,8 +113,8 @@ export default function AppLayout() {
 
   return (
     <BaselineContext.Provider value={contextValue}>
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <header className="sticky top-0 z-10 backdrop-blur bg-slate-950/70 border-b border-white/10">
+      <div className="dark min-h-screen" style={{background:'var(--bg-page)', color:'var(--text-primary)'}}>
+        <header className="sticky top-0 z-10 backdrop-blur" style={{background:'var(--bg-header)', borderBottom:'1px solid var(--bg-header-border)'}}>
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-6">
             <div className="text-xl font-semibold">📡 SDRwatch</div>
             <NavBar />
@@ -123,14 +123,12 @@ export default function AppLayout() {
               <select
                 value={baselineId ?? ''}
                 onChange={e => handleBaselineChange(Number(e.target.value))}
-                className="px-3 py-1.5 rounded-xl border border-white/18 bg-white/8 text-slate-100 font-medium text-sm appearance-none cursor-pointer"
+                className="input text-sm appearance-none cursor-pointer"
                 disabled={baselines.length === 0}
               >
                 {baselines.length === 0 && <option value="">Loading...</option>}
                 {baselines.map(b => (
-                  <option key={b.id} value={b.id} className="bg-slate-800 text-slate-100">
-                    {b.name}
-                  </option>
+                  <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
 
@@ -155,12 +153,12 @@ export default function AppLayout() {
                   </button>
                 )}
                 {showTokenInput && (
-                  <div className="absolute right-0 top-full mt-2 bg-slate-800 border border-white/10 rounded-xl p-3 shadow-xl z-20 w-72">
+                  <div className="absolute right-0 top-full mt-2 rounded-xl p-3 shadow-xl z-20 w-72" style={{background:'var(--bg-elevated)', border:'1px solid var(--border)'}}>
                     <input
                       value={tokenInput}
                       onChange={e => setTokenInput(e.target.value)}
                       placeholder="SDRWATCH_TOKEN"
-                      className="w-full px-3 py-1.5 rounded-lg border border-white/18 bg-slate-900 text-slate-100 text-sm mb-2"
+                      className="input w-full text-sm mb-2"
                       autoFocus
                     />
                     <div className="flex gap-2">
@@ -180,7 +178,7 @@ export default function AppLayout() {
                       )}
                       <button
                         onClick={() => setShowTokenInput(false)}
-                        className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 text-xs ml-auto"
+                        className="px-3 py-1 rounded-lg text-xs ml-auto" style={{background:'var(--chip-bg)', color:'var(--text-secondary)'}}
                       >
                         Cancel
                       </button>
